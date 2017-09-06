@@ -1,0 +1,206 @@
+\documentclass[8pt,a4paper,compress]{beamer}
+
+\usepackage{/home/siyer/lib/slides}
+
+\title{Course Mechanics}
+\date{}
+
+\begin{document}
+\begin{frame}
+\vfill
+\titlepage
+\end{frame}
+
+\begin{frame}
+\frametitle{Outline}
+\tableofcontents
+\end{frame}
+
+\section{Course Logistics}
+\begin{frame}[fragile]
+\pause
+
+Course website: \href{http://www.swamiiyer.net/cs451}{http://www.swamiiyer.net/cs451 \ExternalLink} or \href{http://www.swamiiyer.net/cs651}{.../cs651 \ExternalLink}
+
+\pause
+\bigskip
+
+Goal: write parsers, analyze and generate code for various programming constructs, and allocate physical registers to a program expressed in terms of virtual registers
+
+\pause
+\bigskip
+
+Prerequisites: CS310 and CS420 or CS622
+
+\pause
+\bigskip
+
+Instructor: Swami Iyer
+
+\pause
+\bigskip
+
+Thrice a week classes (required)
+
+\pause
+\bigskip
+
+Text: Introduction to Compiler Construction in a Java World 
+by Bill Campbell, Swami Iyer, and Bahar Akbal-Deliba\c{s}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Grading
+\begin{itemize}
+\item Project assignments (best 5 of 6): 45\%
+\item Exams (best 2 of 3): 50\%
+\item Attendance: 5\%
+\end{itemize}
+
+\pause
+\bigskip
+
+CS account
+
+\pause
+\bigskip
+
+We'll use the following online tools
+\begin{itemize}
+\item Piazza for Q\&A
+\item iClicker for attendance
+\item Gradescope for grading
+\end{itemize}
+
+\pause
+\bigskip
+
+Policies
+\begin{itemize}
+\item Classroom etiquette
+\item Piazza etiquette
+\item Collaboration
+\item Code of conduct
+\item Accommodations for students with disabilities
+\end{itemize}
+
+\pause
+\bigskip
+
+Tips to succeed
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Items on the course website
+\begin{itemize}
+\item Announcements (landing page)
+\item Course Info
+\item Calendar
+\item Slides 
+\item Assignments
+\item Resources
+\end{itemize}
+
+\pause
+\bigskip
+
+Things to do immediately
+\begin{itemize}
+\item Sign up for Piazza
+\item Sign up for iClicker
+\item Sign up for Gradescope
+\item Setup the programming environment
+\item Apply for a CS account
+\end{itemize}
+\end{frame}
+
+\section{Course Overview}
+
+\begin{frame}[fragile]
+\pause
+
+Compilation (Chapter 1)
+\begin{itemize}
+\item What are compilers and why study them?
+\item How does a compiler work? The phases of compilation
+\item An overview of the \jmm to JVM compiler
+\item \jmm compiler source tree
+\end{itemize}
+
+\pause
+\bigskip
+
+Lexical Analysis (Chapter 2)
+\begin{itemize}
+\item Tokens in a programming language and scanning them
+\item Regular expressions
+\item Finite state automata
+\item Non-deterministic finite-state automata (NFA) versus deterministic finite-state automata (DFA)
+\item Regular expressions to NFA
+\item NFA to DFA
+\item Minimal DFA
+\item Generating scanners using JavaCC
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Parsing (Chapter 3)
+\begin{itemize}
+\item Context-free grammars and languages
+\item Top-down deterministic parsing
+\item Bottom-up deterministic parsing
+\item Generating parsers using JavaCC
+\end{itemize}
+
+\pause
+\bigskip
+
+Type Checking (Chapter 4)
+\begin{itemize}
+\item \jmm types
+\item \jmm symbol tables
+\item Pre-analysis of \jmm programs
+\item Analysis of \jmm programs
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+JVM Code Generation (Chapter 5)
+\begin{itemize}
+\item Classes and their members
+\item Control and logical expressions
+\item Message expressions, field selection, and array access expressions
+\item Assignment and similar operations
+\item String concatenation
+\item Casts
+\end{itemize}
+
+\pause
+\bigskip
+
+Translating JVM Code to MIPS Code (Chapter 6)
+\begin{itemize}
+\item What happens to JVM code?
+\item SPIM and MIPS architecture
+\item Our translator from JVM to MIPS
+\end{itemize}
+
+\pause
+\bigskip
+
+Register Allocation (Chapter 7)
+\begin{itemize}
+\item What is register allocation?
+\item Na\"{i}ve register allocation
+\item Register allocation by graph coloring
+\end{itemize}
+\end{frame}
+\end{document}
