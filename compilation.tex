@@ -98,24 +98,42 @@ Examples of programming languages whose programs may be interpreted directly are
 \begin{frame}[fragile]
 \pause
 
-Reasons for studying compilers
-\begin{itemize}
-\item Compilers are larger programs than the ones you have written in your programming courses
+Compilers are larger programs than the ones you have written in your programming courses
 
-\item Compilers make use of all those things you have learned about earlier: arrays, lists, queues, stacks, trees, graphs, maps, regular expressions and finite state automata, context-free grammars and parsers, recursion and patterns
+\pause
+\bigskip
 
-\item You learn a lot about the language you are compiling (in our case, Java)
+Compilers make use of all those things you have learned about earlier: arrays, lists, queues, stacks, trees, graphs, maps, regular expressions and finite state automata, context-free grammars and parsers, recursion and patterns
 
-\item You learn a lot about the target machine (in our case, both the Java Virtual Machine and the MIPS computer)
+\pause
+\bigskip
 
-\item Compilers are still being written for new languages and targeted to new computer architectures
+You learn a lot about the language you are compiling (in our case, Java)
 
-\item There is a good mix of theory and practice, and each is relevant to the other
+\pause
+\bigskip
 
-\item The organization of a compiler is such that it can be written in stages, and each stage makes use of earlier stages; compiler writing is a case study in software engineering
+You learn a lot about the target machine (in our case, both the Java Virtual Machine and the MIPS computer)
 
-\item Compilers are programs and writing programs is fun
-\end{itemize}
+\pause
+\bigskip
+
+Compilers are still being written for new languages and targeted to new computer architectures
+
+\pause
+\bigskip
+
+There is a good mix of theory and practice, and each is relevant to the other
+
+\pause
+\bigskip
+
+The organization of a compiler is such that it can be written in stages, and each stage makes use of earlier stages; compiler writing is a case study in software engineering
+
+\pause
+\bigskip
+
+Compilers are programs and writing programs is fun
 \end{frame}
 
 \section{The Phases of Compilation}
@@ -150,14 +168,13 @@ A compiler's front end analyzes the input program to determine its meaning, and 
 The front end can be further decomposed into a sequence of analysis phases
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.04}.jpg}}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.04}.jpg}}
 \end{center}
 
 \pause
 \bigskip
 
-The scanner breaks the input stream of characters to a stream of tokens: identifiers, literals, reserved words, (one-, two-, three-, and four-character) operators
-and separators
+The scanner breaks the input stream of characters to a stream of tokens: identifiers, literals, reserved words, operators, and separators
 
 \pause
 \bigskip
@@ -181,7 +198,7 @@ A compiler's back end takes the IR and produces (synthesizes) a target machine p
 The back end can be further decomposed into a sequence of synthesis phases
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.05}.jpg}}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.05}.jpg}}
 \end{center}
 
 \pause
@@ -241,7 +258,7 @@ There are several advantages to separating the front end from the back end:
 \item Decomposition makes it possible for several individuals or teams to work concurrently on separate parts, reducing the overall implementation time
 
 \item Decomposition permits a certain amount of code re-use; for example, once one has written
-a front end for Java and a back end for the Intel Core Duo, one need only write a new C front end to get a C compiler, and one need only write a single SPARC back end to re-target both compilers to the Oracle SPARC architecture
+a front end for Java and a back end for the Intel Core Duo, one need only write a new C front end to get a C compiler, and one need only write a single SPARC back end to re-target both compilers to the SPARC architecture
 
 \begin{center}
 \visible<2->{\includegraphics[scale=0.6]{{figures/figure01.07}.jpg}}
@@ -292,13 +309,531 @@ To remedy this deficiency, we'll also study the compilation of JVM code to code 
 \begin{frame}[fragile]
 \pause
 
+Our source language, \jmm, is a proper subset of the Java programming language; it is an object-oriented programming language, supporting classes, methods, fields, message expressions, and a variety of
+statements, expressions and primitive types
 
+\pause
+\bigskip
+
+The \jmm compiler is organized in an object-oriented fashion
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.08}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The scanner supports the parser, scanning tokens from the input stream of characters comprising the source language program
+
+\pause
+\bigskip
+
+For example, the scanner breaks down the following source language \lstinline{HelloWorld} program
+
+\begin{lstlisting}[language=Java]
+import java.lang.System;
+
+public class HelloWorld {
+    // The only method.
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+\end{lstlisting}
+
+into atomic tokens such as \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
+
+\pause
+\bigskip
+
+Some tokens such as \lstinline{java}, \lstinline{HelloWorld}, and \lstinline{main} are \lstinline{IDENTIFIER} tokens, carrying along their images as attributes
+
+\pause
+\bigskip
+
+Some tokens such as \lstinline{import}, \lstinline{public}, and \lstinline{class} are reserved words having the unique names such as \lstinline{IMPORT}, \lstinline{PUBLIC}, and \lstinline{CLASS}
+
+\pause
+\bigskip
+
+Operators and separators such as \lstinline{+} and \lstinline{;} have distinct names such as \lstinline{PLUS} and \lstinline{SEMI}
+
+\pause
+\bigskip
+
+Literals such as \lstinline{"Hello, World!"} comprise a single token such as \lstinline{STRING_LITERAL}
+
+\pause
+\bigskip
+
+Comments are scanned and ignored altogether
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parsing of a \jmm program and the construction of its abstract syntax tree (AST) is driven by the language's syntax, and so is said to be syntax directed
+
+\pause
+\bigskip
+
+In the first instance, our parser is hand-crafted from the \jmm grammar, to parse \jmm programs by a technique known as recursive descent
+
+\pause
+\bigskip
+
+For example, consider the following grammatical rule describing the syntax for a compilation unit
+\begin{lstlisting}[language={}]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} EOF 
+\end{lstlisting}
+
+\pause
+\bigskip
+
+To parse a compilation unit using the recursive descent technique, one would write a method, call it \lstinline{compilationUnit()}
+
+\begin{lstlisting}[language=Java]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null; // Default
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, packageName,
+                imports, typeDeclarations);
+    }
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\pause
+
+An AST for the \lstinline{HelloWorld} program
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.35]{{figures/figure01.09}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As in Java, \jmm names and values have types, and since \jmm (like Java) is statically typed, its compiler must determine the types of all names and expressions
+
+\pause
+\bigskip
+
+Types in \jmm are represented using: \lstinline{Type} (wraps \lstinline{java.lang.Class}), \lstinline{Method} (wraps \lstinline{java.lang.reflect.Method}), \lstinline{Constructor} (wraps \lstinline{java.lang.reflect.Constructor}), \lstinline{Field} (wraps \lstinline{java.lang.reflect.Field}), and \lstinline{Member} (wraps \lstinline{java.lang.reflect.Member})
+
+\pause
+\bigskip
+
+There are places where we want to denote a type by its name, before its type is known or defined, and for this we use \lstinline{TypeName} and (because we need array types) \lstinline{ArrayTypeName}
+
+\pause
+\bigskip
+
+The \jmm compiler maintains a symbol table (a singly-linked list of \lstinline{Context} objects) in which it declares names; each object in the symbol table represents some area of scope and contains a mapping from names to definitions
+
+\pause
+\bigskip
+
+A \lstinline{CompilationUnitContext} object represents the scope comprising the program, ie, the entire compilation unit
+
+\pause
+\bigskip
+
+A \lstinline{ClassContext} object represents the scope of a class declaration
+
+\pause
+\bigskip
+
+A \lstinline{LocalContext} object represents the scope of a block
+
+\pause
+\bigskip
+
+A \lstinline{MethodContext} (subclass of \lstinline{LocalContext}) object represents the scopes of methods and, by extension, constructors
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\lstinline{preAnalyze()} is a first pass at type checking, which builds that part of the symbol table that is at the top of the AST, to declare both imported types and types introduced by class declarations, and to declare the members in those classes
+
+\pause
+\bigskip
+
+\lstinline{analyze()} picks up where \lstinline{preAnalyze()} left off and continues to build the symbol table, decorating the AST with type information and enforcing the \jmm type rules
+
+\pause
+\bigskip
+
+\lstinline{analyze()} also performs other important tasks such as type checking, accessibility, member finding, tree rewriting, and storage allocation
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The JVM is a stack machine: all computations are carried out atop the run-time stack
+
+\pause
+\bigskip
+
+Each time a method is invoked, the JVM allocates a stack frame, a contiguous block of
+memory locations on top of the run-time stack; the actual arguments substituted for formal parameters, the values of local variables, and temporary results are all given positions within this stack frame
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.5]{{figures/figure01.10}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The purpose of \lstinline{codegen()} is to generate JVM byte code from the AST, based on information computed by \lstinline{preAnalyze()} and \lstinline{analyze()}
+
+\pause
+\bigskip
+
+\lstinline{codegen()} is invoked by \lstinline{Main} on the root of the AST, and \lstinline{codegen()} recursively descends the AST, generating byte code
+
+\pause
+\bigskip
+
+\lstinline{CLEmitter} provides an abstraction for the JVM class file, hiding many of the gory details
+
+\pause
+\bigskip
+
+Here's the implementation of \lstinline{codegen()} in \lstinline{JMethodDeclaration} (AST representation for method declarations)
+
+\begin{lstlisting}[language=Java]
+    public void codegen(CLEmitter output) {
+        output.addMethod(mods, name, descriptor, null, false);
+        if (body != null) {
+            body.codegen(output);
+        }
+
+        // Add implicit RETURN
+        if (returnType == Type.VOID) {
+            output.addNoArgInstruction(RETURN);
+        }
+    }
+\end{lstlisting}
 \end{frame}
 
 \section{The \protect \jmm Compiler Source Tree}
 \begin{frame}[fragile]
 \pause
 
+The zip file \lstinline{j--.zip} containing the \jmm distribution may be unzipped into any directory of your choosing; we refer to this directory as \lstinline{$j}
 
+\pause
+\bigskip
+
+\lstinline{$j/j--/src/jminusminus} contains the source files for the compiler, where \lstinline{jminusminus} is a package, and these include
+\begin{itemize}
+\item \lstinline{Main.java}, the driver program
+\item A hand-written scanner (\lstinline{Scanner.java}) and parser (\lstinline{Parser.java})
+\item \lstinline{J*.java} files defining classes representing the AST nodes
+\item \lstinline{CL*.java} files supplying the back-end code that is used by \jmm for creating JVM byte
+code; the most important file amongst these is \lstinline{CLEmitter.java}, which provides the interface between the front end and back end of the compiler
+\item \lstinline{S*.java} files that translate JVM code to SPIM files (SPIM is an interpreter for the
+MIPS machine’s symbolic assembly language)
+\item \lstinline{j--.jj}, the input file to JavaCC containing the specification for generating (as opposed to hand-writing) a scanner and parser for the \jmm language; \lstinline{JavaCCMain}, the driver program that uses the scanner and parser produced by JavaCC
+\item Other Java files providing representation for types and the symbol table
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\lstinline{$j/j--/bin/j--} is a script to run the compiler and has the following command-line
+syntax
+\begin{lstlisting}[language={}]
+Usage: j-- <options> <source file>
+where possible options include:
+  -t Only tokenize input and print tokens to STDOUT
+  -p Only parse input and print AST to STDOUT
+  -pa Only parse and pre-analyze input and print AST to STDOUT
+  -a Only parse, pre-analyze, and analyze input and print AST to STDOUT
+  -s <naive|linear|graph> Generate SPIM code
+  -r <num> Max. physical registers (1-18) available for allocation; default = 8
+  -d <dir> Specify where to place output files; default = .
+\end{lstlisting}
+
+\pause
+\bigskip
+
+For example, the \jmm program \lstinline{$j/j--/tests/pass/HelloWorld.java} can be compiled
+using \lstinline{j--} as follows
+
+\begin{lstlisting}[language={}]
+$ $j/j--/bin/j-- $j/j--/tests/pass/HelloWorld.java
+\end{lstlisting}
+
+to produce a \lstinline{HelloWorld.class} file under \lstinline{pass} folder within the current directory, which can then be run as
+
+\begin{lstlisting}[language={}]
+$ java pass.HelloWorld
+\end{lstlisting}
+
+to produce as output
+
+\begin{lstlisting}[language={}]
+$ Hello, World!
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\jmm provides an elaborate framework with which one may add new Java constructs to the \jmm language
+
+\pause
+\bigskip
+
+As an illustrative example, let's add the division operator to \jmm, which involves modifying the scanner to recognize \lstinline{/} as a token, modifying the parser to be able to parse division expressions, implementing semantic analysis, and finally, code generation for the division operation
+
+\pause
+\bigskip
+
+Writing tests
+\begin{itemize}
+\item Place the following file (\lstinline{Division.java}) under \lstinline{$j/j--/tests/pass}
+
+\begin{lstlisting}[language=Java]
+package pass;
+
+public class Division {
+    public int divide(int x, int y) {
+        return x / y ;
+    }
+}  
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Writing tests (contd.)
+\begin{itemize}
+\item Place the following file (\lstinline{DivisionTest.java}) under \lstinline{$j/j--/tests/junit}
+
+\begin{lstlisting}[language=Java]
+public class DivisionTest extends TestCase {
+    private Division division;
+
+    protected void setUp() throws Exception {
+        super.setUp();
+        division = new Division();
+    }
+
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
+
+    public void testDivide() {
+        this.assertEquals(division.divide(0, 42), 0);
+        this.assertEquals(division.divide(42, 1), 42);
+        this.assertEquals(division.divide(127, 3), 42);
+    }
+}
+\end{lstlisting}
+
+\item Make the following entry in the \lstinline{suite()} method of \lstinline{junit.JMinusMinusTestRunner}
+
+\begin{lstlisting}[language=Java]
+TestSuite suite = new TestSuite();
+...
+suite.addTestSuite(DivisionTest.class);
+return suite;
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Writing tests (contd.)
+\begin{itemize}
+\item Place the following file (\lstinline{Division.java}) under \lstinline{$j/j--/tests/fail}
+
+\begin{lstlisting}[language=Java]
+package fail;
+
+import java.lang.System;
+
+public class Division {
+    public static void main(String[] args) {
+        System.out.println('a' / 42);
+    }
+}
+\end{lstlisting}
+\end{itemize}
+
+\pause
+\bigskip
+
+Changes to lexical and syntactic grammars
+\begin{itemize}
+\item Add a line describing the division operator to \lstinline{$j/j--/lexicalgrammar} under the operators section
+
+\begin{lstlisting}[language={}]
+DIV ::= "/"
+\end{lstlisting}
+
+\item Add a rule for the division operator to the rule describing multiplicative expressions in the \lstinline{$j/j--/grammar} file
+
+\begin{lstlisting}[language={}]
+multiplicativeExpression ::= unaryExpression // level 2
+                               {(STAR | DIV) unaryExpression}
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Changes to scanner
+\begin{itemize}
+\item Make the following change in \lstinline{TokenInfo}
+
+\begin{lstlisting}[language=Java]
+enum TokenKind {
+    EOF (" < EOF >") ,
+    ... ,
+    STAR ("*") ,
+    DIV ("/") ,
+    ...
+}
+\end{lstlisting}
+
+\item Make the following change in \lstinline{Scanner}
+
+\begin{lstlisting}[language=Java]
+if (ch == '/'’) {
+    nextCh();
+    if (ch == '/') {
+        // CharReader maps all new lines to '\n'
+        while (ch != '\n' && ch != EOFCH) {
+            nextCh();
+        }
+    }
+    else {
+        return new TokenInfo(DIV, line);
+    }
+}
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\pause
+
+Changes to parser
+\begin{itemize}
+\item Define a class called \lstinline{JDivideOp} in \lstinline{JBinaryExpression.java} to represent an AST node for the division operator
+
+\begin{lstlisting}[language=Java]
+class JDivideOp extends JBinaryExpression {
+    public JDivideOp(int line, JExpression lhs, JExpression rhs) {
+        super(line, "/", lhs, rhs);
+    }
+    
+    public JExpression analyze (Context context) { return this ; }
+    
+    public void codegen(CLEmitter output) { }
+}
+\end{lstlisting}
+
+\item To parse expressions involving division operator, modify the \lstinline{multiplicativeExpression()} method in \lstinline{Parser.java} as follows
+
+\begin{lstlisting}[language=Java]
+private JExpression multiplicativeExpression() {
+    int line = scanner.token().line();
+    boolean more = true;
+    JExpression lhs = unaryExpression();
+    while (more) {
+        if (have(STAR)) {
+            lhs = new JMultiplyOp(line, lhs, unaryExpression());
+        }
+        else if (have(DIV)) {
+            lhs = new JDivideOp(line, lhs, unaryExpression());
+        }
+        else { more = false; }
+    }
+    return lhs;
+}
+\end{lstlisting}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Semantic analysis and code generation
+\begin{itemize}
+\item Implement \lstinline{analyze()} in \lstinline{JDivideOp} as follows
+
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+    type = Type.INT;
+    return this;
+}
+\end{lstlisting}
+
+\item Implement \lstinline{codegen()} in \lstinline{JDivideOp} as follows
+
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output) {
+    lhs.codegen(output);
+    rhs.codegen(output);
+    output.addNoArgInstruction(IDIV);
+}
+\end{lstlisting}
+\end{itemize}
+
+\pause
+\bigskip
+
+To test the changes, run the following command inside the \lstinline{$j} directory
+
+\begin{lstlisting}[language=Java]
+$ ant
+\end{lstlisting}
 \end{frame}
 \end{document}
