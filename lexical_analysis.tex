@@ -138,11 +138,10 @@ else if (ch == 'n') {
     if (ch == 'e') {
         buffer.append(ch);
         nextCh();
-            if (ch == 'w') {
+        if (ch == 'w') {
             buffer.append(ch);
             nextCh();
-            if (!isLetter(ch) && !isDigit(ch) && 
-                     ch != '_' && ch !=  '$') {
+            if (!isLetter(ch) && !isDigit(ch) && ch != '_' && ch !=  '$') {
                 return new TokenInfo(NEW, line);
             }
         }
@@ -156,8 +155,7 @@ else if (ch == 'n') {
             if (ch == 'l') {
                 buffer.append(ch);
                 nextCh();
-                if (!isLetter(ch) && !isDigit(ch) && 
-                         ch != '_' && ch !=  '$') {
+                if (!isLetter(ch) && !isDigit(ch) && ch != '_' && ch !=  '$') {
                     return new TokenInfo(NULL, line);
                 }
             }
@@ -319,24 +317,287 @@ while (moreWhiteSpace) {
 \begin{frame}[fragile]
 \pause
 
+Regular expressions provide a simple notation for describing patterns of characters in a text
+
+\pause
+\bigskip
+
+A regular expression defines a language of strings over an alphabet, and may take one of the following forms
+\begin{enumerate}
+\item If $a$ is in our alphabet, then the regular expression $a$ describes the language $L(a)$ consisting of the string $a$
+
+\item If $r$ and $s$ are regular expressions then their concatenation $rs$ is also a regular expression describing the language $L(rs)$ of all possible strings obtained by concatenating a string in the language described by $r$, to a string in the language described by $s$
+
+\item If $r$ and $s$ are regular expressions then the alternation $r|s$ is also a regular expression describing the language $L(r|s)$ consisting of all strings described by either $r$ or $s$
+
+\item If $r$ is a regular expression, the repetition (aka the Kleene closure) $r*$ is also a regular expression describing the language $L(r*)$ consisting of strings obtained by concatenating zero or more instances of strings described by $r$ together
+
+\item $\epsilon$ is a regular expression describing the language containing only the empty string
+
+\item If $r$ is a regular expression, then $(r)$ is also a regular expression denoting the same language
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, given an alphabet $\{a,b\}$
+
+\begin{enumerate}
+\item $a(a|b)*$ denotes the language of non-empty strings of $a$'s and $b$'s, beginning with an $a$
+\item $aa | ab | ba | bb$ denotes the language of all two-symbol strings over the alphabet
+\item $(a|b)\!*\!ab$ denotes the language of all strings of $a$'s and $b$'s, ending in $ab$
+\end{enumerate}
+
+\pause
+\bigskip
+
+As another example, in a programming language such as Java
+\begin{enumerate}
+\item Reserved words may be described as \lstinline{abstract | boolean | char | ... | while}
+
+\item Operators may be described as \lstinline{= | == | > | ... | *}
+
+\item Identifiers may be described as \lstinline{([a-zA-Z] | _ | $)([a-zA-Z0-9] | _ | $)*}
+\end{enumerate}
 \end{frame}
 
 \section{Finite State Automata}
 \begin{frame}[fragile]
 \pause
 
+For any language described by a regular expression, there is a state transition diagram called Finite State Automaton that can parse strings in the language
+
+\pause
+\bigskip
+
+A Finite State Automaton (FSA) $F$ is a quintuple $F = (\Sigma, S, s_0, M, F)$ where
+\begin{itemize}
+\item $\Sigma$ is the input alphabet
+\item $S$ is a set of states
+\item $s_0 \in S$ is a special start state
+\item $M$ is a set of moves or state transitions of the form $$m(r, a) = s \text{ where } r,s \in S, a \in \Sigma$$ read as, ``if one is in state $r$, and the next input symbol is $a$, scan the $a$ and move into state $s$
+\item $F \in S$ is a set of final states
+\end{itemize}
 \end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, consider the regular expression $(a|b)a\!*\!b$ over the alphabet $\{a, b\}$ that describes the language consisting of all strings starting with either an $a$ or a $b$, followed by zero or more $a$'s, and ending with a $b$
+
+\pause
+\bigskip
+
+An FSA $F$ that recognizes the language is $F = (\Sigma, S, s_0, M, F)$ where $\Sigma = \{a, b\}, S = \{0, 1, 2\}, s_0 = 0, M = \{m(0, a) = 1, m(0, b) = 1, m(1, a) = 1, m(1, b) = 2\}, F = \{2\}$
+
+\pause
+\bigskip
+
+The corresponding transition diagram is shown below
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+An FSA recognizes strings in the same way that state transition diagrams do 
+
+\pause
+\bigskip
+
+For the previous FSA, given the input sentence $baaab$ and beginning in the start state 0, the following moves are prescribed
+
+\begin{itemize}
+\item $m(0, b)  = 1 \implies$ in state 0 we scan a $b$ and go into state 1
+\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1
+\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1 (again)
+\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1 (again)
+\item $m(1, b)  = 2 \implies$ finally, in state 1 we scan a $b$ and go into the final state 2
+\end{itemize}
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.07}.jpg}}
+\end{center}
+\end{frame}
+
 
 \section{Non-deterministic (NFA) Versus Deterministic Finite State Automata (DFA)}
 \begin{frame}[fragile]
 \pause
 
+A deterministic finite state automaton (DFA) is an automaton without $\epsilon$-moves, and there is a unique move from any state on an input symbol $a$, ie, there cannot be two moves $m(r, a) = s$ and $m(r, a) = t$, \noindent where $s \neq t$
+
+\pause
+\bigskip
+
+A non-deterministic finite state automaton (NFA) is an automaton that allows either of the following
+\begin{itemize}
+\item More than one move from the same state, on the same input symbol $a$, ie, $m(r, a) = s$ and $m(r, a) = t$, \noindent where $s \neq t$
+
+\item An $\epsilon$-move defined on the empty string $\epsilon$, ie, $m(r, \epsilon) = s$, which says we can move from state $r$ to state $s$ without scanning any input symbols
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, an NFA that recognizes all strings of $a$'s and $b$'s that begin with an $a$ and end with a $b$ is $N = (\Sigma, S, s_0, M, F)$ where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $M =  \{m(0, a) = 1, m(1, a) = 1, m(1, b) = 1, m(1, \epsilon) = 0, m(1, b) = 2\}$ and, $F = \{2\}$
+
+\pause
+\bigskip
+
+The corresponding transition diagram is shown below
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.08}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+An NFA is said to recognize an input string if, starting in the start state, there exists a set of moves based on the input that takes us into one of the final states
 \end{frame}
 
 \section{Regular Expresssions to NFA}
 \begin{frame}[fragile]
 \pause
 
+Given any regular expression $r$, we can construct (using Thompson's construction procedure) an NFA $N$ that recognizes the same language; ie, $L(N) = L(r)$
+
+\pause
+\bigskip
+
+(Rule 1) If the regular expression $r$ takes the form of an input symbol, $a$, then the NFA that recognizes it has two states: a start state and a final state, and a move on symbol $a$ from the start state to the final state
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.09}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+(Rule 2) If $N_r$ and $N_s$ are NFA recognizing the languages described by the regular expressions $r$ and $s$ respectively, then we can create a new NFA recognizing the language described by $rs$ as follows: we define an $\epsilon$-move from the final state of $N_r$  to the start state of $N_s$, then choose the start state of $N_r$ to be our new start state, and the final state of $N_s$ to be our new final state
+
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.10}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+(Rule 3) If $N_r$ and $N_s$ are NFA recognizing the languages described by the regular expressions $r$ and $s$ respectively, then we can create a new NFA recognizing the language described by $r|s$ as follows: we define a new start state, having $\epsilon$-moves to each of the start states of $N_r$ and $N_s$, and we define a new final state and add $\epsilon$-moves from each of the final states of $N_r$ and $N_s$ to this state
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.11}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+(Rule 4) If $N_r$ is an NFA recognizing that language described by a regular expression $r$, then we construct a new NFA recognizing $r*$ as follows:  we add an $\epsilon$-move from $N_r$'s final state back to its start state, define a new start state and a new final state, add $\epsilon$-moves from the new start state to both $N_r$'s start state and the new final state, and define an $\epsilon$-move from $N_r$'s final state to the new final state
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.12}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+(Rule 5) If $r$ is $\epsilon$ then we just need an $\epsilon$-move from the start state to the final state
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.13}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+(Rule 6) If $N_r$ is our NFA recognizing the language described by $r$, then $N_r$ also recognizes the language described by $(r)$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As an example, let's construct an NFA for the regular expression $(a|b)a\!*\!b$, which has the following syntactic structure
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.14}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+We start with the first $a$ and $b$; the automata recognizing these are easy enough to construct using Rule 1
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/construction-a1}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We then put them together using Rule 3 to produce an NFA recognizing $a|b$
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a2}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The NFA recognizing $(a|b)$ is the same as that recognizing $a|b$, by Rule 6
+
+\pause
+\bigskip
+
+An NFA recognizing the second instance of $a$ is simple enough, by Rule 1 again
+
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/construction-a3}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The NFA recognizing $a*$ can be constructed from the NFA for $a$, by applying Rule 4
+
+\begin{center}
+\visible<5->{\includegraphics[scale=0.6]{{figures/construction-a4}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We then apply Rule 2 to construct an NFA recognizing the concatenation $(a|b)a*$
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a5}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+An NFA recognizing the second instance of $b$ is simple enough, by Rule 1 again
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a6}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+Finally, we can apply Rule 2 again to produce an NFA recognizing $(a|b)a\!*\!b$
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.15}.jpg}}
+\end{center}
 \end{frame}
 
 \section{NFA to DFA}
