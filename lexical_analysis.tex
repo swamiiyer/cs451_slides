@@ -604,6 +604,206 @@ Finally, we can apply Rule 2 again to produce an NFA recognizing $(a|b)a\!*\!b$
 \begin{frame}[fragile]
 \pause
 
+For any NFA, there is an equivalent DFA that can be constructed using the powerset (or subset) construction procedure
+
+\pause
+\bigskip
+
+The DFA that we construct is always in a state that simulates all the possible states that the NFA could possibly be in having scanned the same portion of the input
+
+\pause
+\bigskip
+
+The computation of all states reachable from a given state $s$ based on $\epsilon$-moves alone is called taking the $\epsilon$-closure of that state
+
+\pause
+\bigskip
+
+The $\epsilon$-closure$(s)$ for a state $s$ includes $s$ and all states reachable from $s$ using $\epsilon$-moves alone, ie, $\epsilon$-closure$(s) = \{s\} \cup \{r \in S | \text{ there is a path of only } \epsilon\text{-moves from } s \text{ to } r\}$
+
+\pause
+\bigskip
+
+The $\epsilon$-closure$(S)$ for a set of states $S$ includes $S$ and all states reachable from any state $s \in S$ using  $\epsilon$-moves alone
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a set of states, $S$
+\ENSURE $\epsilon$-closure($S$)
+\STATE {Stack $P$.addAll($S$)}   \COMMENT{a stack containing all states in $S$}
+\STATE {Set $C$.addAll($S$)}     \COMMENT{the closure initially contains the states in $S$}
+\WHILE {! $P$.empty()}
+\STATE $s$ $\gets$ $P$.pop()
+\FOR {$r$ in $m(s, \epsilon)$}
+\STATE{} \COMMENT{$m(s, \epsilon)$ is a set of states}
+\IF {$r \notin C$}
+\STATE $P$.push($r$)
+\STATE $C$.add($r$)
+\ENDIF
+\ENDFOR
+\ENDWHILE
+\RETURN $C$
+\end{algorithmic}
+\caption{$\epsilon$-closure($S$) for a Set of States $S$}
+\end{algorithm}
+
+\pause
+\bigskip
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a state, $s$
+\ENSURE $\epsilon$-closure($s$)
+\STATE {Set $S$.add($s$)}  \COMMENT{$S = \{s\}$}
+\RETURN $\epsilon$-closure($S$)
+\end{algorithmic}
+\caption{$\epsilon$-closure($s$) for a State $s$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+NFA for the regular expression $(a|b)a\!*\!b$ from before
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure02.15}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+In the corresponding DFA, from the start state $s_0$, and scanning the symbol $a$, we want to go into a state that reflects all the states we could be in after scanning an $a$ in the NFA: 2, and then (via $\epsilon$-moves) 5, 6, 7, 9 and 10
+\begin{align}
+& m(s_0, a) = s_1, \text{ where } \nonumber \\
+& s_1 = \epsilon\text{-closure}(2) = \{2, 5, 6, 7, 9, 10\} \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+Similarly, scanning a symbol $b$ in state $s_0$, we get
+\begin{align}
+& m(s_0, b) = s_2, \text{where} \nonumber \\
+& s_2 = \epsilon\text{-closure}(4) = \{4, 5, 6, 7, 9, 10\} \nonumber
+\end{align}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From state $s_1$, scanning an $a$, we have to consider where we could have gone from the states $\{2, 5, 6, 7, 9, 10\}$ in the NFA;  from state 7, scanning an $a$, we go into state 8, and then (by $\epsilon$-moves) 7, 9, and 10
+\begin{align}
+& m(s_1, a) = s_3, \text{where} \nonumber \\
+& s_3 = \epsilon\text{-closure}(8) = \{7, 8, 9, 10\} \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+Now, from state $s_1$, scanning $b$, we have
+\begin{align}
+& m(s_1, b) = s_4, \text{where} \nonumber \\
+& s_4 = \epsilon\text{-closure}(11) = \{11\} \nonumber
+\end{align}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From state $s_2$, scanning an $a$ takes us into a state reflecting 8, and then (by $\epsilon$-moves) 7, 9 and 10, generating state $\{7, 8, 9, 10\}$, which is $s_3$
+
+\pause
+\bigskip
+
+Scanning a $b$ from state $s_2$ takes us into a state reflecting 11, generating state $\{11\}$, which is $s_4$
+\begin{align}
+& m(s_2, a) = s_3 \nonumber \\
+& m(s_2, b) = s_4 \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+From state $s_3$, scanning an $a$ takes us back into $s_3$, and scanning a $b$ takes us into $s_4$
+\begin{align}
+& m(s_3, a) = s_3 \nonumber \\
+& m(s_3, b) = s_4 \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+There are no moves at all out of state $s_4$, so we have found all of our transitions and all of our states
+
+\pause
+\bigskip
+
+Any state reflecting a final state in the NFA is a final state in the DFA; in our example, only $s_4$ is a final state because it contains (the final) state 11 from the original NFA
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.16}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE an NFA, $N = (\Sigma, S, s_0, M, F)$
+\ENSURE DFA, $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
+\STATE Set $S_{D0} \gets$  $\epsilon$-closure($s_0$)
+\STATE Set $S_D$.add($S_{D0}$)
+\STATE Moves $M_D$
+\STATE Stack $stk$.push($S_{D0}$)
+\STATE $i \gets 0$
+\WHILE {! $stk$.empty()}
+\STATE $t$ $\gets$ $stk$.pop()
+\FOR {$a$ in $\Sigma$}
+\STATE $S_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$);
+\IF {$S_{Di+1} \neq \{\}$}
+\IF {$S_{Di+1} \in S_D$} 
+\STATE $S_D$.add($S_{Di+1}$) \COMMENT{We have a new state}
+\STATE $stk$.push($S_{Di+1}$)
+\STATE $i \gets i + 1$
+\STATE $M_D$.add($M_D(t,a) = i$)
+\ELSIF {$\exists j, S_j \in S_D \land S_{Di+1} = S_j$} 
+\STATE $M_D$.add($M_D(t, a) = j$) \COMMENT{In the case the state already exists}
+\ENDIF
+\ENDIF
+\ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\caption{NFA to DFA Construction}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\STATE Set $F_D$
+\FOR {$s_D$ in $S_D$}
+\FOR {$s$ in $s_D$}
+\IF {$s \in F$}
+\STATE $F_D$.add($s_D$)
+\ENDIF
+\ENDFOR
+\ENDFOR
+\RETURN $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
+\end{algorithmic}
+\caption{NFA to DFA Construction (contd.)}
+\end{algorithm}
 \end{frame}
 
 \section{A Minimal DFA}
