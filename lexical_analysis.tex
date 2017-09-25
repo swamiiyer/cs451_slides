@@ -771,13 +771,13 @@ The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown belo
 \FOR {$a$ in $\Sigma$}
 \STATE $S_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$);
 \IF {$S_{Di+1} \neq \{\}$}
-\IF {$S_{Di+1} \in S_D$} 
+\IF {$S_{Di+1} \notin S_D$} 
 \STATE $S_D$.add($S_{Di+1}$) \COMMENT{We have a new state}
 \STATE $stk$.push($S_{Di+1}$)
 \STATE $i \gets i + 1$
-\STATE $M_D$.add($M_D(t,a) = i$)
-\ELSIF {$\exists j, S_j \in S_D \land S_{Di+1} = S_j$} 
-\STATE $M_D$.add($M_D(t, a) = j$) \COMMENT{In the case the state already exists}
+\STATE $M_D$.add($m_D(t,a) = i$)
+\ELSIF {$\exists j, S_j \in S_D \text{ and } S_{Di+1} = S_j$} 
+\STATE $M_D$.add($m_D(t, a) = j$) \COMMENT{In the case the state already exists}
 \ENDIF
 \ENDIF
 \ENDFOR
@@ -810,11 +810,346 @@ The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown belo
 \begin{frame}[fragile]
 \pause
 
+How do we come up with a smaller DFA that recognizes the same language?
+
+\pause
+\bigskip
+
+Given an input string in our language, there must be a sequence of moves taking us from the start state to one of the final states
+
+\pause
+\bigskip
+
+Given an input string that is not in our language, we must get stuck with no move to take or end up in a non-final state
+
+\pause
+\bigskip
+
+We must combine as many states together as we can, so that the states in our new DFA are partitions of the states in the original (perhaps larger) DFA
+
+\pause
+\bigskip
+
+A good strategy is to start with just one or two partitions of the states, and then split states when it is necessary to produce the necessary DFA 
+
+\pause
+\bigskip
+
+An obvious first partition has two sets: the set of final states and the set of non-final states; the latter could be empty, leaving us with a single partition containing all states
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, consider the DFA for $(a|b)a*b$, partitioned as follows
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.17}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The two states in this new DFA consist of the start state, $\{0, 1, 2, 3\}$ and the final state $\{4\}$ 
+
+\pause
+\bigskip
+
+We must make sure that from a particular partition, each input symbol must move us to an identical partition
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Beginning in any state in the partition $\{0, 1, 2, 3\}$, an $a$ takes us to one of the states in $\{0, 1, 2, 3\}$
+\begin{align}
+& m(0, a) = 1 \nonumber \\
+& m(1, a) = 3 \nonumber \\
+& m(2, a) = 3 \nonumber \\
+& m(3, a) = 3 \nonumber
+\end{align}
+
+So, our partition $\{0, 1, 2, 3\}$ is fine so far as moves on the symbol $a$ are concerned
+
+\pause
+\bigskip
+
+For the symbol $b$,
+\begin{align}
+& m(0, b) = 2 \nonumber \\
+& m(1, b) = 4 \nonumber \\
+& m(2, b) = 4 \nonumber \\
+& m(3, b) = 4 \nonumber
+\end{align}
+
+So we must split the partition $\{0, 1, 2, 3\}$ into two new partitions, $\{0\}$ and $\{1, 2, 3\}$
+
+\pause
+\bigskip
+
+If we are in state $s$, and for an input symbol $a$ in our alphabet there is no defined move $m(s, a) = t$, we invent a special dead state $d$, so that we can say $m(s, a) = d$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We are left with a partition into three sets: $\{0\}$, $\{1, 2, 3\}$ and $\{4\}$, as shown below
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.18}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We need not worry about $\{0\}$ and $\{4\}$ as they contain just one state and so correspond to (those) states in the original machine
+
+\pause
+\bigskip
+
+We consider $\{1, 2, 3\}$ to see if it is necessary to split it
+\begin{align}
+& m(1,a) = 3\nonumber \\
+& m(2,a) = 3 \nonumber \\
+& m(3, a) = 3 \nonumber
+\end{align}
+\begin{align}
+& m(1, b) = 4 \nonumber \\
+& m(2,b) = 4 \nonumber \\
+& m(3, b) = 4 \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+Thus, there is no further state splitting to be done, and we are left with the following smaller DFA
+
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.19}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a DFA, $D = (\Sigma, S, s_0, M, F)$
+\ENSURE a partition of $S$
+\STATE Set $partition \gets \{S - F, F\}$  \COMMENT{start with two sets: the non-final states and the final states} \\
+\STATE{} \COMMENT {Splitting the states}
+\WHILE {splitting occurs}
+\FOR {Set $set$  in $partition$}
+\IF {$set$.size() $>$ 1}
+\FOR {Symbol $a$ in $\Sigma$}
+\STATE{} \COMMENT{Determine if  moves from this `state' force a split}
+\STATE State $s \gets$ a state chosen from set $S$
+\STATE $targetSet \gets$ the set in the partition containing $m(s, a)$
+\STATE Set $set1 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \in targetSet\}$
+\STATE Set $set2 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \notin targetSet\}$
+\IF {$set2 \neq \{\}$}
+\STATE{} \COMMENT{Yes, split the states.}
+\STATE{replace $set$ in $partition$ by $set1$ and $set2$ and break out of the for-loop to continue with the next set in the partition}
+\ENDIF
+\ENDFOR
+\ENDIF
+\ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\caption{Minimizing a DFA}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Let us run through another example, starting from a regular expression, producing an NFA, then a DFA, and finally a minimal DFA
+
+\pause
+\bigskip
+
+Consider the regular expression $(a|b)*baa$ having the following syntactic structure
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.20}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We apply the Thompson's construction procedure to produce the NFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.21}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Using the powerset construction method, we derive a DFA having the following states
+\begin{align}
+& s_0: \{0, 1, 2, 4, 7, 8\} \nonumber \\
+& m(s_0, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
+& m(s_0, b) : \{1, 2, 4, 5, 6,  7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_1, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
+& m(s_1, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_2, a) : \{1, 2, 3, 4, 6, 7, 8, 11, 12\} = s_3 \nonumber \\
+& m(s_2, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_3, a) : \{1, 2, 3, 4, 6, 7, 8, 13\} = s_4 \nonumber
+\end{align}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The DFA itself is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.22}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Finally, we use partitioning to produce the minimal DFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.23}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We re-number the states to produce the equivalent DFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.24}.jpg}}
+\end{center}
 \end{frame}
 
 \section{JavaCC: a Tool for Generating Scanners}
 \begin{frame}[fragile]
 \pause
 
+JavaCC (the CC stands for compiler-compiler) is a tool for generating lexical analyzers from regular expressions and parsers from context-free grammars
+
+\pause
+\bigskip
+
+A lexical grammar specification consists a set of regular expressions and a set of lexical states; from any particular state, only certain regular expressions may be matched in scanning the input
+
+\pause
+\bigskip
+
+There is a standard \lstinline{DEFAULT} state, in which scanning generally begins; one may specify additional states as required
+
+\pause
+\bigskip
+
+Scanning a token proceeds by considering all regular expressions in the current state and choosing the one which consumes the greatest number of input characters
+
+\pause
+\bigskip
+
+After a match, one can specify a state in which the scanner should go into; otherwise the scanner stays in the current state
+
+\pause
+\bigskip
+
+There are four kinds of regular expressions, determining what happens when the regular expression has been matched
+\begin{enumerate}
+\item \lstinline{SKIP}: throws away the matched string
+\item \lstinline{MORE}: continues to the next state, taking the matched string along
+\item \lstinline{TOKEN}: creates a token from the matched string and returns it to the parser (or any caller)
+\item \lstinline{SPECIAL_TOKEN}: creates a special token that does not participate in the parsing
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, a \lstinline{SKIP} can be used for ignoring white space
+\begin{lstlisting}[language={}]
+SKIP: {" "|"\t"|"\n"|"\r"|"\f"}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+We can deal with single-line comments with the following regular expressions
+
+\begin{lstlisting}
+MORE: { "//": IN_SINGLE_LINE_COMMENT }
+<IN_SINGLE_LINE_COMMENT>
+SPECIAL_TOKEN: { <SINGLE_LINE_COMMENT: "\n"|"\r"|"\r\n" > : DEFAULT }
+<IN_SINGLE_LINE_COMMENT>
+MORE: { < ~[] > }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+An alternative regular expression dealing with single-line comments
+
+\begin{lstlisting}
+SPECIAL_TOKEN: {
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Reserved words and symbols are specified by simply spelling them out; for example
+
+\begin{lstlisting}
+TOKEN: {
+  < ABSTRACT: "abstract" >
+| < BOOLEAN: "boolean" >
+...
+
+| < COMMA: "," >
+| < DOT: "." >
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+A token for scanning identifiers
+
+\begin{lstlisting}
+TOKEN: {
+  < IDENTIFIER: (<LETTER>|"_"|"$") (<LETTER>|<DIGIT>|"_"|"$")* >
+| < #LETTER: ["a"-"z","A"-"Z"] >
+| < #DIGIT: ["0"-"9"] >
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+A token for scanning literals
+
+\begin{lstlisting}
+TOKEN: {
+  < INT_LITERAL: ("0" | <NON_ZERO_DIGIT> (<DIGIT>)*) >
+| < #NON_ZERO_DIGIT: ["1"-"9"] >
+| < CHAR_LITERAL: "'" (<ESC> | ~["'","\\","\n","\r"]) "'" >
+| < STRING_LITERAL: "\"" (<ESC> | ~["\"","\\","\n","\r"])* "\"" >
+| < #ESC: "\\" ["n","t","b","r","f","\\","'","\""] >
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+JavaCC takes a specification of the lexical syntax and produces several Java files, one of which is  \lstinline{TokenManager.java}, a program that implements a state machine; this is our scanner
+
+\pause
+\bigskip
+
+The entire lexical grammar for \jmm is specified in \lstinline{$j/j--/lexicalgrammar}
 \end{frame}
 \end{document}
