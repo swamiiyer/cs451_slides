@@ -761,22 +761,22 @@ The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown belo
 \begin{algorithmic}
 \REQUIRE an NFA, $N = (\Sigma, S, s_0, M, F)$
 \ENSURE DFA, $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
-\STATE Set $S_{D0} \gets$  $\epsilon$-closure($s_0$)
-\STATE Set $S_D$.add($S_{D0}$)
+\STATE Set $s_{D0} \gets$  $\epsilon$-closure($s_0$)
+\STATE Set $S_D$.add($s_{D0}$)
 \STATE Moves $M_D$
-\STATE Stack $stk$.push($S_{D0}$)
+\STATE Stack $stk$.push($s_{D0}$)
 \STATE $i \gets 0$
 \WHILE {! $stk$.empty()}
 \STATE $t$ $\gets$ $stk$.pop()
 \FOR {$a$ in $\Sigma$}
-\STATE $S_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$);
-\IF {$S_{Di+1} \neq \{\}$}
-\IF {$S_{Di+1} \notin S_D$} 
-\STATE $S_D$.add($S_{Di+1}$) \COMMENT{We have a new state}
-\STATE $stk$.push($S_{Di+1}$)
+\STATE $s_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$);
+\IF {$s_{Di+1} \neq \{\}$}
+\IF {$s_{Di+1} \notin S_D$} 
+\STATE $S_D$.add($s_{Di+1}$) \COMMENT{We have a new state}
+\STATE $stk$.push($s_{Di+1}$)
 \STATE $i \gets i + 1$
 \STATE $M_D$.add($m_D(t,a) = i$)
-\ELSIF {$\exists j, S_j \in S_D \text{ and } S_{Di+1} = S_j$} 
+\ELSIF {$\exists j, s_j \in S_D \text{ and } s_{Di+1} = s_j$} 
 \STATE $M_D$.add($m_D(t, a) = j$) \COMMENT{In the case the state already exists}
 \ENDIF
 \ENDIF
@@ -943,7 +943,7 @@ Thus, there is no further state splitting to be done, and we are left with the f
 \IF {$set$.size() $>$ 1}
 \FOR {Symbol $a$ in $\Sigma$}
 \STATE{} \COMMENT{Determine if  moves from this `state' force a split}
-\STATE State $s \gets$ a state chosen from set $S$
+\STATE State $s \gets$ a state chosen from $set$
 \STATE $targetSet \gets$ the set in the partition containing $m(s, a)$
 \STATE Set $set1 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \in targetSet\}$
 \STATE Set $set2 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \notin targetSet\}$
