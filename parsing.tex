@@ -653,7 +653,7 @@ But programmers have become both accustomed to (and fond of) the ambiguous condi
 \pause
 \bigskip
 
-Compiler writers handle the rule as a special case in the compiler's parser, making sure that an \lstinline{else} is grouped along with the closest preceding \lstinline{if}.
+Compiler writers handle the rule as a special case in the compiler's parser, making sure that an \lstinline{else} is grouped along with the closest preceding \lstinline{if}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -689,6 +689,544 @@ The parser cannot determine how the expression \lstinline{x.y.z} is parsed becau
 \begin{frame}[fragile]
 \pause
 
+There are two popular top-down deterministic parsing strategies: parsing by recursive descent and LL(1) parsing; both scan the input from left to right, looking at and scanning just one symbol at a time
+
+\pause
+\bigskip
+
+The parser starts with the grammar's start symbol as an initial goal in the parsing process, which is then rewritten using a BNF rule replacing the symbol with the right-hand-side sequence of symbols
+
+\pause
+\bigskip
+
+For example, in parsing a \jmm program, our initial goal is to parse the start symbol, compilationUnit, which is defined by the following BNF rule
+
+\text{ }
+\begin{spaced}
+\begin{production}
+compilationUnit ::= [\lstinline{package} qualifiedIdentifier \lstinline{;}]
+                           \{\lstinline{import}  qualifiedIdentifier \lstinline{;}\}
+                           \{typeDeclaration\} \lstinline{EOF}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+The goal of parsing a compilationUnit in the input can be rewritten as a number of sub-goals
+
+\begin{enumerate}
+\item If there is a \lstinline{package} statement in the input sentence, then we parse that
+\item If there are \lstinline{import} statements in the input, then we parse them
+\item If there are any type declarations, then we parse them
+\item Finally, we parse the terminating \lstinline{EOF} token
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Parsing a token, like \lstinline{package}, is simple enough; if we see it, we simply scan it
+
+\pause
+\bigskip
+
+Parsing a non-terminal is treated as another parsing (sub-) goal
+
+\pause
+\bigskip
+
+For example, in the \lstinline{package} statement, once we have scanned the \lstinline{package} token, we are left with parsing a qualifiedIdentifier, which is defined by the following BNF rule
+
+\text{ }
+\begin{spaced}
+\begin{production}
+qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\<identifier\>}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+We scan an \lstinline{<identifier>} (treated by the lexical scanner as a token), and, so long as we see another period in the input, we scan that period and scan another \lstinline{<identifier>}
+
+\pause
+\bigskip
+
+That we start at the start symbol, and continually rewrite non-terminals using BNF rules until we eventually reach leaves (the tokens are the leaves) makes this a top-down parsing technique
+
+\pause
+\bigskip
+
+Since at each step in parsing a non-terminal, we replace a parsing goal with a sequence of sub-goals, we often call this a goal-oriented parsing technique
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+How do we decide what next step to take? For example, how do we decide whether or not there are more \lstinline{import} statements to parse? 
+
+\pause
+\bigskip
+
+We decide by looking at the next un-scanned input token; if it is an \lstinline{import}, we have another \lstinline{import} statement to parse; otherwise we go on to parsing type declarations
+
+\pause
+\bigskip
+
+As another example, consider the definition for the statement non-terminal
+
+\text{ }
+\begin{spaced}
+\begin{production}
+statement ::= block
+                  \mm{|} \lstinline{if} parExpression statement [\lstinline{else} statement]
+                  \mm{|} \lstinline{while} parExpression statement
+                  \mm{|} \lstinline{return} [expression] \lstinline{;}
+                  \mm{|} \lstinline{;}
+                  \mm{|} statementExpression \lstinline{;}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+We have six alternatives to choose from, depending on the next un-scanned input token
+
+\begin{enumerate}
+\item if the next token is a \lstinline${$, we parse a block
+\item if the next token is an \lstinline{if}, we parse an \lstinline{if} statement
+\item if the next token is a \lstinline{while}, we parse a \lstinline{while} statement
+\item if the next token is a \lstinline{return}, we parse a \lstinline{return} statement
+\item if the next token is a semicolon, we parse an empty statement
+\item otherwise, we parse a statementExpression
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In the above example, the decision could be made by looking at the next single un-scanned input token; when this is the case, we say that our grammar is LL(1)
+
+\pause
+\bigskip
+
+In some cases, one must lookahead several tokens in the input to decide which alternative to take
+
+\pause
+\bigskip
+
+In all cases, because we can predict which of several alternative right-hand-sides of a BNF rule to apply, based on the next input token(s), we say this is a predictive parsing technique
+
+\pause
+\bigskip
+
+There are two principal top-down (goal-oriented, or predictive) parsing techniques available to us
+\begin{enumerate}
+\item Parsing by recursive descent
+\item LL(1) or LL($k$) parsing
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Parsing by recursive descent involves writing a method (or procedure) for parsing each non-terminal according to the production rules that define that non-terminal
+
+\pause
+\bigskip
+
+Depending on the next un-scanned input symbol, the method decides which rule to apply and then scans any terminals (tokens) on the right hand side by calling upon the \lstinline{Scanner}, and parses any non-terminals by recursively invoking the methods that parse them
+
+\pause
+\bigskip
+
+This is the strategy we use in parsing \jmm programs
+
+\pause
+\bigskip
+
+We already saw the method \lstinline{compilationUnit()} that parses a \jmm \lstinline{compilationUnit}
+
+\pause
+\bigskip
+
+As another example, consider the rule defining qualifiedIdentifier
+
+\text{ }
+\begin{spaced}
+\begin{production}
+qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\<identifier\>}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Parsing a qualifiedIdentifier such as \lstinline{java.lang.Class} is straightforward
+\begin{enumerate}
+\item We look at the next incoming token and if it is an identifier, we scan it; if it is not an identifier, then we raise an error
+\item Repeatedly, so long as the next incoming token is a period
+\begin{enumerate}[a.]
+\item We scan the period
+\item We look at the next incoming token and if it is an identifier, we scan it; otherwise, we raise an error
+\end{enumerate}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The method for parsing qualifiedIdentifier not only parses the input, but also constructs an AST node for recording the fully qualified name as a string
+
+\begin{lstlisting}[language=Java]
+    private TypeName qualifiedIdentifier() {
+        int line = scanner.token().line();
+        mustBe(IDENTIFIER);
+        String qualifiedIdentifier = scanner.previousToken().image();
+        while (have(DOT)) {
+            mustBe(IDENTIFIER);
+            qualifiedIdentifier += "." + scanner.previousToken().image();
+        }
+        return new TypeName(line, qualifiedIdentifier);
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The helper predicate method \lstinline{have()} looks at the next incoming token (supplied by the \lstinline{Scanner}), and if that token matches its argument, then it scans the token in the input and returns \lstinline{true}; otherwise, it scans nothing and returns \lstinline{false}
+
+\pause
+\bigskip
+
+The helper method \lstinline{mustBe()} requires that the next incoming token match its argument; it looks at the next token and if it matches its argument, it scans that token in the input, and it raises an error otherwise
+
+\pause
+\bigskip
+
+\lstinline{mustBe()} provides certain amount of error recovery as well
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As another example, consider our syntax for statements
+
+\text{ }
+\begin{spaced}
+\begin{production}
+statement ::= block
+                  \mm{|} \lstinline{if} parExpression statement [\lstinline{else} statement]
+                  \mm{|} \lstinline{while} parExpression statement
+                  \mm{|} \lstinline{return} [expression] \lstinline{;}
+                  \mm{|} \lstinline{;}
+                  \mm{|} statementExpression \lstinline{;}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+The method for parsing a statement decides which rule to apply when looking at the next un-scanned token
+
+\begin{lstlisting}[language=Java]
+    private JStatement statement() {
+        int line = scanner.token().line();
+        if (see(LCURLY)) {
+            return block();
+        } else if (have(IF)) {
+            JExpression test = parExpression();
+            JStatement consequent = statement();
+            JStatement alternate = have(ELSE) ? statement() : null;
+            return new JIfStatement(line, test, consequent, alternate);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        } else if (have(WHILE)) {
+            JExpression test = parExpression();
+            JStatement statement = statement();
+            return new JWhileStatement(line, test, statement);
+        } else if (have(RETURN)) {
+            if (have(SEMI)) {
+                return new JReturnStatement(line, null);
+            } else {
+                JExpression expr = expression();
+                mustBe(SEMI);
+                return new JReturnStatement(line, expr);
+            }
+        } else if (have(SEMI)) {
+            return new JEmptyStatement(line);
+        } else { // Must be a statementExpression
+            JStatement statement = statementExpression();
+            mustBe(SEMI);
+            return statement;
+        }
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The helper predicate method \lstinline{see()} simply looks at the incoming token and returns \lstinline{true} if it is the token that we are looking for, and \lstinline{false} otherwise; in no case is anything scanned
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parsing of statements works because we can determine which rule to follow in parsing the statement based only on the next un-scanned symbol in the input source
+
+\pause
+\bigskip
+
+Unfortunately, this is not always the case
+
+\pause
+\bigskip
+
+Sometimes we must consider the next few symbols in deciding what to do, ie, we must look ahead in the input stream of tokens to decide which rule to apply
+
+\pause
+\bigskip
+
+For example, consider the syntax for a simple unary expression
+
+\text{ }
+\begin{spaced}
+\begin{production}
+simpleUnaryExpression ::= \lstinline{!} unaryExpression
+                                   \mm{|} \lstinline{(} basicType \lstinline{)}  unaryExpression //cast
+                                   \mm{|} \lstinline{(} referenceType \lstinline{)} simpleUnaryExpression // cast
+                                   \mm{|} postfixExpression
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+For this, we must not only differentiate between the two kinds (basic type and reference type) of casts, but we must also distinguish a cast from a postfix expression that is a parenthesized expression; for example \lstinline{(x)}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider the code for parsing a simple unary expression
+
+\begin{lstlisting}[language=Java]
+    private JExpression simpleUnaryExpression() {
+        int line = scanner.token().line();
+        if (have(LNOT)) {
+            return new JLogicalNotOp(line, unaryExpression());
+        } else if (seeCast()) {
+            mustBe(LPAREN);
+            boolean isBasicType = seeBasicType();
+            Type type = type();
+            mustBe(RPAREN);
+            JExpression expr = isBasicType
+                ? unaryExpression()
+                : simpleUnaryExpression();
+            return new JCastOp(line, type, expr);
+        } else {
+            return postfixExpression();
+        }
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+We use the predicate \lstinline{seeCast()} to distinguish casts from parenthesized expressions, and \lstinline{seeBasicType()} to distinguish between casts to basic types from casts to reference types
+
+\pause
+\bigskip
+
+Now, consider the two predicates
+
+\begin{lstlisting}[language=Java]
+    private boolean seeBasicType() {
+        if (see(BOOLEAN) || see(CHAR) || see(INT)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+    private boolean seeCast() {
+	scanner.recordPosition();
+        if (!have(LPAREN)) {
+            scanner.returnToPosition();
+            return false;
+        }
+        if (seeBasicType()) {
+            scanner.returnToPosition();
+            return true;
+        }
+        if (!see(IDENTIFIER)) {
+            scanner.returnToPosition();
+            return false;
+	} else {
+            scanner.next(); // Scan the IDENTIFIER; a qualified identifier is ok
+            while (have(DOT)) {
+                if (!have(IDENTIFIER)) {
+                    scanner.returnToPosition();
+                    return false;
+                }
+            }
+        }
+        while (have(LBRACK)) {
+            if (!have(RBRACK)) {
+                scanner.returnToPosition();
+                return false;
+            }
+        }
+        if (!have(RPAREN)) {
+            scanner.returnToPosition();
+            return false;
+        }
+        scanner.returnToPosition();
+        return true;
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The method \lstinline{seeCast()} must look ahead in the token stream to consider a sequence of tokens in making its decision, but our lexical analyzer \lstinline{Scanner} keeps track of only the single incoming symbol
+
+\pause
+\bigskip
+
+For this reason, we define a second lexical analyzer \lstinline{LookaheadScanner} which encapsulates \lstinline{Scanner} and provides extra machinery that allows us to look ahead in the token stream
+
+\pause
+\bigskip
+
+\lstinline{LookaheadScanner} includes a means of remembering tokens (and their images) that have been scanned, a method \lstinline{recordPosition()} for marking a position in the token stream, and \lstinline{returnToPosition()} for returning the lexical analyzer to that recorded position (ie, for backtracking)
+
+\pause
+\bigskip
+
+Of course, calls to the two methods may be nested, so that one predicate (for example, \lstinline{seeCast()}) may make use of another (for example, \lstinline{seeBasicType()}), and therefore, all of this information must be recorded on a pushdown stack
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+What happens when the parser detects an error?  
+
+\pause
+\bigskip
+
+This will happen when \lstinline{mustBe()} comes across a token that it is not expecting
+
+\pause
+\bigskip
+
+The parser could simply report the error and quit
+
+\pause
+\bigskip
+
+But we would rather have the parser report the error, and then continue parsing so that it might detect any additional syntax errors
+
+\pause
+\bigskip
+
+The facility for continuing after an error is detected is called error recovery
+
+\pause
+\bigskip
+
+Error recovery can be difficult; the parser must not only detect syntax errors but it must sufficiently recover its state so as to continue parsing without introducing additional spurious error messages
+
+\pause
+\bigskip
+
+Many parser generators provide elaborate machinery for programming effective error recovery
+
+\pause
+\bigskip
+
+For the \jmm parser, we provide limited error recovery in the \lstinline{mustBe()} method
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+First, consider the definitions for \lstinline{see()} and \lstinline{have()}
+
+\begin{lstlisting}[language=Java]
+    private boolean see(TokenKind sought) {
+	return (sought == scanner.token().kind());
+    }
+
+    private boolean have(TokenKind sought) {
+        if (see(sought)) {
+            scanner.next();
+            return true;
+        } else {
+            return false;
+        }
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The helper method \lstinline{mustBe()}, defined in the next slide, makes use of a boolean flag, \lstinline{isRecovered}, which is \lstinline{true} if either no error has been detected or if the parser has recovered from a previous syntax error; it takes on the value \lstinline{false} when it is in a state in which it has not yet recovered from a syntax error
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+    boolean isRecovered = true;
+
+    private void mustBe(TokenKind sought) {
+        if (scanner.token().kind() == sought) {
+            scanner.next();
+            isRecovered = true;
+        } else if (isRecovered) {
+            isRecovered = false;
+            reportParserError("%s found where %s sought", scanner                                                                                                                                                                             
+                .token().image(), sought.image());
+        } else {
+            // Do not report the (possibly spurious) error,
+            // but rather attempt to recover by forcing a match.
+            while (!see(sought) && !see(EOF)) {
+                scanner.next();
+            }
+            if (see(sought)) {
+                scanner.next();
+                isRecovered = true;
+            }
+        }
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+When \lstinline{mustBe()} first comes across an input token that it is not looking for (it is in the recovered state) it reports an error and goes into an un-recovered state
+
+\pause
+\bigskip
+
+If, in a subsequent use of \lstinline{mustBe()}, it finds another syntax error, it does not report the error, but rather it attempts to get back into a recovered state by repeatedly scanning tokens until it comes across the one it is seeking
+
+\pause
+\bigskip
+
+If it succeeds in finding that token, it goes back into a recovered state; it may not succeed but instead scan to the end of the file, in which case the parsing stops
 \end{frame}
 
 \section{Bottom-up Deterministic Parsing}
