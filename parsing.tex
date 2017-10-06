@@ -6,6 +6,7 @@
 
 \newcommand{\mm}[1]{$#1$}
 \newcommand{\derives}{\stackrel{*}{\Rightarrow}}
+\newcommand{\expo}[2]{$#1^{#2}$}
 
 \DefineVerbatimEnvironment
 {production}{Verbatim}
@@ -1227,6 +1228,891 @@ If, in a subsequent use of \lstinline{mustBe()}, it finds another syntax error, 
 \bigskip
 
 If it succeeds in finding that token, it goes back into a recovered state; it may not succeed but instead scan to the end of the file, in which case the parsing stops
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The recursive invocation of methods in the recursive descent parsing technique depends on the underlying program stack for keeping track of the recursive calls
+
+\pause
+\bigskip
+
+The LL(1) parsing technique makes this stack explicit
+
+\pause
+\bigskip
+
+The first L in its name indicates a left-to-right scan of the input token stream; the second L signifies that it produces a left parse, which is a left-most derivation; the (1) indicates we just look ahead at the next one symbol in the input to make a decision
+
+\pause
+\bigskip
+
+Like recursive descent, the LL(1) technique is top-down, goal-oriented, and predictive
+
+\pause
+\bigskip
+
+An LL(1) parser works in a top-down fashion; at the start, the start symbol is pushed onto the stack as the initial goal, and depending on the first token in the source program, the start symbol is replaced by a sequence of symbols from the right-hand-side of a rule defining the start symbol
+
+\pause
+\bigskip
+
+Parsing continues by parsing each symbol as it is removed from the top of the stack
+\begin{itemize}
+\item If the top symbol is a terminal, it scans a terminal from the input; if the terminal does not match the terminal on the stack then an error is raised
+\item If the top symbol is a non-terminal, the parser looks at the next incoming token in the source program to decide what production rule to apply to replace that non-terminal
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+LL(1) parsing technique is table-driven, with a unique parse table is produced for each grammar; this table has a row for each non-terminal and a column for each terminal, including a special terminator \lstinline{#} to mark the end of the string
+
+\pause
+\bigskip
+
+The parser consults this table, given the non-terminal on top of the stack and the next incoming token to determine which BNF rule to use in rewriting the non-terminal
+
+\pause
+\bigskip
+
+It is important that the grammar be such that one may always unambiguously decide what BNF rule to apply; equivalently, no table entry may contain more than one rule
+
+\pause
+\bigskip
+
+For example, consider the following grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
+2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
+3. \expo{E}{\prime} ::= \mm{\epsilon}
+4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
+5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+6. \expo{T}{\prime} ::= \mm{\epsilon}
+7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+which describes the same language as the following grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{E} ::= \mm{T} \{\lstinline{\+} \mm{T}\}
+\mm{T} ::= \mm{F} \{\lstinline{\*} \mm{F}\}
+\mm{F} ::= \lstinline{(}\mm{E}\lstinline{)} \mm{|} \lstinline{id}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parse table for the grammar is shown below; the numbers in the table's entries refer to the numbers assigned to BNF rules in the grammar
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure03.05}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The LL(1) parsing algorithm is parameterized by this table, and makes use of an explicit pushdown stack
+
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE LL(1) parse table $table$, production rules $rules$, and a sentence $w$, where $w$ is a string of terminals followed by a terminator \lstinline{#}
+\ENSURE a left-parse, which is a left-most derivation for $w$
+\end{algorithmic}
+\caption{LL(1) Parsing Algorithm}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\STATE Stack $stk$ initially contains the terminator \lstinline{#} and the start symbol $S$, with $S$ on top
+\STATE Symbol $sym$ is the first symbol in the sentence $w$
+\WHILE{true}
+\STATE  Symbol $top \gets stk$.pop()
+\IF{$top = sym =$ \lstinline{#}}
+\STATE Halt successfully
+\ELSIF{$top$ is a terminal symbol}
+\IF{$top = sym$}
+\STATE Advance $sym$ to be the next symbol in $w$
+\ELSE
+\STATE Halt with an error: a $sym$ found where a $top$ was expected
+\ENDIF
+\ELSIF{top is a non-terminal $Y$}
+\STATE $index \gets table[Y, sym]$
+\IF{$index \neq err$}
+\STATE $rule \gets rules[index]$
+\STATE Say rule is $Y ::= X_1X_2 \dots X_n$; push $X_n, \dots, X_2, X_1$ onto the stack $stk$, with $X_1$ on top
+\ENDIF
+\ELSE
+\STATE Halt with an error
+\ENDIF
+\ENDWHILE
+\end{algorithmic}
+\caption{LL(1) Parsing Algorithm (contd.)}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The steps in parsing \lstinline{id + id * id} against the above LL(1) parse table
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure03.06}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+An alternative way of illustrating the states that the parser goes through is as follows
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.25]{{figures/figure03.06_alt}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+How do we construct the LL(1) parse table?
+
+\pause
+\bigskip
+
+\noindent table[$Y$, $a$] = $i$, where $i$ is the number of the rule $Y ::= X_1X_2 \dots X_n$
+
+\bigskip
+
+\noindent says that if there is the goal $Y$ on the stack and the next un-scanned symbol is $a$, then we can rewrite $Y$ on the stack as the sequence of sub goals $X_1X_2 \dots X_n$
+
+\pause
+\bigskip
+
+When do we replace $Y$ with $X_1X_2 \dots X_n$ as opposed to something else?
+
+\pause
+\bigskip
+
+If we consider the last two rules of our grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+7. \mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F} ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\noindent and we have the non-terminal $F$ on top of our parsing stack, the choice is simple; if the next un-scanned symbol is an open parenthesis \lstinline{(}, we apply rule 7, and if it is an \lstinline{id}, we apply rule 8, ie, 
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\mm{F}, \lstinline{(}] = 7
+table[\mm{F}, \lstinline{id}] = 8
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The problem becomes slightly more complicated when the right-hand-side of the rule either starts with a non-terminal or is simply $\epsilon$
+
+\pause
+\bigskip
+
+In general, assuming both $\alpha$ and $\beta$ are (possibly empty) strings of terminals and non-terminals, table[$Y$, $a$] = $i$, where $i$ is the number of the rule $Y ::= X_1X_2 \dots X_n$, if either
+
+\begin{enumerate}
+\item $X_1X_2\dots X_n \derives a\alpha$, or
+\item $X_1X_2\dots X_n \derives \epsilon$, and there is a derivation S\lstinline{#} $\derives \alpha Y a\beta$, that is, $a$ can follow $Y$ in a derivation.
+\end{enumerate}
+
+\pause
+\bigskip
+
+For this we need two helper functions, first and follow
+
+\pause
+\bigskip
+
+We define, $\text{first}(X_1X_2 \dots X_n) = \{a | X_1X_2 \dots X_n \derives a\alpha, a \in T\}$, ie, the set of all terminals that can start strings derivable from $X_1X_2 \dots X_n$; also, if $X_1X_2 \dots X_n \derives \epsilon$, then we say that $\text{first}(X_1X_2 \dots X_n)$ includes $\epsilon$
+
+\pause
+\bigskip
+
+We define two algorithms for computing first: one for a single symbol and the other for a sequence of symbols; the two algorithms are both mutually recursive and make use of memoization, ie, what was previously computed for each set is remembered upon each iteration
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G = (N,T,S,P)$
+\ENSURE first($X$) for all symbols $X$ in $G$
+\FOR{each terminal $x$}
+\STATE $\text{first}(x) \gets \{x\}$
+\ENDFOR
+\FOR{each non-terminal $X$}
+\STATE $\text{first}(X) \gets \{\}$
+\ENDFOR
+\IF {$X ::= \epsilon \in P$}
+\STATE add $\epsilon$ to $\text{first}(X)$
+\ENDIF
+\REPEAT
+\FOR{each $Y ::= X_1X_2 \dots X_n \in P$}
+\STATE add all symbols from $\text{first}(X_1X_2 \dots X_n)$ to $\text{first}(Y)$
+\ENDFOR
+\UNTIL{no new symbols are added to any set}
+\end{algorithmic}
+\caption{Compute first($X$) for all symbols $X$ in a Grammar $G$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G = (N,T,S,P)$ and a sequence $X_1X_2 \dots X_n$
+\ENSURE first($X_1X_2 \dots X_n$)
+\STATE Set $S \gets \text{first}(X_1)$
+\STATE $i \gets 2$
+\WHILE{$\epsilon \in S$ and $i \le n$}
+\STATE $S \gets S - \epsilon$
+\STATE Add $\text{first}(X_i)$ to $S$
+\STATE $i \gets i + 1$
+\ENDWHILE
+\RETURN $S$
+\end{algorithmic}
+\caption{Compute $\text{first}(X_1X_2 \dots X_n)$ for a Grammar $G$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider our example grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
+2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
+3. \expo{E}{\prime} ::= \mm{\epsilon}
+4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
+5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+6. \expo{T}{\prime} ::= \mm{\epsilon}
+7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+The computation of first for the terminals, by step 1 of the first algorithm is trivial
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(\lstinline{+})  = \{\lstinline{\+}\}
+first(\lstinline{*})  = \{\lstinline{*}\}
+first(\lstinline{(})  = \{\lstinline{(}\}
+first(\lstinline{)})  = \{\lstinline{)}\}
+first(\lstinline{id}) = \{\lstinline{id}\}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+Step 2 of the first algorithm gives
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(\mm{E})  = \{\}
+first(\expo{E}{\prime}) = \{\}
+first(\mm{T})  = \{\}
+first(\expo{T}{\prime}) = \{\}
+first(\mm{F})  = \{\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Step 3 of the first algorithm yields
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(\expo{E}{\prime}) = \{\mm{\epsilon}\}
+first(\expo{T}{\prime}) = \{\mm{\epsilon}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Step 4 of the first algorithm is repeatedly executed until no further symbols are added; the first round yields
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(E)  = \{\}
+first(\expo{E}{\prime}) = \{\lstinline{+}, \mm{\epsilon}\}
+first(\mm{T})  = \{\}
+first(\expo{T}{\prime}) = \{\lstinline{*}, \mm{\epsilon}\}
+first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Second round of step 4 yields
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(\mm{E})  = \{\}
+first(\expo{E}{\prime}) = \{\lstinline{\+}, \mm{\epsilon}\}
+first(\mm{T})  = \{\lstinline{(}, \lstinline{id}\}
+first(\expo{T}{\prime}) = \{\lstinline{\*}, \mm{\epsilon}\}
+first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Third round of step 4 yields
+
+\text{ }
+\begin{spaced}
+\begin{production}
+first(\mm{E})  = \{\lstinline{\(}, \lstinline{id}\}
+first(\expo{E}{\prime}) = \{\lstinline{\+}, \mm{\epsilon}\}
+first(\mm{T})  = \{\lstinline{(}, \lstinline{id}\}
+first(\expo{T}{\prime}) = \{\lstinline{\*}, \mm{\epsilon}\}
+first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+The fourth round of step 4 adds no symbols to any set, so we are done
+
+\pause
+\bigskip
+
+When is a rule $X ::= \epsilon$ applicable?  For this we need the notion of follow
+
+\pause
+\bigskip
+
+We define, $\text{follow}(X) = \{a | S \derives wX\alpha \text{ and } \alpha \derives a \dots\}$, ie, all terminal symbols that start terminal strings derivable from what can follow $X$ in a derivation
+
+\pause
+\bigskip
+
+Another definition is as follows
+\begin{enumerate}
+\item $\text{follow}(S)$ contains \lstinline{#}, that is, the terminator follows the start symbol
+\item If there is a rule $Y ::= \alpha X \beta$ in $P$, $\text{follow}(X)$ contains $\text{first}(\beta) - \{\epsilon\}$
+\item If there is a rule $Y ::= \alpha X \beta$ in $P$ and either $\beta = \epsilon$ or $\text{first}(\beta)$ contains $\epsilon$, $\text{follow}(X)$ contains $\text{follow}(Y)$
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G = (N,T,S,P)$
+\ENSURE  $\text{follow}(X)$ for all non-terminals $X$ in $G$
+\STATE $\text{follow}(S) \gets$ \{\lstinline{#}\}
+\FOR{each non-terminal $X \in S$}
+\STATE $\text{follow}(X) \gets \{\}$
+\ENDFOR
+\REPEAT
+\FOR{each rule $Y ::= X_1X_2 \dots X_n \in P$}
+\FOR{each non-terminal $X_i$}
+\STATE Add $\text{first}(X_{i+1}X_{i+2} \dots X_n) - \{\epsilon\}$ to $\text{follow}(X_i)$, and
+if $X_i$ is the right-most symbol or $\text{first}(X_{i+1}X_{i+2} \dots X_n)$ contains $\epsilon$, add $\text{follow}(Y)$ to $\text{follow}(X_i)$
+\ENDFOR
+\ENDFOR
+\UNTIL{no new symbols are added to any set}
+\end{algorithmic}
+\caption{Compute $\text{follow}(X)$ for all non-terminals $X$ in a Grammar $G$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Again, consider our example grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
+2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
+3. \expo{E}{\prime} ::= \mm{\epsilon}
+4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
+5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+6. \expo{T}{\prime} ::= \mm{\epsilon}
+7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\pause
+
+From rule 1, $E  ::= T E'$,  $\text{follow}(T)$ contains first($E'$) - $\{\epsilon\} = \{+\}$, and because first($E'$) contains $\epsilon$, it also contains follow($E$); also, follow($E'$) contains follow($E$); so, round 1 of step 3 yields,
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\expo{E}{\prime}) = \{\lstinline{#}\}
+follow(\mm{T})  = \{\lstinline{+}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+We get nothing additional from rule 2, $E'$ ::= \lstinline{+} $T E'$; follow($T$) contains first($E'$) - $\{\epsilon\}$, but we saw that in rule 1; also, follow($E'$) contains follow($E'$), but that says nothing; we get nothing additional from rule 3, $E' ::= \epsilon$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{#}\}
+follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Rules 5 and 6 give us nothing new (for the same reasons rules 2 and 3 did not)
+
+\pause
+\bigskip
+
+Rule 7, $F$  ::= \lstinline{(}$E$\lstinline{)}, adds \lstinline{)} to follow($E$), so
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\mm{E}) = \{\lstinline{)}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Rule 8 gives us nothing
+
+\pause
+\bigskip
+
+So round 1 of step 3 gives
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\mm{E})  = \{\lstinline{)}, \lstinline{#}\}
+follow(\expo{E}{\prime}) = \{\lstinline{#}\}
+follow(\mm{T})  = \{\lstinline{+}, \lstinline{#}\}
+follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{#}\}
+follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Now, in round 2 of step 3, the \lstinline{)} that was added to follow($E$) trickles down into the other follow sets
+
+\pause
+\bigskip
+
+From rule 1, $E  ::= T E'$, because first($E'$) contains $\epsilon$, follow($T$) contains follow($E$); also, follow($E'$) contains follow($E$); so, we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\expo{E}{\prime}) = \{\lstinline{)}, \lstinline{#}\}
+follow(\mm{T})  = \{\lstinline{+}, \lstinline{)},  \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+From rule 4, $T  ::= F T'$, because first($T'$) contains $\epsilon$, follow($F$) contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{)}, \lstinline{#}\}
+follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{)}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+So round 2 produces
+
+\text{ }
+\begin{spaced}
+\begin{production}
+follow(\mm{E})  = \{\lstinline{)}, \lstinline{#}\}
+follow(\expo{E}{\prime}) = \{\lstinline{)}, \lstinline{#}\}
+follow(\mm{T})  = \{\lstinline{+}, \lstinline{)},  \lstinline{#}\}
+follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{)}, \lstinline{#}\}
+follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{)}, \lstinline{#}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Round 3 of step 3 adds no new symbols to any set, so we are done
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Recall, assuming both $\alpha$ and $\beta$ are (possibly empty) strings of terminals and non-terminals, $\text{table}[Y, a] = i$, where $i$ is the number of the rule $Y ::= X_1X_2 \dots X_n$ if either
+
+\begin{enumerate}
+\item $X_1X_2 \dots X_n \derives a\alpha$, or
+\item $X_1X_2 \dots X_n \derives \epsilon$, and there is a derivation $S$\lstinline{#} $\derives \alpha Ya\beta$, that is, $a$ can follow $Y$ in a derivation.
+\end{enumerate}
+
+This definition, together with the functions, first and follow, suggests the following algorithm for constructing the LL(1) parse table
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G=(N,T,S,P)$
+\ENSURE LL(1) Parse Table for $G$
+\FOR{each non-terminal $Y \in G$}
+\FOR{each rule $Y ::= X_1X_2 \dots X_n \in P$ with number $i$}
+\FOR{each terminal $a \in \text{first}(X_1X_2 \dots X_n) - \{\epsilon\}$}
+\STATE $\text{table}[Y, a] \gets i$
+\IF{$\text{first}(X_1X_2 \dots X_n)$ contains $\epsilon$}
+\FOR{each terminal $a$ (or \lstinline{#}) in $\text{follow}(Y)$}
+\STATE $\text{table}[Y, a] \gets i$
+\ENDFOR
+\ENDIF
+\ENDFOR
+\ENDFOR
+\ENDFOR
+\end{algorithmic}
+\caption{Construct an LL(1) Parse Table for a Grammar $G=(N,T,S,P)$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Let us construct a parse table for our example grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
+2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
+3. \expo{E}{\prime} ::= \mm{\epsilon}
+4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
+5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+6. \expo{T}{\prime} ::= \mm{\epsilon}
+7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\pause
+
+For the non-terminal $E$, we consider rule 1: $E  ::= T E'$.  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\mm{E}, \lstinline{(}] = 1
+table[\mm{E}, \lstinline{id}] = 1
+\end{production}
+\end{spaced}
+
+\pause
+
+Because first($T E'$) does not contain $\epsilon$, we need not consider follow($E$)
+
+\pause
+\bigskip
+
+For the non-terminal $E'$, we first consider rule 2: $E'$ ::= \lstinline{+} $T E'$; first(\lstinline{+} $T$ $E'$) = \{\lstinline{+}\}, so we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\expo{E}{\prime}, \lstinline{+}] = 2
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Rule 3: $E' ::= \epsilon$ is applicable for symbols in follow($E'$) =  \{\lstinline{)}, \lstinline{#}\}, so we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\expo{E}{\prime}, \lstinline{)}] = 3
+table[\expo{E}{\prime}, \lstinline{#}] = 3
+\end{production}
+\end{spaced}
+
+\pause
+
+For the non-terminal $T$, we consider rule 4: $T  ::= F T'$. first($F$ $T'$) = \{\lstinline{(}, \lstinline{id}\}, so we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\mm{T}, \lstinline{(}] = 4
+table[\mm{T}, \lstinline{id}] = 4
+\end{production}
+\end{spaced}
+
+\pause
+
+Because first($F$ $T'$) does not contain $\epsilon$, we need not consider follow($T$)
+
+\pause
+\bigskip
+
+For non-terminal $T'$, we first consider rule: 5: $T'$ ::= \lstinline{*} $F T'$; first(\lstinline{*} $F$ $T'$), so we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\expo{T}{\prime}, \lstinline{*}] = 5
+\end{production}
+\end{spaced}
+
+\pause
+
+Rule 6: $T' ::= \epsilon$ is applicable for symbols in follow($T'$) = \{\lstinline{+}, \lstinline{)}, \lstinline{#}\}, so we have
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\expo{T}{\prime}, \lstinline{+}] = 6
+table[\expo{T}{\prime}, \lstinline{)}] = 6
+table[\expo{T}{\prime}, \lstinline{#}] = 6
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For the non-terminal $F$, we have two rules: Firstly, given rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and that first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\},
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\mm{F}, \lstinline{(}] = 7
+\end{production}
+\end{spaced}
+
+\pause
+
+Secondly, given rule 8: $F$  ::= \lstinline{id}, and since (obviously) first(\lstinline{id}) = \{\lstinline{id}\},
+
+\text{ }
+\begin{spaced}
+\begin{production}
+table[\mm{F}, \lstinline{id}] = 8
+\end{production}
+\end{spaced}
+
+\pause
+
+We say a grammar is LL(1) if the parse table has no conflicts, ie, no entries having more than one rule
+
+\pause
+\bigskip
+
+If a grammar is shown to be LL(1) then it is unambiguous
+
+\pause
+\bigskip
+
+It is possible for a grammar not to be LL(1) but LL($k$) for some $k > 1$; in principle, this would mean a table having columns for each combination of $k$ symbols
+
+\pause
+\bigskip
+
+On the other hand, an LL(1) parser generator (JavaCC for example) based on the table construction algorithm, might allow one to specify a $k$-symbol look ahead for specific non-terminals or rules; these special cases can be handled specially by the parser and so need not lead to overly large (and, most likely sparse) tables
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Not all context-free grammars are LL(1), but for many that are not, one may define equivalent grammars that are LL(1)
+
+\pause
+\bigskip
+
+One class of grammar that is not LL(1) is a grammar having a rule with left recursion; for example 
+
+\text{ }
+\begin{spaced}
+\begin{production}
+Y ::= Y \mm{\alpha}
+Y ::= \mm{\beta}
+\end{production}
+\end{spaced}
+
+\pause
+
+Clearly, a grammar having these two rules is not LL(1), because, by definition, first($Y \alpha$) must include first($\beta$) making it impossible to discern which rule to apply for expanding $Y$
+
+\pause
+\bigskip
+
+Introducing an extra non-terminal, an extra rule, and replacing the left recursion with right recursion easily removes the direct left recursion
+
+\text{ }
+\begin{spaced}
+\begin{production}
+Y  ::= \mm{\beta} \expo{Y}{\prime}
+\expo{Y}{\prime} ::= \mm{\alpha} \expo{Y}{\prime}
+\expo{Y}{\prime} ::= \mm{\epsilon}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, consider the following context-free grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{E} ::= \mm{E} \lstinline{+} \mm{T}
+\mm{E} ::= \mm{T}
+\mm{T} ::= \mm{T}  \lstinline{*} {F}
+\mm{T} ::= \mm{F}
+\mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
+\mm{F} ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\pause
+
+The left recursion captures the left-associative nature of the operators \lstinline{+} and \lstinline{*}, but because the grammar has left-recursive rules, it is not LL(1); we may apply the left-recursion removal rule to this grammar
+
+\pause
+\bigskip
+
+Firstly, applying the rule to $E$ to produce
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{E}  ::= \mm{T} \expo{E}{\prime}
+\expo{E}{\prime} ::= \lstinline{+} \mm{T} \expo{E}{\prime}
+\expo{E}{\prime} ::= \mm{\epsilon}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Applying the rule to $T$ yields
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{T}  ::= \mm{F} \expo{T}{\prime}
+\expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+\expo{T}{\prime} ::= \mm{\epsilon}
+\end{production}
+\end{spaced}
+
+\pause
+
+Giving us the LL(1) grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{E}  ::= \mm{T} \expo{E}{\prime}
+\expo{E}{\prime} ::= \lstinline{+} \mm{T} \expo{E}{\prime}
+\expo{E}{\prime} ::= \mm{\epsilon}
+\mm{T}  ::= \mm{F} \expo{T}{\prime}
+\expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+\expo{T}{\prime} ::= \mm{\epsilon}
+\mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+\mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G=(N,T,S,P)$
+\ENSURE $G$ with left recursion eliminated
+\STATE Arbitrarily enumerate the non-terminals of $G: X_1, X_2, \dots, X_n$
+\FOR{$i := 1 \text{ to } n$}
+\FOR{$j := 1 \text{ to } i - 1$}
+\STATE Replace each rule in $P$ of the form $X_i::= X_j\alpha$ by the rules $X_i ::= \beta_1\alpha | \beta_2\alpha | \dots | \beta_k\alpha$ where $X_j ::= \beta_1 | \beta_2 | \dots | \beta_k$ are the current rules defining $X_i$
+\STATE Eliminate any immediate left recursion using (3.25)
+\ENDFOR
+\ENDFOR
+\end{algorithmic}
+\caption{Left Recursion Removal for a Grammar $G=(N,T,S,P)$}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
 \end{frame}
 
 \section{Bottom-up Deterministic Parsing}
