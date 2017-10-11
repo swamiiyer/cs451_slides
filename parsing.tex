@@ -1945,7 +1945,7 @@ table[\expo{T}{\prime}, \lstinline{#}] = 6
 \begin{frame}[fragile]
 \pause
 
-For the non-terminal $F$, we have two rules: Firstly, given rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and that first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\},
+For the non-terminal $F$, we have two rules: Firstly, given rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and since first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -1956,7 +1956,7 @@ table[\mm{F}, \lstinline{(}] = 7
 
 \pause
 
-Secondly, given rule 8: $F$  ::= \lstinline{id}, and since (obviously) first(\lstinline{id}) = \{\lstinline{id}\},
+Secondly, given rule 8: $F$  ::= \lstinline{id}, and since first(\lstinline{id}) = \{\lstinline{id}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -2046,7 +2046,7 @@ The left recursion captures the left-associative nature of the operators \lstinl
 \pause
 \bigskip
 
-Firstly, applying the rule to $E$ to produce
+Applying the rule to $E$ to produce
 
 \text{ }
 \begin{spaced}
@@ -2102,7 +2102,7 @@ Giving us the LL(1) grammar
 \FOR{$i := 1 \text{ to } n$}
 \FOR{$j := 1 \text{ to } i - 1$}
 \STATE Replace each rule in $P$ of the form $X_i::= X_j\alpha$ by the rules $X_i ::= \beta_1\alpha | \beta_2\alpha | \dots | \beta_k\alpha$ where $X_j ::= \beta_1 | \beta_2 | \dots | \beta_k$ are the current rules defining $X_i$
-\STATE Eliminate any immediate left recursion using (3.25)
+\STATE Eliminate any direct left recursion
 \ENDFOR
 \ENDFOR
 \end{algorithmic}
