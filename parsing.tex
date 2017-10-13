@@ -1358,9 +1358,9 @@ The LL(1) parsing algorithm is parameterized by this table, and makes use of an 
 \IF{$index \neq err$}
 \STATE $rule \gets rules[index]$
 \STATE Say rule is $Y ::= X_1X_2 \dots X_n$; push $X_n, \dots, X_2, X_1$ onto the stack $stk$, with $X_1$ on top
-\ENDIF
 \ELSE
 \STATE Halt with an error
+\ENDIF
 \ENDIF
 \ENDWHILE
 \end{algorithmic}
@@ -1401,11 +1401,6 @@ How do we construct the LL(1) parse table?
 \bigskip
 
 \noindent says that if there is the goal $Y$ on the stack and the next un-scanned symbol is $a$, then we can rewrite $Y$ on the stack as the sequence of sub goals $X_1X_2 \dots X_n$
-
-\pause
-\bigskip
-
-When do we replace $Y$ with $X_1X_2 \dots X_n$ as opposed to something else?
 
 \pause
 \bigskip
@@ -1709,7 +1704,7 @@ We get nothing additional from rule 2, $E'$ ::= \lstinline{+} $T E'$; follow($T$
 \begin{frame}[fragile]
 \pause
 
-From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
+From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\epsilon\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
 
 \text{ }
 \begin{spaced}
@@ -1860,7 +1855,7 @@ Let us construct a parse table for our example grammar
 
 \pause
 
-For the non-terminal $E$, we consider rule 1: $E  ::= T E'$.  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
+For the non-terminal $E$, we consider rule 1: $E  ::= T E'$;  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
 
 \text{ }
 \begin{spaced}
@@ -1902,7 +1897,7 @@ table[\expo{E}{\prime}, \lstinline{#}] = 3
 
 \pause
 
-For the non-terminal $T$, we consider rule 4: $T  ::= F T'$. first($F$ $T'$) = \{\lstinline{(}, \lstinline{id}\}, so we have
+For the non-terminal $T$, we consider rule 4: $T  ::= F T'$; first($F$ $T'$) = \{\lstinline{(}, \lstinline{id}\}, so we have
 
 \text{ }
 \begin{spaced}
@@ -1919,7 +1914,7 @@ Because first($F$ $T'$) does not contain $\epsilon$, we need not consider follow
 \pause
 \bigskip
 
-For non-terminal $T'$, we first consider rule: 5: $T'$ ::= \lstinline{*} $F T'$; first(\lstinline{*} $F$ $T'$), so we have
+For non-terminal $T'$, we first consider rule: 5: $T'$ ::= \lstinline{*} $F T'$; first(\lstinline{*} $F$ $T'$) = \{\lstinline{*}, $\epsilon$\}, so we have
 
 \text{ }
 \begin{spaced}
@@ -1945,7 +1940,7 @@ table[\expo{T}{\prime}, \lstinline{#}] = 6
 \begin{frame}[fragile]
 \pause
 
-For the non-terminal $F$, we have two rules: Firstly, given rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and since first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\}, we have
+Rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and since first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -1956,7 +1951,7 @@ table[\mm{F}, \lstinline{(}] = 7
 
 \pause
 
-Secondly, given rule 8: $F$  ::= \lstinline{id}, and since first(\lstinline{id}) = \{\lstinline{id}\}, we have
+Rule 8: $F$  ::= \lstinline{id}, and since first(\lstinline{id}) = \{\lstinline{id}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -2032,7 +2027,7 @@ For example, consider the following context-free grammar
 \begin{production}
 \mm{E} ::= \mm{E} \lstinline{+} \mm{T}
 \mm{E} ::= \mm{T}
-\mm{T} ::= \mm{T}  \lstinline{*} {F}
+\mm{T} ::= \mm{T} \lstinline{*} {F}
 \mm{T} ::= \mm{F}
 \mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
 \mm{F} ::= \lstinline{id}
@@ -2041,7 +2036,7 @@ For example, consider the following context-free grammar
 
 \pause
 
-The left recursion captures the left-associative nature of the operators \lstinline{+} and \lstinline{*}, but because the grammar has left-recursive rules, it is not LL(1); we may apply the left-recursion removal rule to this grammar
+Since the grammar has left-recursive rules, it is not LL(1); we may apply the left-recursion removal rule to this grammar
 
 \pause
 \bigskip
