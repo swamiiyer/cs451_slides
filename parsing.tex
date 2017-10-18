@@ -1,4 +1,4 @@
-\documentclass[8pt,a4paper,compress]{beamer}
+\documentclass[8pt,a4paper,compress,handout]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
 
@@ -2105,15 +2105,460 @@ Giving us the LL(1) grammar
 \end{algorithm}
 \end{frame}
 
-\begin{frame}[fragile]
-\pause
-
-\end{frame}
-
 \section{Bottom-up Deterministic Parsing}
 \begin{frame}[fragile]
 \pause
 
+Consider our familiar grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
+2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
+3. \expo{E}{\prime} ::= \mm{\epsilon}
+4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
+5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
+6. \expo{T}{\prime} ::= \mm{\epsilon}
+7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+8. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+and suppose we want to parse the input string \lstinline{id + id * id}
+
+\pause
+\bigskip
+
+We would start off with the initial configuration 
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+The first action is to shift the first un-scanned input symbol onto the stack
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$#id$ & \lstinline$+id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From this configuration, the next action is to reduce the \lstinline$id$ on top of the stack to an $F$ using rule 6
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From this configuration, the next two actions involve reducing the $F$ to a $T$ (by rule 4), and then to an $E$ (by rule 2)
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
+\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
+\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parser continues in this fashion, by a sequence of shifts and reductions, until we reach a configuration where \lstinline{#}$E$ is on the stack ($E$ on top) and the sole un-scanned symbol in the input is the terminator, \lstinline{#}
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
+\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
+\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce (6) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce (4) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce (6) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce (3) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce (1) \\
+\lstinline$#$\mm{E} & \underline{\lstinline$#$} & accept
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+At this point, we have reduced the entire input string to the grammar's start symbol $E$, so we can say the input is accepted
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The sequence of reductions 6, 4, 2, 6, 4, 6, 3, 1 above represents the right-most derivation of the input string, but in reverse
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\underline{\mm{E}} \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \mm{T} \lstinline{*} \underline{\mm{F}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}} \lstinline{* id}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{F}} \lstinline{* id}
+   \mm{\Rightarrow} \underline{\mm{E}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{T}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{F}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \lstinline{id + id * id}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+The following questions arise
+\begin{itemize}
+\item How does the parser know when to shift and when to reduce?
+\item When reducing, how many symbols on top of the stack play a role in the reduction?
+\item Also, when reducing, by which rule does it make its reduction?
+\end{itemize}
+
+\pause
+\bigskip
+
+For example, in the derivation above, when the stack contains \lstinline{#}$E$\lstinline{+}$T$ and the next incoming token is a \lstinline{*}, how do we know that we are to shift (the \lstinline{*} onto the stack) rather than reduce either the $E$\lstinline{+}$T$ to an $E$ or the $T$ to an $E$?
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+A couple of things to notice:
+\begin{enumerate}
+\item Ignoring the terminator \lstinline{#}, the stack configuration combined with the un-scanned input stream represents a sentential form in a right-most derivation of the input
+
+\item The part of the sentential form that is reduced to a non-terminal is always on top of the stack, so all actions take place at the top of the stack --- we either shift a token onto the stack, or we reduce what is already there
+\end{enumerate}
+
+\pause
+\bigskip
+
+We call the sequence of terminals on top of the stack that are reduced to a single non-terminal at each reduction step the handle
+
+\pause
+\bigskip
+
+More formally, in a right-most derivation, $S \derives\alpha Yw \Rightarrow \alpha \beta w \derives uw$, where $uw$ is the sentence, the handle is the rule $Y ::= \beta$ and a position in the right sentential form $\alpha \beta w$ where $\beta$ may be replaced by $Y$ to produce the previous right sentential form $\alpha Yw$ in a right-most derivation from the start symbol $S$
+
+\pause
+\bigskip
+
+So, when a handle appears on top of the stack
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+\lstinline$#$$\alpha \beta$ & $w$
+\end{tabular}
+\end{table}
+\noindent we reduce that handle ($\beta$ to $Y$ in this case)
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Now if $\beta$ is the sequence $X_1, X_2, \dots , X_n$, then we call any subsequence, $X_1, X_2, \dots , X_i$, for $i \leq n$ a viable prefix; only viable prefixes may appear on the top of the parse stack
+
+\pause
+\bigskip
+
+If there is not a handle on top of the stack and shifting the first un-scanned input token from the input to the stack results in a viable prefix, a shift is called for
+
+\pause
+\bigskip
+
+The LR(1) parser algorithm is common to all LR(1) grammars and is driven by two tables (derived from a DFA that recognizes viable prefixes and handles): an Action table and a Goto table
+
+\pause
+\bigskip
+
+The algorithm is a state machine with a pushdown stack, driven by two tables: Action and Goto
+
+\pause
+\bigskip
+
+A configuration of the parser is a pair, consisting of the state of the stack and the state of the input
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_m s_m$ & $a_k a_{k +1} \dots a_n$
+\end{tabular}
+\end{table}
+
+\noindent where the $s_i$ are states, the $X_i$ are (terminal or non-terminal) symbols, and $a_k a_{k +1} \dots a_n$ are the un-scanned input symbols
+
+\pause
+\bigskip
+
+This configuration represents a right sentential form in a right-most derivation of the input sentence $X_1X_2 \dots X_m a_k a_{k +1} \dots a_n$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE Action and Goto tables, and the input sentence $w$ to be parsed, followed by the terminator \lstinline{#}
+\ENSURE a right-most derivation in reverse
+
+\STATE Initially, the parser has the configuration,
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0$ & $a_1 a_2 \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\noindent where $a_1 a_2 \dots a_n$ is the input sentence
+\end{algorithmic}
+\caption{The LR(1) Parsing Algorithm}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REPEAT
+\STATE If $\text{Action}[s_m, a_k] = ss_i$, the parser executes a shift (the $s$ stands for ``shift'') and goes into state $s_i$, going into the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_m s_m a_k s_i$ & $a_{k+1} \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = ri$ (the $r$ stands for ``reduce''), where $i$ is the number of the production rule $Y ::= X_j X_{j+1} \dots X_m$, then replace the symbols and states $X_j s_j X_{j+1} s_{j+1} \dots X_m s_m$ by $Ys$, where $s = \text{Goto}[s_{j-1}, Y]$; the parser then outputs production number $i$, and goes into the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_{j-1} s_{j-1} Ys$ & $a_{k+1} \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = \text{ accept}$, then the parser halts and the input has been successfully parsed
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = \text{ error}$, then the parser raises an error.  The input is not in the language
+\UNTIL{either the sentence is parsed or an error is raised}
+\end{algorithmic}
+\caption{The LR(1) Parsing Algorithm (contd.)}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The Action and Goto tables for our grammar for simple expressions are shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure03.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider parsing the input string \lstinline{id + id * id}; initially the parser is in state 0, so a 0 is pushed onto the stack
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+The next incoming symbol is an \lstinline$id$, so we consult the Action table, Action[0, \lstinline{id}] to determine what to do in state 0 with an incoming token, \lstinline{id}; the entry is $s5$, so we shift the \lstinline{id} onto the stack and go into state 5 (pushing the new state onto the stack above the \lstinline{id})
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+Now, the 5 on top of the stack indicates we are in state 5 and the incoming token is \lstinline{+}, so we consult Action[5, \lstinline{+}]; the $r6$ indicates a reduction using rule 6: $F$ ::= \lstinline{id}; to make the reduction, we pop $2k$ items off the stack where $k$ is the number of symbols in the rule's right hand side; in our example $k = 1$ so we pop both the 5 and the \lstinline{id}
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Because we are reducing the right hand side to an $F$ in this example, we push the $F$ onto the stack.
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+Finally, we consult Goto[0, $F$] to determine which state the parser, initially in state 0, should go into after parsing an $F$; since Goto[0, $F$] = 3, this is state 3; we push the 3 onto the stack to indicate the parser's new state
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From state 3 and looking at the incoming token \lstinline$+$, Action[3, \lstinline{+}] tells us to reduce using rule 4: $T ::= F$
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From state 2 and looking at the incoming token \lstinline{+}, Action[2, \lstinline{+}] tells us to reduce using rule 2: $E ::= T$
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From state 1 and looking the incoming token \lstinline{+}, Action[3, \lstinline{+}] = $s6$ tells us to shift (the \lstinline{+} onto the stack and go into state 6
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1 & \underline{\lstinline$+$}\lstinline$id*id#$ & shift 6 \\
+0\mm{E}1\lstinline$+$6 & \underline{\lstinline$id$}\lstinline$*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Continuing in this fashion, the parser goes through the following sequence of configurations and actions
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
+\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
+\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce (6) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce (4) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce (6) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce (3) \\
+\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce (1) \\
+\lstinline$#$\mm{E} & \underline{\lstinline$#$} & accept
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parser has output 6, 4, 2, 6, 4, 6, 3, 1, which is a right-most derivation of the input string in reverse: 1, 3, 6, 4, 6, 2, 4, 6, ie
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\underline{\mm{E}} \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \mm{T} \lstinline{*} \underline{\mm{F}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}} \lstinline{*} \lstinline{id}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{F}} \lstinline{*} \lstinline{id}
+   \mm{\Rightarrow} \underline{\mm{E}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{T}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{F}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \lstinline{id + id * id}
+\end{production}
+\end{spaced}
 \end{frame}
 
 \section{Parser Generation Using JavaCC}
