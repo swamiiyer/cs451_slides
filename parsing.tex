@@ -2109,21 +2109,20 @@ Giving us the LL(1) grammar
 \begin{frame}[fragile]
 \pause
 
-Consider our familiar grammar
+Consider the grammar
 
 \text{ }
 \begin{spaced}
 \begin{production}
-1. \mm{E}  ::= \mm{T} \expo{E}{\prime}
-2. \expo{E}{\prime} ::= \lstinline{+} T \expo{E}{\prime}
-3. \expo{E}{\prime} ::= \mm{\epsilon}
-4. \mm{T}  ::= \mm{F} \expo{T}{\prime}
-5. \expo{T}{\prime} ::= \lstinline{*} \mm{F} \expo{T}{\prime}
-6. \expo{T}{\prime} ::= \mm{\epsilon}
-7. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
-8. \mm{F}  ::= \lstinline{id}
+1. \mm{E} ::= \mm{E} \lstinline{+} \mm{T}
+2. \mm{E} ::= \mm{T}
+3. \mm{T} ::= \mm{T} \lstinline{*} {F}
+4. \mm{T} ::= \mm{F}
+5. \mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
+6. \mm{F} ::= \lstinline{id}
 \end{production}
 \end{spaced}
+
 
 and suppose we want to parse the input string \lstinline{id + id * id}
 
@@ -2135,7 +2134,7 @@ We would start off with the initial configuration
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ &
+& \underline{\lstinline$id$}\lstinline$+id*id#$ &
 \end{tabular}
 \end{table}
 
@@ -2147,8 +2146,8 @@ The first action is to shift the first un-scanned input symbol onto the stack
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
-\lstinline$#id$ & \lstinline$+id*id#$ &
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ &
 \end{tabular}
 \end{table}
 \end{frame}
@@ -2161,9 +2160,9 @@ From this configuration, the next action is to reduce the \lstinline$id$ on top 
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
-\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
-\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
 \end{tabular}
 \end{table}
 
@@ -2175,11 +2174,11 @@ From this configuration, the next two actions involve reducing the $F$ to a $T$ 
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
-\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
-\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
-\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
-\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\lstinline$$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
+\lstinline$$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
+\lstinline$$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ &
 \end{tabular}
 \end{table}
 \end{frame}
@@ -2192,20 +2191,20 @@ The parser continues in this fashion, by a sequence of shifts and reductions, un
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
-\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
-\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
-\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
-\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce (6) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce (4) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce (6) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce (3) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce (1) \\
-\lstinline$#$\mm{E} & \underline{\lstinline$#$} & accept
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
+\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
+\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
+\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
+\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
+\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce (6) \\
+\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce (4) \\
+\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce (6) \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce (3) \\
+\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce (1) \\
+\mm{E} & \underline{\lstinline$#$} & accept
 \end{tabular}
 \end{table}
 
@@ -2247,7 +2246,7 @@ The following questions arise
 \pause
 \bigskip
 
-For example, in the derivation above, when the stack contains \lstinline{#}$E$\lstinline{+}$T$ and the next incoming token is a \lstinline{*}, how do we know that we are to shift (the \lstinline{*} onto the stack) rather than reduce either the $E$\lstinline{+}$T$ to an $E$ or the $T$ to an $E$?
+For example, in the derivation above, when the stack contains $E$\lstinline{+}$T$ and the next incoming token is a \lstinline{*}, how do we know that we are to shift (the \lstinline{*} onto the stack) rather than reduce either the $E$\lstinline{+}$T$ to an $E$ or the $T$ to an $E$?
 \end{frame}
 
 \begin{frame}[fragile]
@@ -2255,7 +2254,7 @@ For example, in the derivation above, when the stack contains \lstinline{#}$E$\l
 
 A couple of things to notice:
 \begin{enumerate}
-\item Ignoring the terminator \lstinline{#}, the stack configuration combined with the un-scanned input stream represents a sentential form in a right-most derivation of the input
+\item The stack configuration combined with the un-scanned input stream represents a sentential form in a right-most derivation of the input
 
 \item The part of the sentential form that is reduced to a non-terminal is always on top of the stack, so all actions take place at the top of the stack --- we either shift a token onto the stack, or we reduce what is already there
 \end{enumerate}
@@ -2278,7 +2277,7 @@ So, when a handle appears on top of the stack
 \begin{table}[H]
 \begin{tabular}{ll}
 Stack & Input \\ \hline \\
-\lstinline$#$$\alpha \beta$ & $w$
+$\alpha \beta$ & $w$
 \end{tabular}
 \end{table}
 \noindent we reduce that handle ($\beta$ to $Y$ in this case)
@@ -2297,7 +2296,7 @@ If there is not a handle on top of the stack and shifting the first un-scanned i
 \pause
 \bigskip
 
-The LR(1) parser algorithm is common to all LR(1) grammars and is driven by two tables (derived from a DFA that recognizes viable prefixes and handles): an Action table and a Goto table
+The LR(1) parsing algorithm is common to all LR(1) grammars and is driven by two tables (derived from a DFA that recognizes viable prefixes and handles): an Action table and a Goto table
 
 \pause
 \bigskip
@@ -2523,20 +2522,20 @@ Continuing in this fashion, the parser goes through the following sequence of co
 \begin{table}[H]
 \begin{tabular}{lll}
 Stack & Input & Action \\ \hline \\
-\lstinline$#$ & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
-\lstinline$#id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (6) \\
-\lstinline$#$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (4) \\
-\lstinline$#$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce (2) \\
-\lstinline$#$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce (6) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce (4) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce (6) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce (3) \\
-\lstinline$#$\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce (1) \\
-\lstinline$#$\mm{E} & \underline{\lstinline$#$} & accept
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1& \underline{\lstinline$+$}\lstinline$id*id#$ & shift 6 \\
+0\mm{E}1\lstinline$+$6 & \underline{\lstinline$id$}\lstinline$*id#$ & shift 5 \\
+0\mm{E}1\lstinline$+$6\lstinline$id$5 & \underline{\lstinline$*$}\lstinline$id#$    & reduce 6, output 6 \\
+0\mm{E}1\lstinline$+$6\mm{F}3 & \underline{\lstinline$*$}\lstinline$id#$ & reduce 4, output 4 \\
+0\mm{E}1\lstinline$+$6\mm{T}13 & \underline{\lstinline$*$}\lstinline$id#$ & shift 7 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7 & \underline{\lstinline$id$}\lstinline$#$ & shift 5 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7\lstinline$id$5 & \underline{\lstinline$#$} & reduce 6, output 6 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7\mm{F}14 & \underline{\lstinline$#$} & reduce 3, output 3 \\
+0\mm{E}1\lstinline$+$6\mm{T}13 & \underline{\lstinline$#$} & reduce 1, output 1 \\
+0\mm{E}1 & \lstinline$#$ & accept
 \end{tabular}
 \end{table}
 \end{frame}
