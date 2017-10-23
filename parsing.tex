@@ -3003,11 +3003,13 @@ goto(\subs{s}{2}, \lstinline{*}) = \subs{s}{7}
 
 \pause
 
-Notice that the closure of  \{[$T  ::= T$ \lstinline{*} $\cdot F$, \lstinline{+/*/#}]\} carries along the same lookaheads since no symbol follows the $F$ in the right hand side; there are no gotos from $s_3$, but several from $s_4$
+Notice that the closure of  \{[$T  ::= T$ \lstinline{*} $\cdot F$, \lstinline{+/*/#}]\} carries along the same lookaheads since no symbol follows the $F$ in the right hand side
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
+
+There are no gotos from $s_3$, but several from $s_4$
 
 \text{ }
 \begin{spaced}
@@ -3195,6 +3197,124 @@ There are no moves from $s_{20}$ or $s_{21}$, so we are done; the LR(1) canonica
 
 \begin{center}
 \visible<2->{\includegraphics[scale=0.28]{{figures/lr1_collection}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G=(N,T,S,P)$
+\ENSURE the LF(1) tables Action and Goto
+\begin{enumerate}
+\item Compute the LR(1) canonical collection $c = \{s_0, s_1, \dots, s_n\}$. State $i$ of the parser corresponds to the item set $s_i$. State 0, corresponding to the item set $s_0$, which contains the item [$S' ::= \cdot S$, \lstinline{#}], is the parser's initial state
+\item The Action table is constructed as follows:
+\begin{enumerate}[a.]
+\item For each transition, goto($s_i$, \lstinline{a}) = $s_j$, where $a$ is a terminal, set Action[$i$, \lstinline{a}] = $sj$.  The $s$ stands for ``shift''
+\item If the item set $s_k$ contains the item [$S' ::= S \cdot$, \lstinline{#}], set Action[$k$, \lstinline{#}] = accept
+\item For all item sets $s_i$, if $s_i$ contains an item of the form [$Y ::= \alpha \cdot$, \lstinline{a}], set Action[$i$, \lstinline{a}] = $rp$, where $p$ is the number corresponding to the rule $Y ::= \alpha$. The $r$ stands for ``reduce''
+\item All undefined entries in Action are set to error
+\end{enumerate}
+\item The Goto table is constructed as follows:
+\begin{enumerate}[a.]
+\item For each transition, goto($s_i$, $Y$) = $s_j$, where Y is a non-terminal, set Goto[$i$, $Y$] = $j$.
+\item All undefined entries in Goto are set to error
+\end{enumerate}
+\end{enumerate}
+\end{algorithmic}
+\caption{Constructing the LR(1) Parsing Tables for a Context-Free Grammar}
+\end{algorithm}
+
+\pause
+\bigskip
+
+If all entries in the Action table are unique then the grammar $G$ is said to be LR(1)
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The Action and Goto tables for our grammar for simple expressions are shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure03.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+There are two different kinds of conflicts possible for an entry in the Action table
+
+\pause
+\bigskip
+
+The first is the shift-reduce conflict, which can occur when there are items of the forms
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{Y} ::= \mm{\alpha \cdot}, \lstinline{a}] and
+[\mm{Y} ::= \mm{\alpha \cdot}\lstinline{a}\mm{\beta}, \lstinline{b}]
+\end{production}
+\end{spaced}
+
+\pause
+
+The first item suggests a reduce if the next un-scanned token is an \lstinline{a}; the second suggests a shift of the \lstinline{a} onto the stack
+
+\pause
+\bigskip
+
+Although such conflicts may occur for unambiguous grammars, a common cause are ambiguous constructs such as
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{S} ::= \lstinline{if} \lstinline{(}\mm{E}\lstinline{)} \mm{S}
+\mm{S} ::= \lstinline{if} \lstinline{(}\mm{E}\lstinline{)} \mm{S} \lstinline{else} \mm{S}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+Most parser generators that are based on LR grammars permit one to supply an extra disambiguating rule; for example, to favor a shift of the \lstinline{else} over a reduce of the \lstinline{if} \lstinline{(}$E$\lstinline{)} $S$ to an $S$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The second kind of conflict that we can have is the reduce-reduce conflict, which can happen when we have a state containing two items of the form
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{X} ::= \mm{\alpha \cdot}, \lstinline{a}] 
+[\mm{Y} ::= \mm{\beta \cdot}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+Here, the parser cannot distinguish which production rule to apply in the reduction
+
+\pause
+\bigskip
+
+The LR(1) parsing table for a typical programming language such as Java can have thousands of states, and so thousands of rows
+
+\pause
+\bigskip
+
+The LALR(1) parsing algorithm (see our text) is capable of reducing the number of states by an order of magnitude
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The following figure illustrates the relationships among the various categories of grammars we have been discussing
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure03.10}.jpg}}
 \end{center}
 \end{frame}
 
