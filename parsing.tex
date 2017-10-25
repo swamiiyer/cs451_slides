@@ -3322,5 +3322,297 @@ The following figure illustrates the relationships among the various categories 
 \begin{frame}[fragile]
 \pause
 
+Besides containing the regular expressions for the lexical structure for \jmm, the \lstinline{j--.jj} file also contains the syntactic rules for the language
+
+\pause
+\bigskip
+
+The Java code between the \lstinline{PARSER_BEGIN(JavaCCParser)} and \lstinline{PARSER_END(JavaCCParser)} block is copied verbatim to the generated \lstinline{JavaCCParser.java} file in the \lstinline{jminusminus} package
+
+\pause
+\bigskip
+
+The Java code defines helper functions, which are available for use within the generated parser; some of the helpers include: \lstinline{reportParserError()} for reporting errors, and \lstinline{recoverFromError()} for recovering from errors
+
+\pause
+\bigskip
+
+Following the block is the specification for the scanner for \jmm, and following that is the specification for the parser for \jmm
+
+\pause
+\bigskip
+
+The general layout for the syntactic specification is this: we define a start symbol, which is a high level non-terminal (\lstinline{compilationUnit} in case of \jmm) that references lower level non-terminals, which in turn reference the tokens defined in the lexical specification
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We are allowed to use the following BNF syntax in the syntactic specification
+\begin{itemize}
+\item $[a]$ for ``zero or one'', or an ``optional'' occurrence of $a$
+\item $(a)*$ for ``zero or more'' occurrences of $a$
+\item $a | b$ for alternation, ie, either $a$ or $b$
+\item $()$ for grouping
+\end{itemize}
+
+\pause
+\bigskip
+
+The syntax for a non-terminal declaration (or production rule) in the input file almost resembles that of a Java method declaration; it has a return type (could be \lstinline{void}), a name, can accept arguments, and has a body, which specifies the BNF rules along with any actions that we want performed as the production rule is parsed
+
+\pause
+\bigskip
+
+The method declaration also has a block preceding the body, which declares any local variables used within the body
+
+\pause
+\bigskip
+
+Syntactic actions, such as creating/returning an AST node, are Java code embedded within blocks
+
+\pause
+\bigskip
+
+JavaCC turns the specification for each non-terminal into a Java method within the generated parser
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The specification for the following rule for parsing a qualified identifier in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\<identifier\>}\}
+\end{production}
+\end{spaced}
+
+\noindent is shown below
+
+\begin{lstlisting}[language=Java]
+private TypeName qualifiedIdentifier(): {
+    int line = 0;
+    String qualifiedIdentifier = "";
+}
+{
+    try {
+        <IDENTIFIER>
+        {
+            line = token.beginLine;
+            qualifiedIdentifier = token.image;
+        }
+        (
+            <DOT> <IDENTIFIER>
+            { qualifiedIdentifier += "." + token.image; }
+        )*
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return new TypeName(line, qualifiedIdentifier); }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The specification for the following rule for parsing a statement in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+statement ::= block
+                  \mm{|} \lstinline{\<identifier\>} \lstinline{:} statement
+                  \mm{|} \lstinline{if} parExpression statement [\lstinline{else} statement]
+                  \mm{|} \lstinline{while} parExpression statement
+                  \mm{|} \lstinline{return} [expression] \lstinline{;}
+                  \mm{|} \lstinline{;}
+                  \mm{|} statementExpression \lstinline{;}
+\end{production}
+\end{spaced}
+
+\noindent is shown below
+
+\begin{lstlisting}[language=Java]
+private JStatement statement(): {
+    int line = 0;
+    JStatement statement = null;
+    JExpression test = null;
+    JStatement consequent = null;
+    JStatement alternate = null;
+    JStatement body = null;
+    JExpression expr = null;
+}
+{
+    try {
+        statement = block() |
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        <IF> { line = token.beginLine; }
+        test = parExpression()
+        consequent = statement()
+        [
+            LOOKAHEAD(<ELSE>)
+            <ELSE> alternate = statement()
+        ]
+        { statement =
+            new JIfStatement(line, test, consequent, alternate); } |
+        <WHILE> { line = token.beginLine; }
+        test = parExpression()
+        body = statement()
+        { statement = new JWhileStatement(line, test, body); } |
+        <RETURN> { line = token.beginLine; }
+        [
+            expr = expression()
+        ]
+        <SEMI>
+        { statement = new JReturnStatement(line, expr); } |
+        <SEMI>
+        { statement = new JEmptyStatement(line); } |
+        statement = statementExpression()
+        <SEMI>
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return statement; }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As in the case of a recursive descent parser, we cannot always decide which production rule to use in parsing a non-terminal just by looking at the current token; we have to look ahead at the next few symbols to decide
+
+\pause
+\bigskip
+
+For example, the specification for the following rule for parsing a simple unary expression in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+simpleUnaryExpression ::= \lstinline{!} unaryExpression
+                                   \mm{|} \lstinline{(} basicType \lstinline{)}  unaryExpression //cast
+                                   \mm{|} \lstinline{(} referenceType \lstinline{)} simpleUnaryExpression // cast
+                                   \mm{|} postfixExpression
+\end{production}
+\end{spaced}
+\noindent involves lookahead and is shown below
+
+\begin{lstlisting}[language=Java]
+private JExpression simpleUnaryExpression(): {
+    int line = 0;
+    Type type = null;
+    JExpression expr = null, unaryExpr = null, simpleUnaryExpr = null;
+}
+{
+    try {
+        <LNOT> { line = token.beginLine; }
+        unaryExpr = unaryExpression()
+        { expr = new JLogicalNotOp(line, unaryExpr); } |
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        LOOKAHEAD(<LPAREN> basicType() <RPAREN>)
+        <LPAREN> { line = token.beginLine; }
+        type = basicType()
+        <RPAREN>
+        unaryExpr = unaryExpression()
+        { expr = new JCastOp(line, type, unaryExpr); } |
+        LOOKAHEAD(<LPAREN> referenceType() <RPAREN>)
+        <LPAREN> { line = token.beginLine; }
+        type = referenceType()
+        <RPAREN>
+        simpleUnaryExpr = simpleUnaryExpression()
+        { expr = new JCastOp(line, type, simpleUnaryExpr); } |
+        expr = postfixExpression()
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return expr; }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The error recovery mechanism we use in our JavaCC parser for \jmm involves catching within the body of a non-terminal, the \lstinline{ParseException} that is raised in the event of a parsing error
+
+\pause
+\bigskip
+
+The exception instance \lstinline{e} along with skip-to tokens is passed to our \lstinline{recoverFromError()} error recovery function
+
+\pause
+\bigskip
+
+The exception instance has information about the erroneous token that was found and the token that was expected, and \lstinline{skipTo} is an array of tokens that we would like to skip to in order to recover from the error
+
+\pause
+\bigskip
+
+In the current error recovery scheme, all non-terminals specify \lstinline{SEMI} and \lstinline{EOF} as \lstinline{skipTo} tokens; this scheme could be made more sophisticated by specifying the follow set of the non-terminal as \lstinline{skipTo} tokens
+
+\pause
+\bigskip
+
+When \lstinline{ParseException} is raised, control is transferred to the calling non-terminal, and thus when an error occurs within higher non-terminals, the lower non-terminals go unparsed
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+    private void recoverFromError(int[] skipTo, ParseException e) {
+        // Get the possible expected tokens
+        StringBuffer expected = new StringBuffer();
+	for (int i = 0; i < e.expectedTokenSequences.length; i++) {
+            for (int j = 0; j < e.expectedTokenSequences[i].length; j++) {
+                expected.append("\n");
+                expected.append("    ");
+                expected.append(tokenImage[e.expectedTokenSequences[i][j]]);
+                expected.append("...");
+            }
+        }
+
+        // Print error message
+        if (e.expectedTokenSequences.length == 1) {
+            reportParserError("\"%s\" found where %s sought",                   
+                getToken(1), expected);
+        }
+        else {
+            reportParserError("\"%s\" found where one of %s sought",            
+                getToken(1), expected);
+        }
+
+        // Recover
+        boolean loop = true;
+        do {
+            token = getNextToken();
+            for (int i = 0; i < skipTo.length; i++) {
+                if (token.kind == skipTo[i]) {
+                    loop = false;
+                    break;
+                }
+            }
+        } while(loop);
+    }
+\end{lstlisting}
 \end{frame}
 \end{document}
