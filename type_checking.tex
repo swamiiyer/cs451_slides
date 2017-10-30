@@ -313,6 +313,312 @@ public Field fieldFor(String name) {
 \begin{frame}[fragile]
 \pause
 
+The semantic analysis of \jmm  programs requires two traversals of the AST because a class name or a member name may be referenced before it is declared in the source program
+
+\pause
+\bigskip
+
+The traversals are accomplished by the method \lstinline{preAnalyze()} for the first traversal and the method \lstinline{analyze()} for the second, which invoke themselves at the child nodes for recursively descending the AST
+
+\pause
+\bigskip
+
+The \lstinline{preAnalyze()} method must traverse down the AST only far enough for
+\begin{itemize}
+\item Declaring imported type names
+\item Declaring user-defined class names
+\item Declaring fields
+\item Declaring methods (including their signatures - the types of their parameters)
+\end{itemize}
+
+\pause
+\bigskip
+
+Therefore, \lstinline{preAnalyze()}need be defined only in the following types of AST nodes
+\begin{itemize}
+\item \lstinline{JCompilationUnit}
+\item \lstinline{JClassDeclaration}
+\item \lstinline{JFieldDeclaration}
+\item \lstinline{JMethodDeclaration}
+\item \lstinline{JConstructorDeclaration}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For the \lstinline{JCompilationUnit} node at the top of the AST, \lstinline{preAnalyze()} does the following
+\begin{enumerate}
+\item It creates a \lstinline{CompilationUnitContext}
+\item It declares the implicit \jmm types, \lstinline{java.lang.String} and \lstinline{java.lang.Object}
+\item It declares any imported types
+\item It declares the types defined by class declaration, ie, creates a \lstinline{Type} for each declared class, whose \lstinline{classRep} refers to a \lstinline{Class} object for an empty class; for example, in the pre-analysis phase of our \lstinline{Factorial} program above, the \lstinline{Type} for \lstinline{Factorial} would have a \lstinline{classRep}, the \lstinline{Class} object for the class
+\begin{lstlisting}[language=Java]
+class Factorial {}
+\end{lstlisting}
+\item Finally, \lstinline{preAnalyze()} invokes itself for each of the type declarations in the compilation unit
+\end{enumerate}
+
+\pause
+\bigskip
+
+Here is the code for \lstinline{preAnalyze()} in \lstinline{JCompilationUnit}
+\begin{lstlisting}[language=Java]
+public void preAnalyze() {
+    context = new CompilationUnitContext();
+
+    // Declare the two implicit types java.lang.Object and
+    // java.lang.String
+    context.addType(0, Type.OBJECT);
+    context.addType(0, Type.STRING);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Here is the code for \lstinline{preAnalyze()} in \lstinline{JCompilationUnit}
+\begin{lstlisting}[language=Java]
+
+    // Declare any imported types
+    for (TypeName imported: imports) {
+        try {
+            Class<?> classRep =
+                Class.forName(imported.toString());
+            context.addType(imported.line(),
+                Type.typeFor(classRep));
+        }
+        catch (Exception e) {
+            JAST.compilationUnit.reportSemanticError(
+                imported.line(),
+                "Unable to find %s", imported.toString());                      
+        }
+    }
+
+    // Declare the locally declared type(s)
+    CLEmitter.initializeByteClassLoader();
+    for (JAST typeDeclaration: typeDeclarations) {
+        ((JTypeDecl)
+              typeDeclaration).declareThisType(context);
+    }
+
+    // Pre-analyze the locally declared type(s). Generate
+    // (partial) Class instances, reflecting only the member
+    // interface type information
+    CLEmitter.initializeByteClassLoader();
+    for (JAST typeDeclaration: typeDeclarations) {
+        ((JTypeDecl)
+          typeDeclaration).preAnalyze(context);
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In a class declaration, \lstinline{preAnalyze()} does the following
+\begin{enumerate}
+\item It firstly creates a new \lstinline{ClassContext}, whose \lstinline{surroundingContext} points to the \lstinline{CompilationUnitContext}
+\item It resolves the class's super type
+\item It creates a new \lstinline{CLEmitter} instance, which will eventually be converted to the \lstinline{Class} object for representing the declared class
+\item It adds a class header, defining a name and any modifiers, to this \lstinline{CLEmitter} instance
+\item It recursively invokes \lstinline{preAnalyze()} on each of the class's members, which causes field declarations, constructors and method declarations (but with empty bodies) to be added to the \lstinline{CLEmitter} instance
+\item If there is no explicit constructor (having no arguments) in the set of members, it adds the implicit constructor to the \lstinline{CLEmitter} instance; for example, for the \lstinline{Factorial} program above, the following implicit constructor is added
+\begin{lstlisting}[language=Java]
+public Factorial() {
+    super();
+}
+\end{lstlisting}
+\item Finally, the \lstinline{CLEmitter} instance produces a \lstinline{Class} object, and that replaces the \lstinline{classRep} for the \lstinline{Type} of the declared class name in the (parent) \lstinline{ClassContext}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Here is the code for \lstinline{preAnalyze()} in \lstinline{JClassDeclaration}
+\begin{lstlisting}[language=Java]
+public void preAnalyze(Context context) {
+    // Construct a class context
+    this.context = new ClassContext(this, context);
+
+    // Resolve superclass
+    superType = superType.resolve(this.context);
+
+    // Creating a partial class in memory can result in a
+    // java.lang.VerifyError if the semantics below are
+    // violated, so we can't defer these checks to analyze()
+    thisType.checkAccess(line, superType);
+    if (superType.isFinal()) {
+        JAST.compilationUnit.reportSemanticError(line,
+            "Cannot extend a final type: %s",                                   
+            superType.toString());
+    }
+
+    // Create the (partial) class
+    CLEmitter partial = new CLEmitter();
+
+    // Add the class header to the partial class
+    String qualifiedName =
+        JAST.compilationUnit.packageName() == "" ? name :
+            JAST.compilationUnit.packageName() + "/" + name;
+    partial.addClass(mods, qualifiedName, superType.jvmName(),
+        null, false);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+
+    // Pre-analyze the members and add them to the partial class
+    for (JMember member: classBlock) {
+        member.preAnalyze(this.context, partial);
+        if (member instanceof JConstructorDeclaration &&
+             ((JConstructorDeclaration) member).
+                 params.size() == 0) {
+            hasExplicitConstructor = true;
+        }
+    }
+
+    // Add the implicit empty constructor?
+    if (!hasExplicitConstructor) {
+        codegenPartialImplicitConstructor(partial);
+    }
+
+    // Get the Class rep for the (partial) class and make it the
+    // representation for this type
+    Type id = this.context.lookupType(name);
+    if (id != null &&
+         !JAST.compilationUnit.errorHasOccurred()) {
+        id.setClassRep(partial.toClass());
+    }
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Here is the code for \lstinline{preAnalyze()} in \lstinline{JMethodDeclaration}
+\begin{lstlisting}[language=Java]
+public void preAnalyze(Context context, CLEmitter partial) {
+    // Resolve types of the formal parameters
+    for (JFormalParameter param: params) {
+        param.setType(param.type().resolve(context));
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+
+    // Resolve return type
+    returnType = returnType.resolve(context);
+
+    // Check proper local use of abstract
+    if (isAbstract && body != null) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "abstract method cannot have a body");
+    }
+    else if (body == null && ! isAbstract) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "Method with null body must be abstract");
+    }
+    else if (isAbstract && isPrivate ) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "private method cannot be declared abstract");
+    }
+    else if (isAbstract && isStatic ) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "static method cannot be declared abstract");
+    }
+
+    // Compute descriptor
+    descriptor = "(";
+    for (JFormalParameter param: params) {
+        descriptor += param.type().toDescriptor();
+    }
+    descriptor += ")" + returnType.toDescriptor();
+
+    // Generate the method with an empty body (for now)
+    partialCodegen(context, partial);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The code for \lstinline{partialCodegen()} is as follows
+\begin{lstlisting}[language=Java]
+public void partialCodegen(Context context, CLEmitter partial) {
+    // Generate a method with an empty body; need a return to
+    // make the class verifier happy.
+    partial.addMethod(mods, name, descriptor, null, false);
+
+    // Add implicit RETURN
+    if (returnType == Type.VOID) {
+	partial.addNoArgInstruction(RETURN);
+    }
+    else if (returnType == Type.INT ||
+              returnType == Type.BOOLEAN ||
+              returnType == Type.CHAR) {
+        partial.addNoArgInstruction(ICONST_0);
+        partial.addNoArgInstruction(IRETURN);
+    }
+    else {
+        // A reference type.
+        partial.addNoArgInstruction(ACONST_NULL);
+        partial.addNoArgInstruction(ARETURN);
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Pre-analysis for a \lstinline{JFieldDeclaration} is similar to that for a \lstinline{JMethodDeclaration}, and does the following
+\begin{enumerate}
+\item Enforces the rule that fields may not be declared \lstinline{abstract}
+\item Resolves the field's declared type
+\item Generates the JVM code for the field declaration, via the \lstinline{CLEmitter} created for the enclosing class declaration
+\end{enumerate}
+
+\pause
+\bigskip
+
+The code itself is rather simple
+\begin{lstlisting}[language=Java]
+public void preAnalyze(Context context, CLEmitter partial) {
+    // Fields may not be declared abstract.
+    if (mods.contains("abstract")) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "Field cannot be declared abstract");
+    }
+
+    for (JVariableDeclarator decl: decls) {
+        // Add field to (partial) class
+        decl.setType(decl.type().resolve( context));
+        partial.addField(mods, decl.name(),
+            decl.type().toDescriptor(), false);
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The following figure illustrates how much of the symbol table is constructed for our \lstinline{Factorial} program once pre-analysis is complete
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure04.04}.jpg}}
+\end{center}
 
 \end{frame}
 
