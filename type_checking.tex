@@ -619,31 +619,214 @@ The following figure illustrates how much of the symbol table is constructed for
 \begin{center}
 \visible<2->{\includegraphics[scale=0.5]{{figures/figure04.04}.jpg}}
 \end{center}
-
 \end{frame}
 
 \section{Analysis of \protect\jmm Programs}
 \begin{frame}[fragile]
 \pause
 
+The analysis phase, ie, the \lstinline{analyze()} method, recursively descends throughout the AST all the way to its leaves
+\begin{itemize}
+\item Re-writing field and local variable initializations as assignments
+\item Declaring both formal parameters and local variables
+\item Allocating locations in the stack frame for the formal parameters and local variables
+\item Computing the types of expressions and enforcing the language type rules
+\item Reclassifying ambiguous names
+\item Doing a limited amount of tree surgery
+\end{itemize}
 
+\pause
+\bigskip
+
+At the top of the AST, \lstinline{analyze()} simply recursively descends into each of the  type (class) declarations, delegating analysis to one class declaration at a time
+\begin{lstlisting}[language=Java]
+public JAST analyze(Context context) {
+    for (JAST typeDeclaration : typeDeclarations) {
+        typeDeclaration.analyze(this.context);
+    }
+    return this;
+}
+\end{lstlisting}
 \end{frame}
 
-\section{The Visitor Pattern and the AST Traversal Mechanism}
+\begin{frame}[fragile]
+\pause
+
+In \lstinline{JFieldDeclaration}, \lstinline{analyze()} rewrites the field initializer as an explicit assignment statement, analyzes that and then stores it in the \lstinline{JFieldDeclaration}'s initializations list
+\begin{lstlisting}[language=Java]
+public JFieldDeclaration analyze(Context context) {
+    for (JVariableDeclarator decl : decls) {
+        // All initializations must be turned into assignment
+        // statements and analyzed
+        if (decl.initializer() != null) {
+            JAssignOp assignOp = new JAssignOp(decl.line(), 
+                                     new JVariable(decl.line(), 
+                                         decl.name()), decl.initializer());
+            assignOp.isStatementExpression = true;
+            initializations.add(new JStatementExpression(decl.line(), 
+                                assignOp).analyze(context));
+        }
+    }
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+In \lstinline{JClassDeclaration}, \lstinline{analyze()} separates the assignment statements into two lists: one for the static fields and one for the instance fields
+\begin{lstlisting}[language=Java]
+// Copy declared fields for purposes of initialization.
+for (JMember member : classBlock) {
+    if (member instanceof JFieldDeclaration) {
+        JFieldDeclaration fieldDecl = (JFieldDeclaration) member;
+        if (fieldDecl.mods().contains("static")) {
+            staticFieldInitializations.add(fieldDecl);
+        } else {
+            instanceFieldInitializations.add(fieldDecl);
+        }
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The following figure shows how the static field declaration (\lstinline{static int n = 5;}) in the \lstinline{Factorial} program is rewritten
+\begin{center}
+\visible<2->{\includegraphics[scale=0.35]{{figures/figure04.05}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Both formal parameters and local variables are declared in the symbol table and allocated locations within a method invocation's run-time stack frame
+
+\pause
+\bigskip
+
+For example, consider the following class declaration
+\begin{lstlisting}[language=Java]
+public class Locals {
+    public int foo(int t, String u) {
+        int v = u.length();
+        {
+            int w = v + 5, x = w + 7;
+            v = w + x;
+        }
+        {
+            int y = 3;
+            int z = v + y;
+            t = t + y + z;
+        }
+        return t + v;
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The stack frame allocated for an invocation of \lstinline{foo()} at run time by the JVM is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure04.06}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The code for analyzing a \lstinline{JMethodDeclaration} performs four steps
+\begin{enumerate}
+\item It creates a new \lstinline{MethodContext}, whose \lstinline{surroundingContext} points back to the previous \lstinline{ClassContext}
+\item The first stack frame offset is 0; but if this is an instance method then offset 0 must be allocated to \lstinline{this}, and the \lstinline{nextOffset} is incremented to 1
+\item The formal parameters are declared as local variables and allocated consecutive offsets in the stack frame
+\item It analyzes the method's body
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+public JAST analyze(Context context) {
+    this.context = new MethodContext(context, returnType);
+
+    if (!isStatic) {
+        // Offset 0 is used to addr "this".
+        this.context.nextOffset();
+    }
+
+    // Declare the parameters
+    for (JFormalParameter param : params) {
+        this.context.addEntry(param.line(), param.name(),
+                new LocalVariableDefn(param.type(), this.context
+                        .nextOffset(), null));
+    }
+
+    if (body != null) {
+        body = body.analyze(this.context);
+    }
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The code for analyzing a \lstinline{JBlock} performs two steps
+\begin{enumerate}
+\item It creates a new \lstinline{LocalContext}, whose \lstinline{surroundingContext} points back to the previous \lstinline{MethodContext} (or \lstinline{LocalContext} in the case of nested blocks); its \lstinline{nextOffset} value is copied from the previous context
+\item It analyzes each of the body's statements; any \lstinline{JVariableDeclaration}s declare their variables in the \lstinline{LocalContext} created in step 1; any nested \lstinline{JBlock} simply invokes this two-step process recursively, creating yet another \lstinline{LocalContext} for the nested block
+\end{enumerate}
+
+\pause
+\bigskip
+
+\begin{lstlisting}[language=Java]
+public JBlock analyze(Context context) {
+    // { ... } defines a new level of scope.
+    this.context = new LocalContext(context);
+
+    for (int i = 0; i < statements.size(); i++) {
+        statements.set(i, (JStatement) statements.get(i).analyze(
+                this.context));
+    }
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The stages of the symbol table in analyzing \lstinline{Locals.foo()}
+\begin{center}
+\visible<2->{\includegraphics[scale=0.3]{{figures/figure04.07}.jpg}}
+\end{center}
+\end{frame}
+
 \begin{frame}[fragile]
 \pause
 
 
 \end{frame}
 
-\section{Programming Language Design and Symbol Table Structure}
 \begin{frame}[fragile]
 \pause
 
 
 \end{frame}
 
-\section{Attribute Grammars}
+\begin{frame}[fragile]
+\pause
+
+
+\end{frame}
+
 \begin{frame}[fragile]
 \pause
 
