@@ -812,6 +812,172 @@ The stages of the symbol table in analyzing \lstinline{Locals.foo()}
 \begin{frame}[fragile]
 \pause
 
+A local variable declaration is represented in the AST with a \lstinline{JVariableDeclaration}; for example, consider the local variable declaration from \lstinline{Locals}
+\begin{lstlisting}[language=Java]
+int w = v + 5, x = w + 7;
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Before the \lstinline{JVariableDeclaration} is analyzed, it appears exactly as it was created by the parser, as is illustrated below
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.4]{{figures/figure04.08}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Analysis of a \lstinline{JVariableDeclaration} involves the following
+\begin{enumerate}
+\item \lstinline{LocalVariableDefn}s and their corresponding stack frame offsets are allocated for each of the declared variables
+\item The code checks to make sure that the declared variables do not shadow existing local variables
+\item The variables are declared in the local context
+\item Any initializations are rewritten as explicit assignment statements; those assignments are re-analyzed and stored in an \lstinline{initializations} list
+\end{enumerate}
+
+\pause
+\bigskip
+
+\begin{lstlisting}[language=Java]
+public JStatement analyze(Context context) {
+    for (JVariableDeclarator decl : decls) {
+        // Local variables are declared here (fields are
+        // declaredin preAnalyze())
+        int offset = ((LocalContext) context).nextOffset();
+        LocalVariableDefn defn = new LocalVariableDefn(decl
+            .type().resolve(context), offset);
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+
+        // First, check for shadowing
+        IDefn previousDefn = context.lookup(decl.name());
+        if (previousDefn != null
+            && previousDefn instanceof LocalVariableDefn) {
+            JAST.compilationUnit.reportSemanticError(decl.line(),
+                "The name " + decl.name()
+                    + " overshadows another local variable.");
+        }
+
+        // Then declare it in the local context
+        context.addEntry(decl.line(), decl.name(), defn);
+
+        // All initializations must be turned into assignment
+        // statements and analyzed
+        if (decl.initializer() != null) {
+             defn.initialize();
+            JAssignOp assignOp = new JAssignOp(decl.line(),
+                new JVariable(decl.line(), decl.name()), decl
+                    .initializer());
+            assignOp.isStatementExpression = true;
+            initializations.add(new JStatementExpression(decl
+                .line(), assignOp).analyze(context));
+        }
+    }
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The sub-tree for \lstinline{int w = v + 5, x = w + 7;} after analysis is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure04.09}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Simple variables (local variables or fields) are represented in the AST as \lstinline{JVariable} nodes
+
+\pause
+\bigskip
+
+Analysis of simple variables involves looking their names up in the symbol table to find their types
+
+\pause
+\bigskip
+
+If a variable is not found in the symbol table, we examine the \lstinline{Type} for the surrounding class (in which the variable appears) to see if it is a field; if it is a field, then the field selection is made explicit by rewriting the tree as a \lstinline{JFieldSelection}
+
+\pause
+\bigskip
+
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    iDefn = context.lookup(name);
+    if (iDefn == null) {
+        // Not a local, but is it a field?
+	Type definingType = context.definingType();
+        Field field = definingType.fieldFor(name);
+        if (field == null) {
+            type = Type.ANY;
+            JAST.compilationUnit.reportSemanticError(line,
+                "Cannot find name: " + name);
+        } else {
+            // Rewrite a variable denoting a field as an
+            // explicit field selection
+            type = field.type();
+            JExpression newTree = new JFieldSelection(line(),
+                field.isStatic() ||
+		(context.methodContext() != null &&
+                 context.methodContext().isStatic()) ?
+                        new JVariable(line(),
+                            definingType.toString()) :
+                            new JThis(line), name);
+            return (JExpression) newTree.analyze(context);
+        }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+    } else {
+        if (!analyzeLhs && iDefn instanceof LocalVariableDefn &&
+            !((LocalVariableDefn) iDefn).isInitialized()) {
+            JAST.compilationUnit.reportSemanticError(line,
+                "Variable " + name + " might not have been
+                    initialized");
+        }
+        type = iDefn.type();
+    }
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+For example, the AST node for the local variable \lstinline{v} in the statement \lstinline{return t + v;} in \lstinline{Locals.foo()}, before and after analysis, is shown below
+\begin{center}
+\visible<3->{\includegraphics[scale=0.4]{{figures/figure04.10}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As another example, consider the analysis of the static field \lstinline{n}, when it appears in the \lstinline{main()} method of our \lstinline{Factorial} class; the AST node for the field, before and after analysis, is shown below
+\begin{center}
+\visible<3->{\includegraphics[scale=0.4]{{figures/figure04.11}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
 
 \end{frame}
 
