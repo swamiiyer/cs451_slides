@@ -978,24 +978,482 @@ As another example, consider the analysis of the static field \lstinline{n}, whe
 \begin{frame}[fragile]
 \pause
 
+Both field selections and message expressions have targets
 
+\pause
+\bigskip
+
+In a field selection, the target is either an object or a class from which one wants to select a field, and in a message expression, the target is an object or class to which one is sending a message
+
+\pause
+\bigskip
+
+Unfortunately, the parser cannot always make out the syntactic structure of a target
+
+\pause
+\bigskip
+
+For example, consider the field selection \lstinline{w.x.y.z}; the parser knows this is a field selection of some sort and that \lstinline{z} is the field, but, without knowing the types of \lstinline{w}, \lstinline{x} and \lstinline{y}, the parser cannot know whether
+\begin{itemize}
+\item \lstinline{w} is a class name,  \lstinline{x} is a static field in \lstinline{w}, and \lstinline{y} is a field of \lstinline{x};
+\item \lstinline{w} is a package containing class \lstinline{x}, and \lstinline{y} is a static field in \lstinline{x}; or
+\item \lstinline{w.x.y} is a fully qualified class name like \lstinline{java.lang.System}
+\end{itemize}
+
+\pause
+\bigskip
+
+For this reason, the parser packages up the string \lstinline{"w.x.y"} in an \lstinline{AmbiguousName} object, attached to either the \lstinline{JFieldSelection} or \lstinline{JMessageExpression}, deferring the decision until analysis
+
+\pause
+\bigskip
+
+The \lstinline{reclassify()} method in \lstinline{AmbiguousName} is based on the rules in the Java Language Specification for reclassifying an ambiguous name
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
 
+\begin{lstlisting}[language=Java]
+public JExpression reclassify(Context context) {
+    // Easier because we require all types to be imported.
+    JExpression result = null;
+    StringTokenizer st = new StringTokenizer(name, ".");
 
+    // Firstly, find a variable or Type.
+    String newName = st.nextToken();
+    IDefn iDefn = null;
+
+    do {
+        iDefn = context.lookup(newName);
+        if (iDefn != null) {
+            result = new JVariable(line, newName);
+            break;
+        } else if (!st.hasMoreTokens()) {
+            // Nothing found. :(
+            JAST.compilationUnit.reportSemanticError(line,
+                "Cannot find name " + newName);
+            return null;
+        } else {
+            newName += "." + st.nextToken();
+        }
+    } while (true);
+
+    // For now we can assume everything else is fields.
+    while (st.hasMoreTokens()) {
+        result = new JFieldSelection(line, result, st.nextToken());
+    }
+    return result;
+}
+\end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
 
+For example, consider the message expression
+\begin{lstlisting}[language=Java]
+java.lang.System.out.println(...);
+\end{lstlisting}
 
+The parser will have encapsulated the target \lstinline{java.lang.System.out} in an \lstinline{AmbiguousName} object
+
+\pause
+\bigskip
+
+The first thing \lstinline{analyze()} does for a \lstinline{JMessageExpression} is to reclassify the \lstinline{AmbiguousName} to determine the structure of the expression that it denotes, which it does by looking at the ambiguous \lstinline{java.lang.System.out} from left to right
+\begin{enumerate}
+\item Firstly, \lstinline{reclassify(}) looks up the simple name, \lstinline{java} in the symbol table.
+\item Not finding that, it looks up \lstinline{java.lang}
+\item Not finding that, it looks up \lstinline{java.lang.System}, which (assuming \lstinline{java.lang.System} has been properly imported) it finds to be a class.
+\item It then assumes that the rest of the ambiguous part, that is \lstinline{out}, is a field
+\item Thus the target is a field selection whose target is \lstinline{java.lang.System} and whose field name is \lstinline{out}
+\end{enumerate}
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
 
+After reclassifying any ambiguous part and making that the target, analysis of a \lstinline{JFieldSelection} proceeds as follows
+\begin{enumerate}
+\item It analyzes the target and determines the target's type
+\item It then considers the special case where the target is an array and the field is \lstinline{length}.  In this case, the type of the ``field selection'' is \lstinline{Type.INT}
+\item Otherwise, it ensures that the target is not a primitive and determines whether or not it can find a field of the appropriate name in the target's type; if it cannot, then an error is reported
+\item Otherwise, it checks to make sure the field is accessible to this region, a non-static field is not referenced from a static context, and then returns the analyzed field selection sub-tree
+\end{enumerate}
 
+\pause
+\bigskip
+
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    // Reclassify the ambiguous part.
+    ...
+    
+    target = (JExpression) target.analyze(context);
+    Type targetType = target.type();
+    
+    // We use a workaround for the "length" field of arrays.
+    if ((targetType instanceof ArrayTypeName) && fieldName.equals("length")) {
+        type = Type.INT;
+    } else {
+        // Other than that, targetType has to be a
+        // ReferenceType
+        if (targetType.isPrimitive()) {
+            JAST.compilationUnit.reportSemanticError(line(),
+                "Target of a field selection must be a defined type");
+            type = Type.ANY;
+            return this;
+        }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        field = targetType.fieldFor(fieldName);
+        if (field == null) {
+            JAST.compilationUnit.reportSemanticError(line(),
+                "Cannot find a field: " + fieldName);
+            type = Type.ANY;
+        } else {
+            context.definingType().checkAccess(line,
+		(Member) field);
+            type = field.type();
+
+            // Non-static field cannot be referenced from a
+            // static context.
+            if (!field.isStatic()) {
+                if (target instanceof JVariable &&
+                    ((JVariable) target).iDefn() instanceof
+                       TypeNameDefn) {
+                     JAST.compilationUnit.
+                         reportSemanticError(line(),
+                         "Non-static field " + fieldName +
+                            " cannot be referenced from a static
+                              context");
+                }
+            }
+        }
+    }
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+After reclassifying any \lstinline{AmbiguousName}, analyzing a \lstinline{JMessageExpression} proceeds as follows
+
+\begin{enumerate}
+\item It analyzes the arguments to the message and constructs an array of their types
+\item It determines the surrounding, defining class (for determining access)
+\item It analyzes the target to which the message is being sent
+\item It takes the message name and the array of argument types and looks for a matching method defined in the target's type (in \jmm, argument types must match exactly), and if no such method is found, it reports an error
+\item Otherwise, the target class and method are checked for accessibility, a non-static method is now allowed to be referenced from a static context, and the method's return type becomes the type of the message expression
+\end{enumerate}
+
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    // Reclassify the ambiguous part
+    …
+
+    // Then analyze the arguments, collecting
+    // their types (in Class form) as argTypes
+    argTypes = new Type[arguments.size()];
+    for (int i = 0; i < arguments.size(); i++) {
+        arguments.set(i, (JExpression) arguments.get(i).analyze(
+            context));
+        argTypes[i] = arguments.get(i).type();
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+
+    // Where are we now? (For access)
+    Type thisType = ((JTypeDecl) context.classContext
+        .definition()).thisType();
+        
+    // Then analyze the target
+    if (target == null) {
+                 // Implied this (or, implied type for statics)
+        if (!context.methodContext().isStatic()) {
+            target = new JThis(line()).analyze(context);
+        }
+        else {
+            target = new JVariable(line(),
+                        context.definingType().toString()).
+                            analyze(context);
+        }
+    } else {
+        target = (JExpression) target.analyze(context);
+        if (target.type().isPrimitive()) {
+            JAST.compilationUnit.reportSemanticError(line(),
+                "cannot invoke a message on a primitive type:"
+                    + target.type());
+        }
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+
+    // Find appropriate Method for this message expression
+    method = target.type().methodFor(messageName, argTypes);
+    if (method == null) {
+        JAST.compilationUnit.reportSemanticError(line(),
+            "Cannot find method for: "
+                + Type.signatureFor(messageName, argTypes));
+        type = Type.ANY;
+    } else {
+        context.definingType().checkAccess(line,
+                                          (Member) method);
+        type = method.returnType();
+
+        // Non-static method cannot be referenced from a
+        // static context.
+        if (!method.isStatic()) {
+            if (target instanceof JVariable &&
+                ((JVariable) target).iDefn() instanceof
+                    TypeNameDefn) {
+                 JAST.compilationUnit.reportSemanticError(line(),
+                  "Non-static method " +
+                  Type.signatureFor(messageName, argTypes) +
+                  "cannot be referenced from a static context");
+            }
+        }
+    }
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The rest of analysis, as defined for the various kinds of AST nodes is about computing and checking types and enforcing additional \jmm rules
+
+\pause
+\bigskip
+
+For most kinds of AST nodes, analysis involves analyzing the sub-trees and checking the types
+
+\pause
+\bigskip
+
+Analysis of \lstinline{JIfStatement}
+\begin{lstlisting}[language=Java]
+public JStatement analyze(Context context) {
+    test = (JExpression) test.analyze(context);
+    test.type().mustMatchExpected(line(), Type.BOOLEAN);
+    consequent = (JStatement) consequent.analyze(context);
+    if (alternate != null) {
+        alternate = (JStatement) alternate.analyze(context);
+    }
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Analysis of \lstinline{JSubtractOp}
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+     lhs = (JExpression) lhs.analyze(context);
+     rhs = (JExpression) rhs.analyze(context);
+     lhs.type().mustMatchExpected(line(), Type.INT);
+     rhs.type().mustMatchExpected(line(), Type.INT);
+     type = Type.INT;
+     return this;
+ }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Analysis of \lstinline{JPlusOp}
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+    if (lhs.type() == Type.STRING || rhs.type() == Type.STRING) {
+        return (new JStringConcatenationOp(line, lhs, rhs))
+            .analyze(context);
+    } else if (lhs.type() == Type.INT && rhs.type() == Type.INT){
+        type = Type.INT;
+    } else {
+        type = Type.ANY;
+        JAST.compilationUnit.reportSemanticError(line(),
+            "Invalid operand types for +");
+    }
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Analysis of \lstinline{JStringConcatenateOp}
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    type = Type.STRING;
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Analysis of \lstinline{JLiteralInt}
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    type = Type.INT;
+    return this;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The \jmm language is stricter than is Java when it comes to types
+
+\pause
+\bigskip
+
+There are no implied conversions in \jmm; when one assigns an expression to a variable, the types must match exactly, and the same goes for actual parameters to messages matching the formal parameters of methods
+
+\pause
+\bigskip
+
+This does not exclude polymorphism; for example if type \lstinline{Bar} extends type \lstinline{Foo}, if \lstinline{bar} is a variable of type \lstinline{Bar} and \lstinline{foo} is a variable of type \lstinline{Foo}, we can say
+\begin{lstlisting}[language=Java]
+foo = (Foo) bar;
+\end{lstlisting}
+to keep the \jmm compiler happy
+
+\pause
+\bigskip
+
+Of course, the object that \lstinline{bar} refers to could be of type \lstinline{Bar} or any of its sub-types; polymorphism has not gone away
+
+\pause
+\bigskip
+
+Analysis, when encountering a \lstinline{JCastOp}\index{\lstinline{JCastOp}} for an expression such as 
+\begin{lstlisting}[language={}]
+    (Type2) expression of Type1
+\end{lstlisting}
+must determine two things
+\begin{enumerate}
+\item That an expression of type \lstinline{Type1} can be cast to \lstinline{Type2}, ie, that the cast is valid
+\item The type of the result, which is simply \lstinline{Type2}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+To determine (1) we must consider the possibilities for \lstinline{Type1} and \lstinline{Type2}
+\begin{enumerate}
+\item Any type may be cast to itself (aka identity cast)
+\item An arbitrary reference type may be cast to another reference type if and only if either one of the following holds
+\begin{enumerate}
+\item The first type is a sub-type of (extends) the second type; this is called widening and requires no action at run time
+\item The second type is a sub-type of the first type; this is called narrowing and requires a run-time check to make sure the expression being cast is actually an instance of the type it is being cast to
+\end{enumerate}
+\item The following table summarizes other casts, and says whether or not (and how) a type labeling a row may be cast to a type labeling a column
+\begin{center}
+    \begin{tabular}{ | l | l | l | l | l | l | l | }
+    \hline
+    & \lstinline$boolean$   & \lstinline$char$    & \lstinline$int$ & \lstinline$Boolean$ &
+                \lstinline$Character$ & \lstinline$Integer$   \\ \hline
+
+   \lstinline$boolean$   & Identity & Error     & Error    & Boxing  & Error  & Error \\ \hline
+   \lstinline$char$      & Error    & Identity  & Widening & Error   & Boxing & Error \\ \hline
+   \lstinline$int$       & Error    & Narrowing & Identity & Error   & Error      & Boxing \\ \hline
+   \lstinline$Boolean$   & Unboxing & Error     & Error    & Identity & Error   & Error \\ \hline
+   \lstinline$Character$ & Error    & Unboxing  & Error    & Error    & Identity & Error \\ \hline
+   \lstinline$Integer$   & Error    & Error     & Unboxing & Error    & Error   & Identity \\ \hline
+    \end{tabular}
+\end{center}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Analysis in \lstinline{JCastOp}
+
+\begin{lstlisting}[language=Java]
+public JExpression analyze(Context context) {
+    expr = (JExpression) expr.analyze(context);
+    type = cast = cast.resolve(context);
+    if (cast.equals(expr.type())) {
+        converter = Converter.Identity;
+    } else if (cast.isJavaAssignableFrom(expr.type())) {
+        converter = Converter.WidenReference;
+    } else if (expr.type().isJavaAssignableFrom(cast)) {
+        converter = new NarrowReference(cast);
+    } else if ((converter =
+        conversions.get(expr.type(), cast)) != null) {
+    } else {
+        JAST.compilationUnit.reportSemanticError(line,
+            "Cannot cast a " + expr.type().toString() + " to a "
+                + cast.toString());
+    }
+    return this;
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+A converter for narrowing one reference type to another (more specific) reference sub-type
+\begin{lstlisting}[language=Java]
+class NarrowReference implements Converter {
+    private Type target;
+
+    public NarrowReference(Type target) {
+        this.target = target;
+    }
+
+    public void codegen(CLEmitter output) {
+        output.addReferenceInstruction(CHECKCAST, target.jvmName());
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In Java, every variable (whether it be a local variable or a field) must be definitely assigned before it is accessed in a computation, ie, it must appear on the left hand side of the \lstinline{=} operator before it is accessed
+
+\pause
+\bigskip
+
+We do not have this rule in  \jmm, so we need not enforce it in our compiler
+
+\pause
+\bigskip
+
+Enforcing the definite assignment rule requires data flow analysis, which determines where in the program variables are defined (assigned values), where in the program the variables' values are used and so where in the program those values are valid (from assignment to last use)
+
+\pause
+\bigskip
+
+Our JVM to MIPS translator performs data-flow analysis as part of computing live intervals for register allocation
 \end{frame}
 \end{document}
