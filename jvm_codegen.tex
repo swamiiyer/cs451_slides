@@ -341,17 +341,334 @@ public void codegen(CLEmitter output) {
 \begin{frame}[fragile]
 \pause
 
+Almost all control statements in \jmm are controlled by some Boolean expression
+
+\pause
+\bigskip
+
+For example, consider the if-then-else statement below
+\begin{lstlisting}[language=Java]
+if (a > b) { c = a; } else { c = b; }
+\end{lstlisting}
+
+The JVM code produced for the statement is as follows
+\begin{lstlisting}[language={}]
+0: iload_1
+1: iload_2
+2: if_icmple 10
+5: iload_1
+6: istore_3
+7: goto  12
+10: iload_2
+11: istore_3
+12: ...
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Notice a couple of things
+\begin{enumerate}
+\item We don't compute a Boolean value onto the stack and then branch on its value, but make use of the underlying JVM instruction set, which makes for more compact code
+
+\item We branch to the else-part if the condition is \lstinline{false}
+\begin{lstlisting}[language={}]
+branch to elseLabel if <condition> is false
+    <code for thenPart>
+    branch to endLabel
+elseLabel:
+    <code for elsePart>
+endLabel:
+\end{lstlisting}
+\end{enumerate}
 \end{frame}
 
+\begin{frame}[fragile]
+\pause
+
+Suppose we wish implement the Java do-while statement in \jmm; for example
+\begin{lstlisting}[language=Java]
+do {
+    a++;
+}
+while (a < b);
+\end{lstlisting}
+
+The code we generate might have the form
+\begin{lstlisting}[language={}]
+topLabel:
+    <code for body>
+    branch to topLabel if <condition> is true
+\end{lstlisting}
+
+Note that we branch when the condition is \lstinline{true}
+
+\pause
+\bigskip
+
+In generating code for a condition, one needs a method specifying three arguments
+\begin{enumerate}
+\item The \lstinline{CLEmitter} instance
+\item The target label for the branch
+\item A \lstinline{boolean} flag \lstinline{onTrue}; if \lstinline{onTrue} is \lstinline{true} then the branch should be made on the condition, and if \lstinline{false}, the branch should be made on the condition's complement
+\end{enumerate}
+
+\pause
+\bigskip
+
+Thus, every boolean expression must support a version of \lstinline{codegen()} with these three arguments;  for example, here is that overloaded \lstinline{codegen()} method for \lstinline{JGreaterThanOp}
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output, String targetLabel, boolean onTrue) {
+    lhs.codegen(output);
+    rhs.codegen(output);
+    output.addBranchInstruction(onTrue ? IF_ICMPGT : IF_ICMPLE, targetLabel);
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The three-argument \lstinline{codegen()} method is invoked on the condition controlling execution
+
+\pause
+\bigskip
+
+For example, the \lstinline{codegen()} method in \lstinline{JIfStatement} makes use of the three-argument \lstinline{codegen()} method in producing code for the if-then-else statement
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output) {
+    String elseLabel = output.createLabel();
+    String endLabel = output.createLabel();
+    condition.codegen(output, elseLabel, false);
+    thenPart.codegen(output);
+    if (elsePart != null) {
+        output.addBranchInstruction(GOTO, endLabel);
+    }
+    output.addLabel(elseLabel);
+    if (elsePart != null) {
+        elsePart.codegen(output);
+        output.addLabel(endLabel);
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The semantics of Java, and so of \jmm, requires that the evaluation of expressions such as \lstinline{arg1 && arg2} be short-circuited, ie, if \lstinline{arg1} is \lstinline{false}, then \lstinline{arg2} is not evaluated
+
+\pause
+\bigskip
+
+The code to be generated depends of whether the branch for the entire expression is to be made on \lstinline{true}, or on \lstinline{false}
+
+\begin{lstlisting}[language={}]
+Branch to target when           Branch to target when
+    arg1 && arg2 is true:                arg1 && arg2 is false:
+
+    branch to skip if               branch to target if
+        arg1 is false                    arg1 is false
+    branch to target when           branch to target if
+        arg2 is true                     arg2 is false
+skip: ...
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, the code generated for 
+\begin{lstlisting}[language=Java]
+if (a > b && b > c) { c = a; } else { c = b; }
+\end{lstlisting}
+
+would be
+
+\begin{lstlisting}[language={}]
+0: iload_1
+1: iload_2
+2: if_icmple 15
+5: iload_2
+6: iload_3
+7: if_icmple 15
+10: iload_1
+11: istore_3
+12: goto 17
+15: iload_2
+16: istore_3
+17: ...
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The \lstinline{codegen()} method in \lstinline{JLogicalAndOp}
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output, String targetLabel, boolean onTrue) {
+    if (onTrue) {
+        String falseLabel = output.createLabel();
+        lhs.codegen(output, falseLabel, false);
+        rhs.codegen(output, targetLabel, true);
+        output.addLabel(falseLabel);
+    } else {
+        lhs.codegen(output, targetLabel, false);
+        rhs.codegen(output, targetLabel, false);
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Notice that our method prevents unnecessary branches to branches; for example, consider the slightly more complicated condition in
+\begin{lstlisting}[language=Java]
+if (a > b && b > c && c > 5) { c = a; } else { c = b; }
+
+\end{lstlisting}
+
+The JVM code produced for this targets the same exit on \lstinline{false}, for each of the \lstinline{&&} operations
+\begin{lstlisting}[language={}]
+0:   iload_1
+1:   iload_2
+2:   if_icmple       18
+5:   iload_2
+6:   iload_3
+7:   if_icmple       18
+10:  iload_3
+11:  iconst_5
+12:  if_icmple       18
+15:  iinc    1, -1
+18:  ...
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The \lstinline{codegen()} method in \lstinline{JLogicalNotOp}
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output, String targetLabel, boolean onTrue) {
+    arg.codegen(output, targetLabel, !onTrue);
+}
+\end{lstlisting}
+\end{frame}
 
 \section{Generating Code for Message Expressions, Field Selection, and Array Expressions}
 \begin{frame}[fragile]
 \pause
 
-
+The \lstinline{codegen()} method in \lstinline{JMessageExpression} proceeds as follows
+\begin{enumerate}
+\item If the message expression involves an instance message, \lstinline{codegen()} generates code for the target
+\item The message invocation instruction is determined: \lstinline{invokevirtual} for instance messages and \lstinline{invokestatic} for static messages
+\item The \lstinline{addMemberAccessInstruction()} method is invoked to generate the message invocation instruction; this method takes the following arguments
+\begin{enumerate}[(a)]
+\item The instruction (\lstinline{invokevirtual} or \lstinline{invokestatic})
+\item The JVM name for the target's type
+\item The message name
+\item The descriptor of the invoked method, which was determined in analysis.
+\end{enumerate}
+\item If the message expression is being used as a statement expression and the return type of the method  is non-void, then the method \lstinline{addNoArgInstruction()} is invoked for generating a \lstinline{pop} instruction; this is necessary because executing the message expression will produce a result on top of the stack, and this result is to be thrown away
+\end{enumerate}
 \end{frame}
 
 \section{Generating Code for Assignment and Similar Operations}
+\begin{frame}[fragile]
+\pause
+
+For example, the code generated for 
+\begin{lstlisting}[language=Java]
+... = s.square(6);
+\end{lstlisting}
+would be
+\begin{lstlisting}[language={}]
+aload s' # s' denotes offset of s
+bipush  6
+invokevirtual   #6; //Method square:(I)I
+\end{lstlisting}
+
+whereas the code generated for 
+\begin{lstlisting}[language=Java]
+s.square(6);
+\end{lstlisting}
+would be 
+\begin{lstlisting}[language={}]
+aload s'
+bipush  6
+invokevirtual   #6; //Method square:(I)I
+pop
+\end{lstlisting}
+
+\pause
+\bigskip
+
+We invoke static methods using the \lstinline{invokestatic} instruction; for example the following \jmm code
+\begin{lstlisting}[language=Java]
+... = Square.square(5);
+\end{lstlisting}
+where \lstinline{int square(int)} is a static method in \lstinline{Square}, would generate the following JVM code
+\begin{lstlisting}[language={}]
+iconst_5
+invokestatic    #5; //Method square:(I)I
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The \lstinline{codegen()} method in \lstinline{JFieldSelection} works as follows
+\begin{enumerate}
+\item It generates code for its target; if the target is a class, no code is generated
+\item The compiler must again treat the special case, \lstinline{a.length} where \lstinline{a} is an array; the code generated makes use of the special instruction, \lstinline{arraylength}
+\item Otherwise, it is treated as a proper field selection; the field selection instruction is determined: \lstinline{getfield} for instance fields and \lstinline{getstatic} for static fields
+\item The \lstinline{addMemberAccessInstruction()} method is invoked with the following arguments
+\begin{enumerate}[(a)]
+\item The instruction (\lstinline{getfield} or \lstinline{getstatic})
+\item The JVM name for the target's type
+\item The field name
+\item The JVM descriptor for the type of the field, and so the type of the result
+\end{enumerate}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, the following code
+\begin{lstlisting}[language=Java]
+... = s.instanceField;
+\end{lstlisting}
+would be translated as
+\begin{lstlisting}[language={}]
+aload s'
+getfield instanceField
+\end{lstlisting}
+
+whereas the following code
+\begin{lstlisting}[language=Java]
+... = Square.staticField;
+\end{lstlisting}
+would be translated as
+\begin{lstlisting}[language={}]
+getstatic staticField
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Code generation for array access expressions is straightforward; for example, if the variable \lstinline{a} references an array object, and \lstinline{i} is an integer, then the following code
+\begin{lstlisting}[language=Java]
+... = a[i];
+\end{lstlisting}
+is translated to 
+\begin{lstlisting}[language={}]
+aload a'
+iload i'
+iaload
+\end{lstlisting}
+\end{frame}
+
 \begin{frame}[fragile]
 \pause
 
