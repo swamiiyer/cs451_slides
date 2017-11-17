@@ -573,7 +573,6 @@ The \lstinline{codegen()} method in \lstinline{JMessageExpression} proceeds as f
 \end{enumerate}
 \end{frame}
 
-\section{Generating Code for Assignment and Similar Operations}
 \begin{frame}[fragile]
 \pause
 
@@ -669,23 +668,311 @@ iaload
 \end{lstlisting}
 \end{frame}
 
+\section{Generating Code for Assignment and Similar Operations}
 \begin{frame}[fragile]
 \pause
 
+Consider the simple assignment statement
+\begin{lstlisting}[language=Java]
+x = y;
+\end{lstlisting}
+which asks that the value of the variable \lstinline{y} be stored in variable \lstinline{x}
 
+\pause
+\bigskip
+
+We want the $l$-value (address or location) for \lstinline{x} and the $r$-value (content or value) for \lstinline{y}
+
+\pause
+\bigskip
+
+All expressions have $r$-values, but many have no $l$-values; for example, if \lstinline{a} is an array of ten integers, and \lstinline{o} is an object with field \lstinline{f}, \lstinline{C} is a class with static field \lstinline{sf}, and \lstinline{x} is a local variable, the following have both $l$-values and $r$-values 
+\begin{lstlisting}[language={}]
+a[3]
+o.f
+C.sf
+x
+\end{lstlisting}
+while the following have $r$-values, but not $l$-values
+\begin{lstlisting}[language={}]
+5
+x+5
+Factorial.factorial(5)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The right-hand-side expression is compiled to produce code for computing its $r$-value and leaving it on the stack
+
+\pause
+\bigskip
+
+For the left-hand-side, sometimes no code needs to be generated, as in the following example
+\begin{lstlisting}[language=Java]
+x = y;
+\end{lstlisting}
+produces
+\begin{lstlisting}[language={}]
+iload y'
+istore x'
+\end{lstlisting}
+
+On the other hand, compiling
+\begin{lstlisting}[language=Java]
+a[x] = y;
+\end{lstlisting}
+produces
+\begin{lstlisting}[language={}]
+aload a'
+iload x'
+iload y'
+iastore
+\end{lstlisting}
+
+\pause
+\bigskip
+
+An assignment may act as a statement, as shown below
+\begin{lstlisting}[language=Java]
+x = y;
+\end{lstlisting}
+or as an expression, as shown below
+\begin{lstlisting}[language=Java]
+z = x = y;
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In the first case, no value is left on the stack
+
+\pause
+\bigskip
+
+In the second case, \lstinline{x = y} must assign the value of \lstinline{y} to \lstinline{x} but also leave a value (the $r$-value for \lstinline{y}) on the stack so that it may be popped off and assigned to \lstinline{z}, ie, the code might look something like
+\begin{lstlisting}[language={}]
+iload y'
+dup
+istore x'
+istore z'
+\end{lstlisting}
+
+\pause
+\bigskip
+
+In parsing, when an expression is used as a statement, \lstinline{Parser}'s \lstinline{statementExpression()} method sets a flag \lstinline{isStatementExpression} in the expression node to \lstinline{true}, and the code generation phase makes use of this flag in deciding when code must be produced for duplicating $r$-values on the run-time stack
+
+\pause
+\bigskip
+
+The most important property of the assignment is its side effect; one uses the assignment operation for its side effect: overwriting a variable's $r$-value with another
+
+\pause
+\bigskip
+
+There are several Java (and \jmm) operations having the same sort of side effect; for example,
+\begin{lstlisting}[language=Java]
+x--
+++x
+x += 6
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The table below compares the various operations (labeled down the left), with an assortment of left-hand sides (labeled across the top)
+\begin{center}
+\visible<2->{\includegraphics[scale=0.25]{{figures/assignments1}.jpg}}
+\end{center}
+The instructions in brackets [...] must be generated if and only if the operation is a sub-expression of some other expression, ie, if the operation is not a statement expression
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The table above suggests four sub-operations common to most of the assignment-like operations in \jmm \begin{enumerate}
+\item \lstinline{codegenLoadLhsLvalue()} - this generates code to load any up-front data for the left-hand side of an assignment needed for an eventual store, ie, its $l$-value
+\item \lstinline{codegenLoadLhsRvalue()} - this generates code to load the $r$-value of the left-hand side, needed for implementing, for example the \lstinline{+=} operator
+\item \lstinline{codegenDuplicateRvalue()} - this generates code to duplicate an $r$-value on the stack and put it in a place where it will be on top of the stack once the store is executed
+\item \lstinline{codegenStore()} - this generates the code necessary to perform the actual store
+\end{enumerate}
+
+\pause
+\bigskip
+
+The code needed for each of these differs for each potential left-hand side of an assignment: a simple local variable \lstinline{x}, an indexed array element \lstinline{a[i]}, an instance field \lstinline{o.f}, and a static field \lstinline{C.sf}
+
+\pause
+\bigskip
+
+The code necessary for each of the four operations, and for each left-hand-side form, is illustrated in the table below
+
+\begin{center}
+\visible<4->{\includegraphics[scale=0.27]{{figures/assignments2}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Our compiler defines an interface \lstinline{JLhs}, which declares four abstract methods for these four sub-operations; each of \lstinline{JVariable}, \lstinline{JArrayExpression} and \lstinline{JFieldSelection} implements \lstinline{JLhs}
+
+\pause
+\bigskip
+
+Of course, one must also be able to generate code for the right-hand side expression, but \lstinline{codegen()} is sufficient for that
+
+\pause
+\bigskip
+
+For example, \lstinline{JPlusAssignOp}'s \lstinline{codegen()} is shown below
+\begin{lstlisting}[language=Java]
+public void codegen(CLEmitter output) {
+    ((JLhs) lhs).codegenLoadLhsLvalue(output);
+    if (lhs.type().equals(Type.STRING)) {
+        rhs.codegen(output);
+    } else {
+        ((JLhs) lhs).codegenLoadLhsRvalue(output);
+        rhs.codegen(output);
+        output.addNoArgInstruction(IADD);
+    }
+    if (!isStatementExpression) {
+        // Generate code to leave the r-value atop stack
+        ((JLhs) lhs).codegenDuplicateRvalue(output);
+    }
+    ((JLhs) lhs).codegenStore(output);
+}
+\end{lstlisting}
 \end{frame}
 
 \section{Generating Code for String Concatenation}
 \begin{frame}[fragile]
 \pause
 
+In \jmm, as in Java, the binary \lstinline{+} operator is overloaded; if both of its operands are integers, it denotes addition, but if either operand is a string then the operator denotes string concatenation and the result is a string
 
+\pause
+\bigskip
+
+The compiler's analysis phase determines whether or not string concatenation is implied, and when it is, the concatenation is made explicit, ie, the operation's AST is rewritten, replacing \lstinline{JPlusOp} with a \lstinline{JStringConcatenationOp}
+
+\pause
+\bigskip
+
+Also, when \lstinline{x} is a string, analysis replaces
+\begin{lstlisting}[language=Java]
+x += <expression>
+\end{lstlisting}
+by
+\begin{lstlisting}[language=Java]
+x = x + <expression>
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+To implement string concatenation, the compiler generates code to do the following
+\begin{enumerate}
+\item Create an empty string buffer, ie, a \lstinline{StringBuffer} object, and initialize it
+\item Append any operands to that buffer; that \lstinline{StringBuffer}'s \lstinline{append()} method is overloaded to deal with any type makes handling operands of mixed types easy
+\item Invoke the \lstinline{toString()} method on the string buffer to produce a \lstinline{String}
+\end{enumerate}
+
+\pause
+\bigskip
+
+\lstinline{JStringConcatenationOp}'s \lstinline{codegen()} makes use of a helper method, \lstinline{nestedCodegen()} for performing only step 2 for any nested string concatenation operations, which eliminates the instantiation of unnecessary string buffers
+
+\pause
+\bigskip
+
+For example, given the \jmm expression
+\begin{lstlisting}[language=Java]
+x + true + "cat" + 0
+\end{lstlisting}
+the compiler generates the following JVM code
+\begin{lstlisting}[language={}]
+new java/lang/StringBuilder
+dup
+invokespecial StringBuilder."<init>":()V
+aload x'
+invokevirtual append:(Ljava/lang/String;)StringBuilder;
+iconst_1
+invokevirtual append:(Z)Ljava/lang/StringBuilder;
+ldc "cat"
+invokevirtual append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+iconst_0
+invokevirtual append:(I)Ljava/lang/StringBuilder;
+invokevirtual StringBuilder.toString:()Ljava/lang/String;
+\end{lstlisting}
 \end{frame}
 
 \section{Generating Code for Casts}
 \begin{frame}[fragile]
 \pause
 
+Analysis determines both the validity of a cast and the necessary \lstinline{Converter}, which encapsulates the code generated for the particular cast
 
+\pause
+\bigskip
+
+Each \lstinline{Converter} implements a method \lstinline{codegen()}, which generates any code necessary to the cast
+
+\pause
+\bigskip
+
+For example, consider the converter for casting a reference type to one of its sub-types (narrowing cast) which requires that a \lstinline{checkcast} instruction be generated
+\begin{lstlisting}[language=Java]
+class NarrowReference implements Converter {
+    private Type target;
+
+    public NarrowReference(Type target) {
+        this.target = target;
+    }
+
+    public void codegen(CLEmitter output) {
+        output.addReferenceInstruction(CHECKCAST, target.jvmName());
+    }
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+On the other hand, when any type is cast to itself (the identity cast), or when a reference type is cast to one of its super types (called widening), no code need be generated
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Casting an \lstinline{int} to an \lstinline{Integer} is called boxing and requires an invocation of the \lstinline{Integer.valueOf()} method
+
+\begin{lstlisting}[language={}]
+invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Casting an \lstinline{Integer} to an \lstinline{int} is called unboxing and requires an invocation of the \lstinline{Integer.intValue()} method
+
+\begin{lstlisting}[language={}]
+invokevirtual java/lang/Integer.intValue:()I
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Certain casts, from one primitive type to another require that a special instruction be executed; for example, the \lstinline{i2c} instruction converts an \lstinline{int} to a \lstinline{char}
+
+\pause
+\bigskip
+
+There is a \lstinline{Converter} defined for each valid conversion in \jmm
 \end{frame}
 \end{document}
