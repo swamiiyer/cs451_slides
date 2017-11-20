@@ -16,10 +16,236 @@
 \tableofcontents
 \end{frame}
 
-\section{xxx}
+\section{Introduction}
 \begin{frame}[fragile]
 \pause
 
+Compilation is not necessarily done after the class file is constructed
+
+\pause
+\bigskip
+
+At ``execution'', the class is loaded into the JVM and then interpreted
+
+\pause
+\bigskip
+
+In the Oracle HotSpot VM, once a method has been executed several times, it is compiled to native code --- code that can be directly executed by the underlying computer
+
+\pause
+\bigskip
+
+So at run time, control shifts back and forth between JVM code and native code
+
+\pause
+\bigskip
+
+The native code runs much faster than does the interpreted JVM code
+
+\pause
+\bigskip
+
+Compiling JVM code to native code involves the following
+\begin{itemize}
+\item Register allocation
+\item Optimization
+\item Instruction selection
+\item Run-time support
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We will translate a small subset of JVM instructions to the native code for the MIPS architecture
+
+\pause
+\bigskip
+
+MIPS is a relatively modern reduced instruction set computer (RISC), which has a set of simple but fast instructions that operate on values in registers --- for this reason it is often referred to as a register-based architecture
+
+\pause
+\bigskip
+
+Our goal is illustrated in the following figure
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/figure06.01}.jpg}}
+\end{center}
+
+We re-define what constitute the IR, the front end and the back end
+\begin{itemize}
+\item JVM code is our new IR
+\item The \jmm to JVM translator (Chapters 1 --- 5) is our new front end
+\item The JVM to SPIM translator (Chapters 6 and 7) is our new back end
+\end{itemize}
+
+\pause
+\bigskip
+
+We translate enough JVM code to SPIM code to handle the \jmm program shown in the following slide
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+import spim.SPIM;
+
+// Prints factorial of a number computed using recursive and iterative
+// algorithms.
+public class Factorial {
+    // Return the factorial of the given number computed recursively.
+    public static int computeRec(int n) {
+        if (n <= 0) {
+            return 1;
+        } else {
+            return n * computeRec(n - 1);
+        }
+    }
+
+    // Return the factorial of the given number computed iteratively.
+    public static int computeIter(int n) {
+        int result = 1;
+        while ( n > 0 ) {
+            result = result * n--;
+	}
+        return result;
+    }
+
+    // Entry point; print factorial of a number computed using
+    // recursive and iterative algorithms.
+    public static void main(String[] args) {
+        int n = 7;
+        SPIM.printInt(Factorial.computeRec(n));
+	SPIM.printChar('\n');
+        SPIM.printInt(Factorial.computeIter(n));
+        SPIM.printChar('\n');
+    }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We handle static methods, conditional statements, while loops, recursive method invocations, and enough arithmetic to do a few computations
+
+\pause
+\bigskip
+
+We must deal with some objects, for example, constant strings
+
+\pause
+\bigskip
+
+The program above refers to an array, but doesn't do anything with it so we do not implement array objects
+
+\pause
+\bigskip
+
+So, our run-time support is minimal
+
+\pause
+\bigskip
+
+To determine what JVM instructions must be handled, it is worth looking at the output from running \lstinline{javap} on \lstinline{Factorial.class}
+
+\pause
+\bigskip
+
+\begin{lstlisting}[language={}]
+public class Factorial extends java.lang.Object
+  minor version: 0
+  major version: 49
+  Constant pool:
+... <the constant pool is elided here> ...
+
+{
+public Factorial();
+  Code:
+   Stack=1, Locals=1, Args_size=1
+   0: aload_0
+   1: invokespecial #8; //Method java/lang/Object."<init>":()V
+   4: return
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language={}]
+
+public static int computeRec(int);
+  Code:
+   Stack=3, Locals=1, Args_size=1
+   0: iload_0
+   1: iconst_0
+   2: if_icmpgt 10
+   5: iconst_1
+   6: ireturn
+   7: goto  19
+   10: iload_0
+   11: iload_0
+   12: iconst_1
+   13: isub
+   14: invokestatic #13; //Method computeRec:(I)I
+   17: imul
+   18: ireturn
+   19: nop
+
+public static int computeIter(int);
+  Code:
+   Stack=2, Locals=2, Args_size=1
+   0: iconst_1
+   1: istore_1
+   2: iload_0
+   3: iconst_0
+   4: if_icmple 17
+   7: iload_1
+   8: iload_0
+   9: iinc  0, -1
+   12: imul
+   13: istore_1
+   14: goto 2
+   17: iload_1
+   18: ireturn
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language={}]
+
+public static void main(java.lang.String[]);
+  Code:
+   Stack=1, Locals=2, Args_size=1
+   0: bipush    7
+   2: istore_1
+   3: iload_1
+   4: invokestatic  #13; //Method computeRec:(I)I
+   7: invokestatic  #22; //Method spim/SPIM.printInt:(I)V
+   10: bipush   10
+   12: invokestatic #26; //Method spim/SPIM.printChar:(C)V
+   15: iload_1
+   16: invokestatic #28; //Method computeIter:(I)I
+   19: invokestatic #22; //Method spim/SPIM.printInt:(I)V
+   22: bipush   10
+   24: invokestatic #26; //Method spim/SPIM.printChar:(C)V
+   27: return
+}
+\end{lstlisting}
+\end{frame}
+
+\section{SPIM and the MIPS Architecture}
+\begin{frame}[fragile]
+\pause
+
+\end{frame}
+
+\section{Our Translator}
+\begin{frame}[fragile]
+\pause
 
 \end{frame}
 \end{document}
