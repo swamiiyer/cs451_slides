@@ -1,4 +1,4 @@
-\documentclass[8pt,a4paper,compress]{beamer}
+\documentclass[8pt,a4paper,compress,handout]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
 
@@ -57,7 +57,7 @@ Compiling JVM code to native code involves the following
 \begin{frame}[fragile]
 \pause
 
-We will translate a small subset of JVM instructions to the native code for the MIPS architecture
+We will translate a small subset of JVM instructions to the native code for the MIPS architecture, and execute the native code using SPIM (a MIPS simulator)
 
 \pause
 \bigskip
@@ -241,6 +241,74 @@ public static void main(java.lang.String[]);
 \begin{frame}[fragile]
 \pause
 
+The MIPS computer organization is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.02}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Memory organization, by convention divided into four segments, is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure06.03}.jpg}}
+\end{center}
+
+\begin{itemize}
+\item Text segment - The program's instructions go here
+\item Static data segment - Static data, which exist for the duration of the program, go here
+\item Dynamic data segment (aka heap) - This is where objects and arrays are dynamically
+allocated during execution of the program
+\item Like the stack for the JVM, every time a routine is called, a new stack frame is pushed onto the stack; every time a return is executed, a frame is popped off
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Many of the thirty two (0 -- 31) 32-bit general-purpose registers, by convention are designated for special uses, and have alternative names
+\begin{itemize}
+\item \$zero (0) always holds the constant 0
+\item \$at (1)  is reserved for use by the assembler
+\item \$v0 and \$v1 (2 and 3) are used for expression evaluation and as the results of a function
+\item \$a0 -- \$a3 (4 -- 7) are used for passing the first four arguments to routines; any additional
+arguments are passed on the stack
+\item \$t0 -- \$t7 (8 -- 15) are meant to hold temporary values that need not be preserved across
+routine calls; if they must be preserved, it is up to the caller to save them
+\item \$s0 -- \$s7 (16 -- 23) are meant to hold values that must be preserved across routine calls; it is up to the callee to save these registers
+\item \$t8 and \$t9 (24 and 25) are caller-saved temporaries
+\item \$k0 and \$k1 (26 and 27) are reserved for use by the operating system kernel
+\item \$gp (28) is a global pointer to the middle of a 64K block of memory in the static data segment
+\item \$sp (29) is the stack pointer, pointing to the last location on the stack
+\item \$fp (30) is the stack frame pointer, pointing to the latest frame on the stack
+\item \$ra (31) is the return address register, holding the address to which execution should continue upon return from the latest routine
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+SPIM assumes we follow a particular protocol in implementing routine calls, when one
+routine (the caller) invokes another routine (the callee)
+
+\pause
+\bigskip
+
+Most bookkeeping for routine invocation is recorded in a stack frame on the run-time stack segment, as is done in the JVM; but here we must also deal with registers
+
+\pause
+\bigskip
+
+The stack frame for an invoked routine is shown below
+\begin{center}
+\visible<4->{\includegraphics[scale=0.4]{{figures/figure06.04}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+SPIM provides a set of system calls for accessing simple input and output functions
 \end{frame}
 
 \section{Our Translator}
