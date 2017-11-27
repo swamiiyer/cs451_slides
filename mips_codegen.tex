@@ -1,6 +1,27 @@
-\documentclass[8pt,a4paper,compress,handout]{beamer}
+\documentclass[8pt,a4paper,compress]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
+
+\usepackage{fancyvrb}
+
+\newcommand{\mm}[1]{$#1$}
+\newcommand{\derives}{\stackrel{*}{\Rightarrow}}
+\newcommand{\expo}[2]{$#1^{#2}$}
+\newcommand{\subs}[2]{${#1}_{#2}$}
+
+\DefineVerbatimEnvironment
+{production}{Verbatim}
+{fontfamily=timesroman,commandchars=\\\{\}}
+\newenvironment{spaced}
+{
+\smallskip
+\hspace{.5cm}
+\begin{minipage}[c]{\textwidth}
+}
+{
+\end{minipage}
+\smallskip
+}
 
 \title{Translating JVM Code to MIPS Code}
 \date{}
@@ -315,5 +336,372 @@ SPIM provides a set of system calls for accessing simple input and output functi
 \begin{frame}[fragile]
 \pause
 
+Phases of our JVM to SPIM translator are shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.06}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The first step is to scan through the JVM instructions and construct a flow graph of basic blocks
+
+\pause
+\bigskip
+
+A basic block is a sequence of instructions with just one entry point at the start and one exit point at the end; otherwise, there are no branches into or out of the instruction sequence
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider the \lstinline{computeIter()} method from our \lstinline{Factorial} example 
+\begin{lstlisting}[language=Java]
+    public static int computeIter(int n) {
+        int result = 1;
+        while ( n > 0 ) {
+            result = result * n--;
+        }
+        return result;
+    }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The JVM code for the method is shown below (line breaks to delineate basic blocks)
+\begin{lstlisting}[language={}]
+public static int computeIter(int);
+  Code:
+   Stack=2, Locals=2, Args_size=1
+
+   0: const_1
+   1: istore_1
+
+   2: iload_0
+   3: iconst_0
+   4: if_icmple 17
+
+   7: iload_1
+   8: iload_0
+   9: iinc  0, -1
+   12: imul
+   13: istore_1
+   14: goto 2
+
+   17: iload_1
+   18: ireturn
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The control-flow graph, expressed as a graph constructed from the basic blocks is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure06.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The boxes represent the basic blocks and the arrows indicate the flow of control among the blocks
+
+\pause
+\bigskip
+
+The first line of text within each box identifies the block, a list of any successor blocks (labeled by \lstinline{succ}) and a list of any predecessor blocks (labeled by \lstinline{pred})
+
+\pause
+\bigskip
+
+We add an extra beginning block \lstinline{B0} for the method's entry point
+
+\pause
+\bigskip
+
+The denotation \lstinline{[LH]} on the first line of \lstinline{B2} indicates that \lstinline{B2} is a loop header
+
+\pause
+\bigskip
+
+The denotation \lstinline{[LT]} on the first line of \lstinline{B3} indicates that \lstinline{B3} is a loop tail
+
+\pause
+\bigskip
+
+The pairs of numbers within square brackets, for example \lstinline{[7, 14]} on the first line of \lstinline{B3}, denote the ranges of JVM instructions captured in the block
+
+\pause
+\bigskip
+
+The denotation \lstinline{dom} labels the basic block's immediate dominator
+
+\pause
+\bigskip
+
+A node $d$ is said to dominate a node $n$ if every path from the entry node (\lstinline{B0}) to $n$ must go through $d$
+
+\pause
+\bigskip
+
+A node $d$ strictly dominates $n$ if it dominates $n$ but is not the same as $n$
+
+\pause
+\bigskip
+
+Node $d$ is an immediate dominator of node $n$ if $d$ strictly dominates $n$ but does not dominate any other node that strictly dominates $n$, ie, it is the node on the path from the entry node to $n$ that is the ``closest'' to $n$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Local variables are tracked in a state vector called \lstinline{Locals} and are indexed in this vector
+by their location in the JVM stack frame
+
+\pause
+\bigskip
+
+The current state of this vector at the end of a block's instruction sequence is printed on the block's second line and labeled with \lstinline{Locals}
+
+\pause
+\bigskip
+
+The values are listed in positional order and each value is represented by the instruction ID for the instruction that computes it
+
+\pause
+\bigskip
+
+For example, in \lstinline{B0} this vector has just one element, corresponding to the method's formal argument \lstinline{n}; in \lstinline{B1} the vector has two elements: the first is \lstinline{I0} for \lstinline{n} and the second is \lstinline{I2} for result
+
+\pause
+\bigskip
+
+The instruction sequence within each basic block is of a higher level than is JVM code
+
+\pause
+\bigskip
+
+For example, the \jmm statement 
+\begin{lstlisting}[language=Java]
+w = x + y + z;
+\end{lstlisting}
+\noindent might bre represented in HIR by
+\begin{lstlisting}[language={}]
+I8: I0 + I1
+I9: I8 + I2
+\end{lstlisting}
+where \lstinline{I0}, \lstinline{I1} and \lstinline{I2} refer to the instruction IDs labeling instructions that compute values for \lstinline{x}, \lstinline{y} and \lstinline{z} respectively
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The instruction for loading a constant is simply the constant itself; for example, the single instruction from block \lstinline{B1} 
+\begin{lstlisting}[language={}]
+I2: 1
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Not all instructions generate values; for example, the instruction
+\begin{lstlisting}[language={}]
+6: if I3 <= I5 then B4 else B3
+\end{lstlisting}
+\noindent in block \lstinline{B2} produces no value but transfers control to either \lstinline{B4} or \lstinline{B3}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Our HIR employs static single assignment (SSA) form, where for every variable, there is just one place in the method where that variable is assigned a value, which means that when a variable is re-assigned in the method, one must create a new version for it
+
+\pause
+\bigskip
+
+For example, given the simple sequence
+\begin{lstlisting}[language=Java]
+x = 3;
+x = x + y;
+\end{lstlisting}
+we might subscript our variables to distinguish different versions
+\begin{production}
+\subs{\text{\lstinline{x}}}{\text{1}} \lstinline{= 3;}
+\subs{\text{\lstinline{x}}}{\text{2}} \lstinline{=} \subs{\text{\lstinline{x}}}{\text{1}} \lstinline{+} \subs{\text{\lstinline{y}}}{\text{1}}\lstinline{;}
+\end{production}
+
+\pause
+\bigskip
+
+In the HIR we represent a variable's value by the instruction that computed it and we track these values in the state vector
+
+\pause
+\bigskip
+
+The value in a state vector's element may change as we sequence through the block's instructions
+
+\pause
+\bigskip
+
+If the next block has just one predecessor, it can copy the predecessor's state vector at its start; if there are two or more predecessors, the states must be merged
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, consider the following \jmm method, where the variables are in SSA form.
+\begin{production}
+\lstinline{static int ssa(int} \subs{\text{\lstinline{w}}}{\text{1}}\lstinline{) \{}
+    \lstinline{if (}\subs{\text{\lstinline{w}}}{\text{1}} \lstinline{\> 0) \{}
+        \subs{\text{\lstinline{w}}}{\text{2}} \lstinline{= 1;}
+    \lstinline{\}}
+    \lstinline{else \{}
+        \subs{\text{\lstinline{w}}}{\text{3}} \lstinline{= 2;}
+    \lstinline{\}}
+    \lstinline{return} \subs{\text{\lstinline{w}}}{\text{?}}\lstinline{;}
+\lstinline{\}}
+\end{production}
+
+\pause
+\bigskip
+
+In the statement 
+\begin{production}
+\lstinline{return} \subs{\text{\lstinline{w}}}{\text{?}}\lstinline{;}
+\end{production}
+which \lstinline{w} do we return?
+
+\pause
+\bigskip
+
+We solve this problem by using what is called a Phi function, a special HIR instruction that captures the possibility of a variable having one of several values; in our example, the final block would contain the following code
+\begin{production}
+\subs{\text{\lstinline{w}}}{\text{4}} = [\subs{\text{\lstinline{w}}}{\text{2}}  \subs{\text{\lstinline{w}}}{\text{3}}];
+\lstinline{return} \subs{\text{\lstinline{w}}}{\text{4}}\lstinline{;}
+\end{production}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Another place where Phi functions are needed are in loop headers, basic blocks having at least one incoming backward branch and at least two predecessors, as illustrated below
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure06.11}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We conservatively define Phi functions for all variables and then remove redundant Phi functions later
+
+\pause
+\bigskip
+
+In the first instance, $\text{\lstinline{w}}_2$ can be defined as a Phi function with operands $\text{\lstinline{w}}_1$  and $\text{\lstinline{w}}_2$
+\begin{production}
+\subs{\text{\lstinline{w}}}{\text{2}}  = [\subs{\text{\lstinline{w}}}{\text{1}} \subs{\text{\lstinline{w}}}{\text{2}}]
+\end{production}
+
+\pause
+\bigskip
+
+When \lstinline{w} is later incremented, the second operand may be overwritten by the new $\text{\lstinline{w}}_3$
+\begin{production}
+\subs{\text{\lstinline{w}}}{\text{2}} = [\subs{\text{\lstinline{w}}}{\text{1}} \subs{\text{\lstinline{w}}}{\text{3}}]
+\end{production}
+
+\pause
+
+A redundant Phi function will not be changed and can be removed
+
+\pause
+\bigskip
+
+If the \lstinline{w} is never modified in the loop body, the Phi function instruction takes the form
+\begin{production}
+\subs{\text{\lstinline{w}}}{\text{2}} = [\subs{\text{\lstinline{w}}}{\text{1}} \subs{\text{\lstinline{w}}}{\text{2}}]
+\end{production}
+
+\pause
+\bigskip
+
+Phi functions are tightly bound to state vectors, so when a block is processed
+\begin{itemize}
+\item If the block has just a single predecessor, then it may inherit the state vector of that predecessor; the states are simply copied
+\item If the block has more than one predecessor, then those states in the vectors that differ must be merged using Phi functions
+\item For loop headers we conservatively create Phi functions for all variables, and then later remove redundant Phi functions
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The translation process from JVM instructions to HIR takes place in the constructor \lstinline{NEmitter()} in the class \lstinline{NEmitter}; for each method, the control-flow graph HIR is constructed in several steps
+
+\pause
+\bigskip
+
+The \lstinline{NControlFlowGraph} constructor is invoked on the method, which produces the control-flow graph \lstinline{cfg}; in this first step, the JVM code is translated to sequences of tuples
+
+\begin{enumerate}
+\item Objects of type \lstinline{NBasicBlock} represent the basic blocks in the control-flow graph; the control flow is captured by the links, \lstinline{successors} in each block; there are also the links \lstinline{predecessors} for analysis
+
+\item The JVM code is first translated to a list of tuples, corresponding to the JVM instructions; each block stores its sequence of tuples in an \lstinline{ArrayList} called \lstinline{tuples}
+\end{enumerate}
+
+\pause
+\bigskip
+
+The method call
+\begin{lstlisting}[language=Java]
+cfg.detectLoops(cfg.basicBlocks.get(0), null);
+\end{lstlisting}
+detects loop headers and loop tails
+
+\pause
+\bigskip
+
+The method call
+\begin{lstlisting}[language=Java]
+cfg.removeUnreachableBlocks();
+\end{lstlisting}
+removes unreachable blocks
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The method call
+\begin{lstlisting}[language=Java]
+cfg.computeDominators(cfg.basicBlocks.get(0), null);
+\end{lstlisting}
+computes an immediate dominator for each basic block, that closest predecessor through which all paths must pass to reach the target block; it's a useful place to which insert invariant code that is lifted out of a loop in optimization
+
+\pause
+\bigskip
+
+The method call
+\begin{lstlisting}[language=Java]
+cfg.tuplesToHir();
+\end{lstlisting}
+converts the tuples representation to HIR, stored as a sequence of HIR instructions in the array list \lstinline{hir} for each block
+
+\pause
+\bigskip
+
+The method call
+\begin{lstlisting}[language=Java]
+cfg.eliminateRedundantPhiFunctions();
+\end{lstlisting}
+eliminates unnecessary Phi functions and replaces them with their simpler values
+
+\pause
+\bigskip
+
+The HIR is now ready for further analysis
 \end{frame}
 \end{document}
