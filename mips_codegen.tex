@@ -704,4 +704,216 @@ eliminates unnecessary Phi functions and replaces them with their simpler values
 
 The HIR is now ready for further analysis
 \end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+That the HIR is in SSA form makes it amenable to several simple optimizations, which make for fewer instructions and/or faster programs
+
+\pause
+\bigskip
+
+Local optimizations are improvements made based on analysis of the linear sequence of instructions within a basic block
+
+\pause
+\bigskip
+
+Global optimizations require an analysis of the whole control graph and involve what is called data-flow analysis
+
+\pause
+\bigskip
+
+In some cases, the code of a callee's body can replace the call sequence in the caller's code, saving the overhead of a routine call --- we call this inlining; for example, consider the following code
+
+\begin{lstlisting}[language=Java]
+static int getA() {
+    return Getter.a;
+}
+
+static void foo() {
+    int i;
+    i = getA();
+}
+\end{lstlisting}
+
+can be replaced with
+
+\begin{lstlisting}[language=Java]
+static void foo() {
+    int i;
+    i = Getter.a;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Expressions having operands that are both constants, or variables whose values are known to be constants, can be folded, that is replaced by their constant value
+
+\pause
+\bigskip
+
+For example, consider the Java method
+
+\begin{lstlisting}[language=Java]
+static void foo() {
+    int i = 1;
+    int j = 2;
+    int k = i + j + 3;
+}
+\end{lstlisting}
+
+and the corresponding HIR code
+
+\begin{lstlisting}[language={}]
+  B0 succ: B1
+  Locals:
+    0: 0
+    1: 1
+    2: 2
+
+  B1 [0, 10] dom: B0 pred: B0
+  Locals:
+    0: I3
+    1: I4
+    2: I7
+  I3: 1
+  I4: 2
+  I5: I3 + I4
+  I6: 3
+  I7: I5 + I6
+  8: return
+\end{lstlisting}
+
+\pause
+\bigskip
+
+The instruction \lstinline{I3 + I4} at \lstinline{I5} can be replaced by the constant \lstinline{3} and the \lstinline{I5 + I6} at \lstinline{I7} can replaced by the constant \lstinline{6}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Another optimization one may make is common subexpression elimination, where we identify expressions that are re-evaluated even if their operands are unchanged; for example, in the following method
+
+\begin{lstlisting}[language=Java]
+void foo(int i) {
+    int j = i * i * i;
+    int k = i * i * i;
+}
+\end{lstlisting}
+
+we can replace
+
+\begin{lstlisting}[language=Java]
+int k = i * i * i;
+\end{lstlisting}
+
+in \lstinline{foo()} with the more efficient
+
+\begin{lstlisting}[language=Java]
+int k = j;
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Common subexpressions do arise in places one might not expect them; for example, consider the following C language fragment
+\begin{lstlisting}[language=C]
+for (i = 0; i < 1000; i++) {
+    for (j = 0; j < 1000; j++) {
+        c[i][j] = a[i][j] + b[i][j];
+    }
+}
+\end{lstlisting}
+where \lstinline{a}, \lstinline{b}, and \lstinline{c} are integer matrices 
+
+\pause
+\bigskip
+
+If \lstinline{a'}, \lstinline{b'}, and \lstinline{c'} are their base addresses respectively, then the memory addresses of \lstinline{a[i][j]}, \lstinline{b[i][j]}, and \lstinline{c[i][j]} are \lstinline{a' + i * 4 * 1000 + j * 4}, \lstinline{b' + i * 4 * 1000 + j * 4}, and \lstinline{c' + i * 4 * 1000 + j * 4}; eliminating the common offsets, \lstinline{i * 4 * 1000 + j * 4}, can save us a lot of computation
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Loop invariant expressions can be lifted out of the loop and computed in the predecessor block to the loop header
+
+\pause
+\bigskip
+
+For example, the following \jmm code for summing two matrices
+\begin{lstlisting}[language=Java]
+int i = 0;
+while (i <= 999) {
+    int j = 0;
+    while (j <= 999) {
+        c[i][j] = a[i][j] + b[i][j];
+        j = j + 1;;
+    }
+    i = i + 1;
+}
+\end{lstlisting}
+
+can be rewritten as 
+
+\begin{lstlisting}[language=Java]
+int i = 0;
+while (i <= 999) {
+    int[] ai = a[i];
+    int[] bi = b[i];
+    int[] ci = c[i];
+    int j = 0;
+    while (j <= 999)
+    {
+        ci[j] = ai[j] + bi[j];
+        j = j + 1;;
+    }
+    i = i + 1;
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+When indexing an array, we must check that the index is within bounds; for example, in our code for matrix addition, in the assignment
+
+\begin{lstlisting}[language=Java]
+c[i][j] = a[i][j] + b[i][j];
+\end{lstlisting}
+\noindent the \lstinline{i} and \lstinline{j} must be tested to make sure each is greater than or equal to zero, and less than 1000; and this must be done for each of \lstinline{c}, \lstinline{a} and \lstinline{b}
+
+\pause
+\bigskip
+
+But if we know that \lstinline{a}, \lstinline{b} and \lstinline{c} are all of like dimensions, then once the check is done for \lstinline{a}, it need not be repeated for \lstinline{b} and \lstinline{c}
+
+\pause
+\bigskip
+
+Every time we send a message to an object, or access a field of an object, we must insure that the object is not the special null object; for example, in
+\begin{lstlisting}[language=Java]
+...a.f...
+\end{lstlisting}
+we want to make sure that \lstinline{a} is non-null before computing the offset to the field \lstinline{f}
+
+\pause
+\bigskip
+
+But we may know that \lstinline{a} is non-null; for example, in the following code
+\begin{lstlisting}[language=Java]
+...a.f...
+...a.g...
+...a.h...
+\end{lstlisting}
+once we've done the null-check for \lstinline{a.f} there is no reason to do it again for either \lstinline{a.g} or \lstinline{a.h}
+
+\pause
+\bigskip
+
+The HIR does not present every opportunity for optimization, particularly those involving
+back branches (in loops); for this we would need full data-flow analysis where we compute where in the code computed values remain valid
+\end{frame}
 \end{document}
