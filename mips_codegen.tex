@@ -916,4 +916,404 @@ once we've done the null-check for \lstinline{a.f} there is no reason to do it a
 The HIR does not present every opportunity for optimization, particularly those involving
 back branches (in loops); for this we would need full data-flow analysis where we compute where in the code computed values remain valid
 \end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Since the HIR is not necessarily suitable for register allocation, we translate it into a low-level intermediate representation (LIR) where
+
+\begin{itemize}
+\item Phi functions are removed from the code and replaced by explicit moves
+
+\item Instruction operands are expressed as explicit virtual registers
+\end{itemize}
+
+\pause
+\bigskip
+
+For example, the LIR for \lstinline{Factorial.computeIter()} is shown below
+
+\begin{lstlisting}[language={}]
+computeIter (I)I
+
+  B0
+
+  B1
+  0: LDC [1] [V32|I]
+  5: MOVE $a0 [V33|I]                                                                                                                                                                                                                         
+  10: MOVE [V32|I] [V34|I]                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                              
+  B2                                                                                                                                                                                                                                          
+  15: LDC [0] [V35|I]                                                                                                                                                                                                                         
+  20: BRANCH [LE] [V33|I] [V35|I] B4                                                                                                                                                                                                          
+                                                                                                                                                                                                                                              
+  B3                                                                                                                                                                                                                                          
+  25: LDC [-1] [V36|I]                                                                                                                                                                                                                        
+  30: ADD [V33|I] [V36|I] [V37|I]                                                                                                                                                                                                             
+  35: MUL [V34|I] [V33|I] [V38|I]                                                                                                                                                                                                             
+  40: MOVE [V38|I] [V34|I]                                                                                                                                                                                                                    
+  45: MOVE [V37|I] [V33|I]                                                                                                                                                                                                                    
+  50: BRANCH B2                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                              
+  B4                                                                                                                                                                                                                                          
+  55: MOVE [V34|I] $v0
+  60: RETURN $v0
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In the above example, seven virtual registers \lstinline{V32} -- \lstinline{V38} are allocated to the LIR computation
+
+\pause
+\bigskip
+
+Two physical registers, \lstinline{$a0} for the argument \lstinline{n} and \lstinline{$v0} for the return value, are referred to by their symbolic names
+
+\pause
+\bigskip
+
+We start enumerating virtual registers beginning at 32; the numbers 0 through 31 are reserved for enumerating physical registers
+
+\pause
+\bigskip
+
+LIR instructions are read from left to right
+
+\pause
+\bigskip
+
+We enumerate the LIR instructions by multiples of five, which eases the insertion of spill (and restore) instructions, which may be required for register allocation
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The process of translating HIR to LIR is relatively straightforward and is a two-step
+process
+\begin{enumerate}
+\item The \lstinline{NEmitter} constructor invokes the \lstinline{NControlFlowGraph} method \lstinline{hirToLir()} on the control-flow graph
+\begin{lstlisting}[language=Java]
+cfg.hirToLir();
+\end{lstlisting}
+which iterates through the array of HIR instructions for the control-flow graph translating each to an LIR instruction, relying on a method \lstinline{toLir()}, which is defined for each HIR instruction.
+
+\item \lstinline{NEmitter} invokes the \lstinline{NControlFlowGraph} method \lstinline{resolvePhiFunctions()} on the control-flow graph
+\begin{lstlisting}[language=Java]
+cfg.resolvePhiFunctions();
+\end{lstlisting}
+which resolves Phi function instructions, replacing them by move instructions near the end of the predecessor blocks; for example, the Phi function from figure (a) below resolves to the moves in figure (b)
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.12}.jpg}}
+\end{center}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+A run-time environment supporting code produced for Java would require
+\begin{enumerate}
+\item A naming convention
+\item A run-time stack
+\item A representation for arrays and objects
+\item A heap
+\item A run-time library of code that supports the Java API
+\end{enumerate}
+
+\pause
+\bigskip
+
+We use a simple naming mechanism that takes account of just classes and their members
+
+\pause
+\bigskip
+
+Methods are represented in SPIM by routines with assembly language names of the form \lstinline{<class>.<name>} where \lstinline{<name>} names a method in a class \lstinline{<class>}
+
+\pause
+\bigskip
+
+Static fields are similarly named
+
+\pause
+\bigskip
+
+String literals in the data segment have labels that suggest what they label
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Our run-time stack conforms to the run-time convention described for SPIM
+
+\pause
+\bigskip
+
+Each time a method is invoked, a new stack frame of the type shown below is pushed onto the stack; upon return from the method, the same frame is popped off from the stack
+\begin{center}
+\visible<3->{\includegraphics[scale=0.4]{{figures/figure06.04}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+An arbitrary object might be organized as follows
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.14}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+For each class, we also maintain a class template in the data segment, which among other things may include a typical copy of an object of that class that can be copied to the heap during allocation
+
+\pause
+\bigskip
+
+For example, consider the following \jmm code
+\begin{lstlisting}[language=Java]
+public class Foo {
+    int field1 = 1;
+    int field2 = 2;
+
+    int f() { return field1 + field2; }
+
+    int foo() { return field1; }
+}
+
+class Bar extends Foo {
+    int field3 = 3;
+    int field1 = 4;
+
+    int f() { return field1 + field2 + field3; }
+
+    int bar() { return field1; }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Layout and dispatch table for \lstinline{Foo}
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.15}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Layout and dispatch table for \lstinline{Bar}
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure06.16}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Arrays are a special kind of object; they are dynamically allocated on the heap but lie
+outside of the \lstinline{Object} hierarchy
+
+\pause
+\bigskip
+
+A possible layout for an array is shown below
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure06.17}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+Strings are also special objects; while they are part of the \lstinline{Object} hierarchy they are
+final and so they may not be sub-classed
+
+\pause
+\bigskip
+
+A possible layout for a string is shown below
+\begin{center}
+\visible<5->{\includegraphics[scale=0.6]{{figures/figure06.18}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+Constant strings may be allocated in the data segment, ie, we may generate constant strings in the data segment; strings in the data segment will then look exactly like those on the heap
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The logic for allocating free space on the heap is pretty simple in our (oversimplified) model
+
+\begin{lstlisting}[language={}]
+obj = heapPointer;
+heapPointer += <object size>;
+if (heapPointer >= stackPointer) goto freakOut;
+<copy object template to obj>;
+\end{lstlisting}
+
+\pause
+\bigskip
+
+When allocating a new object, we simply increment a free pointer by the appropriate size and if we've run out of space (ie, when the heap pointer meets the stack pointer), we freak out; a more robust heap management system might perform garbage collection
+
+\pause
+\bigskip
+
+Once we have allocated the space for the object, we copy its template onto the heap at the object's location; proper initialization is left to the SPIM routines that model the constructors
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+SPIM provides a set of built-in system calls for performing simple I/O tasks
+
+\pause
+\bigskip
+
+Our runtime environment includes a class \lstinline{SPIM}, which is a wrapper that gives us access to these calls as a set of static methods
+
+\begin{lstlisting}[language=Java]
+package spim;
+
+public class SPIM {
+    public static void printInt(int value) { }
+    public static void printFloat(float value) { }
+    public static void printDouble(double value) { }
+    public static void printString(String value) { }
+    public static void printChar(char value) { }
+    public static int readInt() { return 0; }
+    public static float readFloat() { return 0; }
+    public static double readDouble() { return 0; }
+    public static String readString(int length) { return null; }
+    public static char readChar() { return ' '; }
+    public static int open(String filename, int flags, int mode) { return 0; }
+    public static String read(int fd, int length) { return null; }
+    public static int write(int fd, String buffer, int length) { return 0; }
+    public static void close(int fd) { }
+    public static void exit() { }
+    public static void exit2(int status) { }
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Since the \lstinline{SPIM} class is defined in the package \lstinline{spim}, that package name is part of the label for the entry point to each SPIM method; for example
+\begin{lstlisting}[language={}]
+spim.SPIM.printInt:
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Once virtual registers have been mapped to physical registers, translating LIR to SPIM code is pretty straightforward
+
+\pause
+\bigskip
+
+We iterate through the list of methods for each class; for each method, we do the following
+\begin{itemize}
+\item We generate a label for the method's entry point
+
+\item We generate code to push a new frame onto the run-time stack and then code to save all our registers; we treat all of SPIM's general purpose registers \$t0 -- \$t9 and \$s0 -- \$s7 as callee-saved registers
+
+\item Since all branches in the code are expressed as branches to basic blocks, a unique label for each basic block is generated into the code
+
+\item We then iterate through the LIR instructions for the block, invoking a method \lstinline{toSpim()}, which is defined for each LIR instruction; there is a one-to-one translation from each LIR instruction to its SPIM equivalent
+
+\item Any string literals that are encountered in the instructions are put into a list, together with appropriate labels; these will be emitted into a data segment at the end of the method
+
+\item We generate code to restore those registers that had been saved at the start; this code also does a jump to that instruction following the call in the calling code, which had been stored in the \$ra register
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+After we have generated the text portion (the program instructions) for the method, we then populate
+a data area from the list of string literals constructed previously; any other literals that you may wish to implement would be handled in the same way
+
+\pause
+\bigskip
+
+Once all of the program code has been generated, we then copy out the SPIM code for implementing the \lstinline{SPIM} class
+
+\pause
+\bigskip
+
+For example, the SPIM code for \lstinline{Factorial.computeIter()} is as follows
+\begin{lstlisting}[language={}]
+.text
+
+Factorial.computeIter:
+    subu    $sp,$sp,36   # Stack frame is 36 bytes long
+    sw      $ra,32($sp)  # Save return address
+    sw      $fp,28($sp)  # Save frame pointer
+    sw      $t0,24($sp)  # Save register $t0                                                                                                                                                                                                  
+    sw      $t1,20($sp)  # Save register $t1
+    sw      $t2,16($sp)  # Save register $t2                                                                                                                                                                                                  
+    sw      $t3,12($sp)  # Save register $t3
+    sw      $t4,8($sp)   # Save register $t4                                                                                                                                                                                                  
+    sw      $t5,4($sp)   # Save register $t5
+    sw      $t6,0($sp)   # Save register $t6                                                                                                                                                                                                  
+    addiu   $fp,$sp,32   # Save frame pointer                                                                                                                                                                                                 
+                                                                                                                                                                                                                                              
+Factorial.computeIter.0:                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                              
+Factorial.computeIter.1:                                                                                                                                                                                                                      
+    li $t0,1
+    move $t1,$a0
+    move $t2,$t0
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language={}]
+Factorial.computeIter.2:
+    li $t3,0                                                                                                                                                                                                                                  
+    ble $t1,$t3,Factorial.computeIter.4
+    j Factorial.computeIter.3
+
+Factorial.computeIter.3:
+    li $t4,-1                                                                                                                                                                                                                                 
+    add $t5,$t1,$t4
+    mul $t6,$t2,$t1                                                                                                                                                                                                                           
+    move $t2,$t6                                                                                                                                                                                                                              
+    move $t1,$t5                                                                                                                                                                                                                              
+    j Factorial.computeIter.2                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                              
+Factorial.computeIter.4:                                                                                                                                                                                                                      
+    move $v0,$t2                                                                                                                                                                                                                              
+    j Factorial.computeIter.restore                                                                                                                                                                                                           
+                                                                                                                                                                                                                                              
+Factorial.computeIter.restore:                                                                                                                                                                                                                
+    lw      $ra,32($sp)  # Restore return address                                                                                                                                                                                             
+    lw      $fp,28($sp)  # Restore frame pointer                                                                                                                                                                                              
+    lw      $t0,24($sp)  # Restore register $t0
+    lw      $t1,20($sp)  # Restore register $t1                                                                                                                                                                                               
+    lw      $t2,16($sp)  # Restore register $t2
+    lw      $t3,12($sp)  # Restore register $t3                                                                                                                                                                                               
+    lw      $t4,8($sp)   # Restore register $t4
+    lw      $t5,4($sp)   # Restore register $t5                                                                                                                                                                                               
+    lw      $t6,0($sp)   # Restore register $t6
+    addiu   $sp,$sp,36   # Pop stack
+    jr      $ra          # Return to caller
+\end{lstlisting}
+
+\pause
+\bigskip
+
+We can perform peephole optimizations (considering just a few instuctions at a time) on the SPIM code to remove jumps to immediate instructions and simplify jumps to jumps
+\end{frame}
 \end{document}
