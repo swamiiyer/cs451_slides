@@ -7,6 +7,7 @@
 \newcommand{\mm}[1]{$#1$}
 \newcommand{\derives}{\stackrel{*}{\Rightarrow}}
 \newcommand{\expo}[2]{$#1^{#2}$}
+\newcommand{\subs}[2]{${#1}_{#2}$}
 
 \DefineVerbatimEnvironment
 {production}{Verbatim}
@@ -1358,9 +1359,9 @@ The LL(1) parsing algorithm is parameterized by this table, and makes use of an 
 \IF{$index \neq err$}
 \STATE $rule \gets rules[index]$
 \STATE Say rule is $Y ::= X_1X_2 \dots X_n$; push $X_n, \dots, X_2, X_1$ onto the stack $stk$, with $X_1$ on top
-\ENDIF
 \ELSE
 \STATE Halt with an error
+\ENDIF
 \ENDIF
 \ENDWHILE
 \end{algorithmic}
@@ -1401,11 +1402,6 @@ How do we construct the LL(1) parse table?
 \bigskip
 
 \noindent says that if there is the goal $Y$ on the stack and the next un-scanned symbol is $a$, then we can rewrite $Y$ on the stack as the sequence of sub goals $X_1X_2 \dots X_n$
-
-\pause
-\bigskip
-
-When do we replace $Y$ with $X_1X_2 \dots X_n$ as opposed to something else?
 
 \pause
 \bigskip
@@ -1709,7 +1705,7 @@ We get nothing additional from rule 2, $E'$ ::= \lstinline{+} $T E'$; follow($T$
 \begin{frame}[fragile]
 \pause
 
-From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
+From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\epsilon\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
 
 \text{ }
 \begin{spaced}
@@ -1860,7 +1856,7 @@ Let us construct a parse table for our example grammar
 
 \pause
 
-For the non-terminal $E$, we consider rule 1: $E  ::= T E'$.  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
+For the non-terminal $E$, we consider rule 1: $E  ::= T E'$;  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
 
 \text{ }
 \begin{spaced}
@@ -1902,7 +1898,7 @@ table[\expo{E}{\prime}, \lstinline{#}] = 3
 
 \pause
 
-For the non-terminal $T$, we consider rule 4: $T  ::= F T'$. first($F$ $T'$) = \{\lstinline{(}, \lstinline{id}\}, so we have
+For the non-terminal $T$, we consider rule 4: $T  ::= F T'$; first($F$ $T'$) = \{\lstinline{(}, \lstinline{id}\}, so we have
 
 \text{ }
 \begin{spaced}
@@ -1919,7 +1915,7 @@ Because first($F$ $T'$) does not contain $\epsilon$, we need not consider follow
 \pause
 \bigskip
 
-For non-terminal $T'$, we first consider rule: 5: $T'$ ::= \lstinline{*} $F T'$; first(\lstinline{*} $F$ $T'$), so we have
+For non-terminal $T'$, we first consider rule: 5: $T'$ ::= \lstinline{*} $F T'$; first(\lstinline{*} $F$ $T'$) = \{\lstinline{*}, $\epsilon$\}, so we have
 
 \text{ }
 \begin{spaced}
@@ -1945,7 +1941,7 @@ table[\expo{T}{\prime}, \lstinline{#}] = 6
 \begin{frame}[fragile]
 \pause
 
-For the non-terminal $F$, we have two rules: Firstly, given rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and that first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\},
+Rule 7: $F$  ::= \lstinline{(}$E$\lstinline{)}, and since first(\lstinline{(}$E$\lstinline{)}) = \{\lstinline{(}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -1956,7 +1952,7 @@ table[\mm{F}, \lstinline{(}] = 7
 
 \pause
 
-Secondly, given rule 8: $F$  ::= \lstinline{id}, and since (obviously) first(\lstinline{id}) = \{\lstinline{id}\},
+Rule 8: $F$  ::= \lstinline{id}, and since first(\lstinline{id}) = \{\lstinline{id}\}, we have
 
 \text{ }
 \begin{spaced}
@@ -2032,7 +2028,7 @@ For example, consider the following context-free grammar
 \begin{production}
 \mm{E} ::= \mm{E} \lstinline{+} \mm{T}
 \mm{E} ::= \mm{T}
-\mm{T} ::= \mm{T}  \lstinline{*} {F}
+\mm{T} ::= \mm{T} \lstinline{*} {F}
 \mm{T} ::= \mm{F}
 \mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
 \mm{F} ::= \lstinline{id}
@@ -2041,12 +2037,12 @@ For example, consider the following context-free grammar
 
 \pause
 
-The left recursion captures the left-associative nature of the operators \lstinline{+} and \lstinline{*}, but because the grammar has left-recursive rules, it is not LL(1); we may apply the left-recursion removal rule to this grammar
+Since the grammar has left-recursive rules, it is not LL(1); we may apply the left-recursion removal rule to this grammar
 
 \pause
 \bigskip
 
-Firstly, applying the rule to $E$ to produce
+Applying the rule to $E$ to produce
 
 \text{ }
 \begin{spaced}
@@ -2102,7 +2098,7 @@ Giving us the LL(1) grammar
 \FOR{$i := 1 \text{ to } n$}
 \FOR{$j := 1 \text{ to } i - 1$}
 \STATE Replace each rule in $P$ of the form $X_i::= X_j\alpha$ by the rules $X_i ::= \beta_1\alpha | \beta_2\alpha | \dots | \beta_k\alpha$ where $X_j ::= \beta_1 | \beta_2 | \dots | \beta_k$ are the current rules defining $X_i$
-\STATE Eliminate any immediate left recursion using (3.25)
+\STATE Eliminate any direct left recursion
 \ENDFOR
 \ENDFOR
 \end{algorithmic}
@@ -2110,20 +2106,1513 @@ Giving us the LL(1) grammar
 \end{algorithm}
 \end{frame}
 
-\begin{frame}[fragile]
-\pause
-
-\end{frame}
-
 \section{Bottom-up Deterministic Parsing}
 \begin{frame}[fragile]
 \pause
 
+Consider the grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+1. \mm{E} ::= \mm{E} \lstinline{+} \mm{T}
+2. \mm{E} ::= \mm{T}
+3. \mm{T} ::= \mm{T} \lstinline{*} {F}
+4. \mm{T} ::= \mm{F}
+5. \mm{F} ::= \lstinline{(}\mm{E}\lstinline{)}
+6. \mm{F} ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+
+and suppose we want to parse the input string \lstinline{id + id * id}
+
+\pause
+\bigskip
+
+We would start off with the initial configuration 
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+& \underline{\lstinline$id$}\lstinline$+id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+The first action is to shift the first un-scanned input symbol onto the stack
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From this configuration, the next action is to reduce the \lstinline$id$ on top of the stack to an $F$ using rule 6
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+\lstinline$$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From this configuration, the next two actions involve reducing the $F$ to a $T$ (by rule 4), and then to an $E$ (by rule 2)
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+\lstinline$$\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 5, output a 4 \\
+\lstinline$$\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+\lstinline$$\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parser continues in this fashion, by a sequence of shifts and reductions, until we reach a configuration where $E$ is on the stack ($E$ on top) and the sole un-scanned symbol in the input is the terminator symbol \lstinline{#}
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+& \underline{\lstinline$id$}\lstinline$+id*id#$ & shift \\
+\lstinline$id$ & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+\mm{T} & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+\mm{E} & \underline{\lstinline$+$}\lstinline$id*id#$ & shift \\
+\mm{E}\lstinline$+$ & \underline{\lstinline$id$}\lstinline$*id#$ & shift \\
+\mm{E}\lstinline$+id$ & \underline{\lstinline$*$}\lstinline$id#$ & reduce 6, output a 6 \\
+\mm{E}\lstinline$+$\mm{F} & \underline{\lstinline$*$}\lstinline$id#$ & reduce 4, output a 4 \\
+\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$*$}\lstinline$id#$ & shift \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*$ & \underline{\lstinline$id$}\lstinline$#$ & shift \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*id$ & \underline{\lstinline$#$} & reduce 6, output a 6 \\
+\mm{E}\lstinline$+$\mm{T}\lstinline$*$\mm{F} & \underline{\lstinline$#$} & reduce 3, output a 3 \\
+\mm{E}\lstinline$+$\mm{T} & \underline{\lstinline$#$} & reduce 1, output a 1 \\
+\mm{E} & \underline{\lstinline$#$} & accept
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+At this point, we have reduced the entire input string to the grammar's start symbol $E$, so we can say the input is accepted
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The sequence of reductions 6, 4, 2, 6, 4, 6, 3, 1 above represents the right-most derivation of the input string, but in reverse
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\underline{\mm{E}} \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \mm{T} \lstinline{*} \underline{\mm{F}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}} \lstinline{* id}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{F}} \lstinline{* id}
+   \mm{\Rightarrow} \underline{\mm{E}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{T}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{F}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \lstinline{id + id * id}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+The following questions arise
+\begin{itemize}
+\item How does the parser know when to shift and when to reduce?
+\item When reducing, how many symbols on top of the stack play a role in the reduction?
+\item Also, when reducing, by which rule does it make its reduction?
+\end{itemize}
+
+\pause
+\bigskip
+
+For example, in the derivation above, when the stack contains $E$\lstinline{+}$T$ and the next incoming token is a \lstinline{*}, how do we know that we are to shift (the \lstinline{*} onto the stack) rather than reduce either the $E$\lstinline{+}$T$ to an $E$ or the $T$ to an $E$?
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+A couple of things to notice
+\begin{enumerate}
+\item The stack configuration combined with the un-scanned input stream represents a sentential form in a right-most derivation of the input
+
+\item The part of the sentential form that is reduced to a non-terminal is always on top of the stack, so all actions take place at the top of the stack --- we either shift a token onto the stack, or we reduce what is already there
+\end{enumerate}
+
+\pause
+\bigskip
+
+We call the sequence of terminals on top of the stack that are reduced to a single non-terminal at each reduction step the handle
+
+\pause
+\bigskip
+
+More formally, in a right-most derivation, $S \derives\alpha Yw \Rightarrow \alpha \beta w \derives uw$, where $uw$ is the sentence, the handle is the rule $Y ::= \beta$ and a position in the right sentential form $\alpha \beta w$ where $\beta$ may be replaced by $Y$ to produce the previous right sentential form $\alpha Yw$ in a right-most derivation from the start symbol $S$
+
+\pause
+\bigskip
+
+So, when a handle appears on top of the stack
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$\alpha \beta$ & $w$
+\end{tabular}
+\end{table}
+\noindent we reduce that handle ($\beta$ to $Y$ in this case)
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Now if $\beta$ is the sequence $X_1, X_2, \dots , X_n$, then we call any subsequence, $X_1, X_2, \dots , X_i$, for $i \leq n$ a viable prefix; only viable prefixes may appear on the top of the parse stack
+
+\pause
+\bigskip
+
+If there is not a handle on top of the stack and shifting the first un-scanned input token from the input to the stack results in a viable prefix, a shift is called for
+
+\pause
+\bigskip
+
+The LR(1) parsing algorithm is common to all LR(1) grammars and is driven by two tables (derived from a DFA that recognizes viable prefixes and handles): an Action table and a Goto table
+
+\pause
+\bigskip
+
+The algorithm is a state machine with a pushdown stack, driven by two tables: Action and Goto
+
+\pause
+\bigskip
+
+A configuration of the parser is a pair, consisting of the state of the stack and the state of the input
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_m s_m$ & $a_k a_{k +1} \dots a_n$
+\end{tabular}
+\end{table}
+
+\noindent where the $s_i$ are states, the $X_i$ are (terminal or non-terminal) symbols, and $a_k a_{k +1} \dots a_n$ are the un-scanned input symbols
+
+\pause
+\bigskip
+
+This configuration represents a right sentential form in a right-most derivation of the input sentence $X_1X_2 \dots X_m a_k a_{k +1} \dots a_n$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE Action and Goto tables, and the input sentence $w$ to be parsed, followed by the terminator \lstinline{#}
+\ENSURE a right-most derivation in reverse
+
+\STATE Initially, the parser has the configuration,
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0$ & $a_1 a_2 \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\noindent where $a_1 a_2 \dots a_n$ is the input sentence
+\end{algorithmic}
+\caption{The LR(1) Parsing Algorithm}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REPEAT
+\STATE If $\text{Action}[s_m, a_k] = ss_i$, the parser executes a shift (the $s$ stands for ``shift'') and goes into state $s_i$, going into the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_m s_m a_k s_i$ & $a_{k+1} \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = ri$ (the $r$ stands for ``reduce''), where $i$ is the number of the production rule $Y ::= X_j X_{j+1} \dots X_m$, then replace the symbols and states $X_j s_j X_{j+1} s_{j+1} \dots X_m s_m$ by $Ys$, where $s = \text{Goto}[s_{j-1}, Y]$; the parser then outputs production number $i$, and goes into the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$s_0 X_1 s_1 X_2 s_2 \dots X_{j-1} s_{j-1} Ys$ & $a_{k+1} \dots a_n$\lstinline$#$
+\end{tabular}
+\end{table}
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = \text{ accept}$, then the parser halts and the input has been successfully parsed
+
+\bigskip
+
+\STATE Otherwise, if $\text{Action}[s_m, a_k] = \text{ error}$, then the parser raises an error; the input is not in the language
+\UNTIL{either the sentence is parsed or an error is raised}
+\end{algorithmic}
+\caption{The LR(1) Parsing Algorithm (contd.)}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The Action and Goto tables for our grammar for simple expressions are shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure03.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider parsing the input string \lstinline{id + id * id}; initially the parser is in state 0, so a 0 is pushed onto the stack
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+The next incoming symbol is an \lstinline$id$, so we consult the Action table, Action[0, \lstinline{id}] to determine what to do in state 0 with an incoming token, \lstinline{id}; the entry is $s5$, so we shift the \lstinline{id} onto the stack and go into state 5 (pushing the new state onto the stack above the \lstinline{id})
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+Now, the 5 on top of the stack indicates we are in state 5 and the incoming token is \lstinline{+}, so we consult Action[5, \lstinline{+}]; the $r6$ indicates a reduction using rule 6: $F$ ::= \lstinline{id}; to make the reduction, we pop $2k$ items off the stack where $k$ is the number of symbols in the rule's right hand side; in our example $k = 1$ so we pop both the 5 and the \lstinline{id}
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Because we are reducing the right hand side to an $F$ in this example, we push the $F$ onto the stack.
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F} & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+Finally, we consult Goto[0, $F$] to determine which state the parser, initially in state 0, should go into after parsing an $F$; since Goto[0, $F$] = 3, this is state 3; we push the 3 onto the stack to indicate the parser's new state
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From state 3 and looking at the incoming token \lstinline$+$, Action[3, \lstinline{+}] tells us to reduce using rule 4: $T ::= F$
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+From state 2 and looking at the incoming token \lstinline{+}, Action[2, \lstinline{+}] tells us to reduce using rule 2: $E ::= T$
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1 & \underline{\lstinline$+$}\lstinline$id*id#$ &
+\end{tabular}
+\end{table}
+
+\pause
+\bigskip
+
+From state 1 and looking the incoming token \lstinline{+}, Action[3, \lstinline{+}] = $s6$ tells us to shift (the \lstinline{+} onto the stack and go into state 6
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1 & \underline{\lstinline$+$}\lstinline$id*id#$ & shift 6 \\
+0\mm{E}1\lstinline$+$6 & \underline{\lstinline$id$}\lstinline$*id#$ &
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Continuing in this fashion, the parser goes through the following sequence of configurations and actions
+
+\begin{table}[H]
+\begin{tabular}{lll}
+Stack & Input & Action \\ \hline \\
+0 & \underline{\lstinline$id$}\lstinline$+id*id#$ & shift 5 \\
+0\lstinline$id$5 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 6, output a 6 \\
+0\mm{F}3 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 4, output a 4 \\
+0\mm{T}2 & \underline{\lstinline$+$}\lstinline$id*id#$ & reduce 2, output a 2 \\
+0\mm{E}1& \underline{\lstinline$+$}\lstinline$id*id#$ & shift 6 \\
+0\mm{E}1\lstinline$+$6 & \underline{\lstinline$id$}\lstinline$*id#$ & shift 5 \\
+0\mm{E}1\lstinline$+$6\lstinline$id$5 & \underline{\lstinline$*$}\lstinline$id#$    & reduce 6, output a 6 \\
+0\mm{E}1\lstinline$+$6\mm{F}3 & \underline{\lstinline$*$}\lstinline$id#$ & reduce 4, output a 4 \\
+0\mm{E}1\lstinline$+$6\mm{T}13 & \underline{\lstinline$*$}\lstinline$id#$ & shift 7 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7 & \underline{\lstinline$id$}\lstinline$#$ & shift 5 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7\lstinline$id$5 & \underline{\lstinline$#$} & reduce a 6, output 6 \\
+0\mm{E}1\lstinline$+$6\mm{T}13\lstinline$*$7\mm{F}14 & \underline{\lstinline$#$} & reduce 3, output a 3 \\
+0\mm{E}1\lstinline$+$6\mm{T}13 & \underline{\lstinline$#$} & reduce 1, output a 1 \\
+0\mm{E}1 & \lstinline$#$ & accept
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The parser has output 6, 4, 2, 6, 4, 6, 3, 1, which is a right-most derivation of the input string in reverse: 1, 3, 6, 4, 6, 2, 4, 6, ie
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\underline{\mm{E}} \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \mm{T} \lstinline{*} \underline{\mm{F}}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{T}} \lstinline{*} \lstinline{id}
+   \mm{\Rightarrow} \mm{E} \lstinline{+} \underline{\mm{F}} \lstinline{*} \lstinline{id}
+   \mm{\Rightarrow} \underline{\mm{E}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{T}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \underline{\mm{F}} \lstinline{+ id * id}
+   \mm{\Rightarrow} \lstinline{id + id * id}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The LR(1) parsing tables, Action and Goto, for a grammar $G$ are derived from a DFA for recognizing the possible handles for a parse in $G$
+
+\pause
+\bigskip
+
+This DFA is constructed from what is called an LR(1) canonical collection, a collection of sets of items (representing potential handles) of the form
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[Y ::= \mm{\alpha \cdot \beta}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+\noindent where $Y ::= \alpha \beta$ is a production rule in the set of productions $P$, $\alpha$ and $\beta$ are (possibly empty) strings of symbols, and \lstinline{a} is a lookahead
+
+\pause
+\bigskip
+
+The $\cdot$ is a position marker that marks the top of the stack, indicating that we have parsed the $\alpha$ and still have the $\beta$ ahead of us in satisfying the $Y$
+
+\pause
+\bigskip
+
+The lookahead symbol \lstinline{a} is a token that can follow $Y$ (and so, $\alpha \beta$) in a legal right-most derivation of some sentence
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+If the position marker comes at the start of the right hand side in an item
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[Y ::= \mm{\cdot \alpha \beta}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+\noindent the item is called a possibility
+
+\pause
+\bigskip
+
+One way of parsing the $Y$ is to first parse the $\alpha$ and then parse the $\beta$, after which point the next incoming token will be an \lstinline{a}; the parser might be in the following configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$\gamma$ & $u$\lstinline$a...$
+\end{tabular}
+\end{table}
+
+\noindent where $\alpha \beta \derives u$, where $u$ is a string of terminals
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+If the position marker comes after a string of symbols $\alpha$ but before a string of symbols $\beta$ in the right hand side in an item
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[Y ::= \mm{\alpha \cdot \beta}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+\noindent the item indicates that $\alpha$ has been parsed (and so is on the stack) but that there is still $\beta$ to parse from the input
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$\gamma \alpha$ & $v$\lstinline$a...$
+\end{tabular}
+\end{table}
+
+\noindent where $\beta \derives v$, where $v$ is a string of terminals
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+If the position marker comes at the end of the right hand side in an item
+
+\begin{spaced}
+\begin{production}
+[Y ::= \mm{\alpha \beta \cdot}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+\noindent the item indicates that the parser has successfully parsed $\alpha \beta$ in a context where $Y$\lstinline{a} would be valid, the $\alpha \beta$ can be reduced to a $Y$, and so $\alpha \beta$ is a handle, ie, the parser  is in the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$\gamma \alpha \beta$ & \lstinline$a...$
+\end{tabular}
+\end{table}
+
+\noindent and the reduction of $\alpha \beta$ would cause the parser to go into the configuration
+
+\begin{table}[H]
+\begin{tabular}{ll}
+Stack & Input \\ \hline \\
+$\gamma Y$ & \lstinline$a...$
+\end{tabular}
+\end{table}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The states in the DFA for recognizing viable prefixes and handles are constructed from items, and we call the set of states the canonical collection
+
+\pause
+\bigskip
+
+We first augment our grammar $G$ with an additional start symbol $S'$ and an additional rule so as to yield an equivalent grammar $G'$, which does not have its start symbol on the right hand side of any rule
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\expo{S}{\prime} ::= \mm{S}
+\end{production}
+\end{spaced}
+
+\pause
+
+For example, augmenting our grammar for simple expressions gives us the following grammar
+
+\text{ }
+\begin{spaced}
+\begin{production}
+0. \expo{E}{\prime} ::= \mm{E}
+1. \mm{E}  ::= \mm{E} \lstinline{+} \mm{T}
+2. \mm{E}  ::= \mm{T}
+3. \mm{T}  ::= \mm{T} \lstinline{*} \mm{F}
+4. \mm{T}  ::= \mm{F}
+5. \mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)}
+6. \mm{F}  ::= \lstinline{id}
+\end{production}
+\end{spaced}
+
+\pause
+
+The first set, representing the initial state in our DFA, will contain the LR(1) item
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}]\}
+\end{production}
+\end{spaced}
+
+\noindent which says that parsing an $E'$ means parsing an $E$ from the input, after which point the next (and last) remaining un-scanned token should be the terminator \lstinline{#}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We must parse an $E$ next, which means that we might be parsing either an $E$ \lstinline{+} $T$ (by rule 1) or a $T$ (by rule 2); so the initial set would also contain
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{#}]
+[\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{#}]
+\end{production}
+\end{spaced}
+
+\pause
+
+The initial set, called kernel, may imply additional items
+
+\pause
+\bigskip
+
+From the kernel, we compute a closure of all items implied by the kernel
+
+\pause
+\bigskip
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a set of items, $s$
+\ENSURE closure($s$)
+\STATE add $s$ to $\text{closure}(s)$
+\REPEAT
+\STATE if $\text{closure}(s)$ contains an item of the form,
+
+\begin{production}
+[\mm{Y} ::= \mm{\alpha \cdot} \mm{X} \mm{\beta}, \lstinline{a}]
+\end{production}
+
+\noindent add the item
+
+\begin{production}
+[\mm{X} ::= \mm{\cdot \gamma}, \lstinline{b}]
+\end{production}
+
+\noindent for every rule $X ::= \gamma$ in $P$ and for every token $b$ in first($\beta$\lstinline{a}).
+\UNTIL{no new items may be added}
+\end{algorithmic}
+\caption{Computing the Closure of a Set of Items}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, closure(\{[$E' ::= \cdot E$, \lstinline{#}]\}) by step 1 is initially
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+We then invoke step 2; because the $\cdot$ comes before the $E$, and because we have the rule $E$ ::= $E$ \lstinline{+} $T$ and $E ::= T$, we add [$E$ ::= $\cdot$ $E$ \lstinline{+} $T$, \lstinline{#}] and [$E$ ::= $\cdot$ $T$, \lstinline{#}] to get
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+The item [$E$ ::= $\cdot$ $E$ \lstinline{+} $T$, \lstinline{#}] implies
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+}]
+[\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+}]
+\end{production}
+\end{spaced}
+
+\pause
+
+\noindent because first(\lstinline{+}$T$\lstinline{#}) = \{\lstinline{+}\}
+
+\pause
+\bigskip
+
+Given that these items differ from previous items only in the lookaheads, we can use the more compact notation to get
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+/#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+/#}]\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The items [$E$  ::= $\cdot$ $T$, \lstinline{+/#}] imply additional items (by similar logic), leading to
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+/#}],
+  [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+/#}],
+  [\mm{T}  ::= \mm{\cdot} \mm{T}  \lstinline{*} \mm{F}, \lstinline{+/*/#}],
+  [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/#]}\}
+\end{production}
+\end{spaced}
+
+\pause
+
+And finally the items [$T$ ::= $\cdot$ $F$, \lstinline{+/*/#}] imply additional items (by similar logic), leading to
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\subs{s}{0} = \{[\expo{E}{\prime} ::= \mm{\cdot} \mm{E}, \lstinline{#}],
+         [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+/#}],
+         [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+/#}],
+         [\mm{T}  ::= \mm{\cdot} \mm{T} \lstinline{*} \mm{F}, \lstinline{+/*/#}],
+         [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/#}],
+         [\mm{F}  ::= \mm{\cdot}\lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/#}],
+         [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+
+\noindent which represents the initial state $s_0$ in our canonical LR(1) collection
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We now need to compute all of the states and transitions of the DFA that recognizes viable prefixes and handles
+
+\pause
+\bigskip
+
+For any item set $s$, and any symbol $X \in (T \cup N)$ $$\text{goto}(s, X) = \text{closure}(r),$$ where $r = \{[Y ::= \alpha X \cdot \beta, a] | [Y ::= \alpha \cdot X \beta, a]\}$, ie, to compute $\text{goto}(s,X)$, we take all items from $s$ with a $\cdot$ before the $X$ and move it after the $X$; we then take the closure of that
+
+\pause
+\bigskip
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a state $s$, and a symbol $X \in T \cup N$
+\ENSURE the state, $\text{goto}(s, X)$
+\STATE $r \gets \{\}$
+\FOR {each item $[Y ::= \alpha \cdot X \beta$, \lstinline{a}] in $s$}
+\STATE add $[Y ::= \alpha X \cdot \beta$, \lstinline{a}] to $r$
+\ENDFOR
+\RETURN $\text{closure}(r)$
+\end{algorithmic}
+\caption{Computing goto}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Consider the computation of $\text{goto}(s_0, E)$ for our running example; the relevant items in $s_0$ are [$E' ::= \cdot E$, \lstinline{#}] and [$E  ::= \cdot E$ \lstinline{+} $T$, \lstinline{+/#}]; moving the $\cdot$ to the right of the $E$ in the items gives us \{[$E' ::= E \cdot$, \lstinline{#}], [$E  ::= E  \cdot$ \lstinline{+} $T$, \lstinline{+/#]}\}; the closure of this set is the set itself; let us call this state $s_1$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{0}, \mm{E}) = \subs{s}{1}
+                = \{[\expo{E}{\prime} ::= \mm{E} \mm{\cdot}, \lstinline{#}],
+                    [\mm{E}  ::= \mm{E} \mm{\cdot} \lstinline{+} \mm{T}, \lstinline{+/#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+We can similarly compute
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{0}, \mm{T}) = \subs{s}{2}
+                = \{[\mm{E}  ::= \mm{T} \mm{\cdot}, \lstinline{+/#}],
+                    [\mm{T}  ::= \mm{T} \mm{\cdot} \lstinline{*} \mm{F}, \lstinline{+/*/#}]\}
+
+goto(\subs{s}{0}, \mm{F}) = \subs{s}{3}
+                = \{[\mm{T}  ::= \mm{F} \mm{\cdot}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{0}, \lstinline{(}) involves a closure since moving the \mm{\cdot} across the \lstinline{(} puts it in front of the \mm{E}
+
+goto(\subs{s}{0}, \lstinline{(}) = \subs{s}{4}
+               = \{[\mm{F}  ::= \lstinline{(}\mm{\cdot} \mm{E}\lstinline{)},  \lstinline{+/*/#}],
+                    [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+/)}],
+                    [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+/)}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{T} \lstinline{*} \mm{F}, \lstinline{+/*/)}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/)}]\}
+
+goto(\subs{s}{0}, \lstinline{id}) = \subs{s}{5}
+                = \{[\mm{F}  ::= \lstinline{id} \mm{\cdot}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+We continue in this manner, computing goto for the states we have, and then for any new states repeatedly until we have defined no more new states; this gives us the canonical LR(1) collection
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G = (N,T,S,P)$
+\ENSURE the canonical LR(1) collection of states $c = \{s_0, s_1, \dots, s_n\}$
+\STATE Define an augmented grammar $G'$ which is $G$ with the added non-terminal $S'$ and added production rule $S' ::= S$, where $S$ is $G$'s start symbol
+\STATE $c \gets \{s_0\}$ where $s_0 = \text{closure}(\{[S' ::= \cdot S$, \lstinline{#} $]\})$
+\REPEAT
+\FOR{each $s$ in $c$, and for each symbol $X \in T \cup N$}
+\IF{$\text{goto}(s, X) \neq \emptyset$ and $\text{goto}(s, X) \notin c$}
+\STATE add $\text{goto}(s, X)$ to $c$.
+\ENDIF
+\ENDFOR
+\UNTIL{no new states are added to $c$}
+\end{algorithmic}
+\caption{Computing the LR(1) Collection}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We now resume computing the LR(1) canonical collection for our simple expression grammar, beginning from state $s_1$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{1}, \lstinline{+}) = \subs{s}{6}
+               = \{[\mm{E}  ::= \mm{E} \lstinline{+} \mm{\cdot} \mm{T}, \lstinline{+/#}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{T} \lstinline{*} \mm{F}, \lstinline{+/*/#}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/#}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)},  \lstinline{+/*/#]},
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+There are no more moves from $s_1$; similarly, from $s_2$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{2}, \lstinline{*}) = \subs{s}{7}
+               = \{[\mm{T}  ::= \mm{T} \lstinline{*} \mm{\cdot} \mm{F}, \lstinline{+/*/#}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/#}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Notice that the closure of  \{[$T  ::= T$ \lstinline{*} $\cdot F$, \lstinline{+/*/#}]\} carries along the same lookaheads since no symbol follows the $F$ in the right hand side
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+There are no gotos from $s_3$, but several from $s_4$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{4}, \mm{E}) = \subs{s}{8}
+                = \{[\mm{F}  ::= \lstinline{(}\mm{E} \mm{\cdot} \lstinline{)},  \lstinline{+/*/#}],
+                    [\mm{E}  ::= \mm{E} \mm{\cdot} \lstinline{+} \mm{T}, \lstinline{+/})]\}
+
+goto(\subs{s}{4}, \mm{T}) = \subs{s}{9}
+                = \{[\mm{E}  ::= \mm{T} \mm{\cdot}, \lstinline{+/})],
+                    [\mm{T}  ::= \mm{T} \mm{\cdot} \lstinline{*} \mm{F}, \lstinline{+/*/})]\}
+
+goto(\subs{s}{4}, \mm{F}) = \subs{s}{10}
+                = \{[\mm{T}  ::= \mm{F} \mm{\cdot}, \lstinline{+/*/})]\}
+
+goto(\subs{s}{4}, \lstinline{(}) = \subs{s}{11}
+               = \{[\mm{F}  ::= \lstinline{(} \mm{\cdot} \mm{E}\lstinline{)}, \lstinline{+/*/})],
+                    [\mm{E}  ::= \mm{\cdot} \mm{E} \lstinline{+} \mm{T}, \lstinline{+/})],
+                    [\mm{E}  ::= \mm{\cdot} \mm{T}, \lstinline{+/})],
+                    [\mm{T}  ::= \mm{\cdot} \mm{T} \lstinline{*} \mm{F}, \lstinline{+/*/})],
+                    [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/})],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/})],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/})]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Notice that $s_{11}$ differs from $s_4$ in only the lookaheads for the first item
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{4}, \lstinline{id}) = \subs{s}{12}
+                = \{[\mm{F}  ::= \lstinline{id} \mm{\cdot}, \lstinline{+/*/})]\}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+There are no moves from $s_5$, so consider $s_6$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{6}, \mm{T}) = \subs{s}{13}
+                = \{[\mm{E}  ::= \mm{E} \lstinline{+} \mm{T} \mm{\cdot}, \lstinline{+/#}],
+                     [\mm{T}  ::= \mm{T} \mm{\cdot} \lstinline{*} \mm{F}, \lstinline{+/*/#}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+Now, goto($s_6$, $F$) = \{[$T  ::= F \cdot$, \lstinline{+/*/#}]\} but that is $s_3$. goto($s_6$, \lstinline{(}) is closure(\{[$F ::=$ \lstinline{(} $\cdot E$), \lstinline{+/*/#}]\}), but that is $s_4$; and goto($s_6$, \lstinline{id}) is $s_5$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{6}, \mm{F}) = \subs{s}{3}
+goto(\subs{s}{6}, \lstinline{(}) = \subs{s}{4}
+goto(\subs{s}{6}, \lstinline{id}) = \subs{s}{5}
+\end{production}
+\end{spaced}
+
+\pause
+
+Consider $s_7$, $s_8$, and $s_9$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{7}, \mm{F})= \subs{s}{14}
+               = \{[\mm{T}  ::= \mm{T} \lstinline{*} \mm{F} \mm{\cdot}, \lstinline{+/*/#}]\}
+goto(\subs{s}{7}, \lstinline{(}) = \subs{s}{4}
+goto(\subs{s}{7}, \lstinline{id}) = \subs{s}{5}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{8}, \lstinline{)}) = \subs{s}{15}
+               = \{[\mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)} \mm{\cdot},  \lstinline{+/*/#}]\}
+goto(\subs{s}{8}, \lstinline{+}) = \subs{s}{16}
+               = \{[\mm{E}  ::= \mm{E} \lstinline{+} \mm{\cdot} \mm{T}, \lstinline{+/)}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{T} \lstinline{*} \mm{F}, \lstinline{+/*/)}],
+                    [\mm{T}  ::= \mm{\cdot} \mm{F}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/)}]\}
+goto(\subs{s}{9}, \lstinline{*}) = \subs{s}{17}
+               = \{[\mm{T}  ::= \mm{T} \lstinline{*} \mm{\cdot} \mm{F}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{(}\mm{E}\lstinline{)}, \lstinline{+/*/)}],
+                    [\mm{F}  ::= \mm{\cdot} \lstinline{id}, \lstinline{+/*/)}]\}
+\end{production}
+\end{spaced}
+
+\pause
+
+There are no moves from $s_{10}$, but several from $s_{11}$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{11}, \mm{E}) = \subs{s}{18}
+                 = \{[\mm{F}  ::= \lstinline{(}\mm{E} \mm{\cdot}\lstinline{)}, \lstinline{+/*/)}],
+                     [\mm{E}  ::= \mm{E} \mm{\cdot} \lstinline{+} \mm{T}, \lstinline{+/)}]\}
+goto(\subs{s}{11}, \mm{T}) = \subs{s}{9}
+goto(\subs{s}{11}, \mm{F}) = \subs{s}{10}
+goto(\subs{s}{11}, \lstinline{(}) = \subs{s}{11}
+goto(\subs{s}{11}, \lstinline{id}) = \subs{s}{12}
+\end{production}
+\end{spaced}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+There are no moves from $s_{10}$, but several from $s_{11}$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{11}, \mm{E}) = \subs{s}{18}
+                 = \{[\mm{F}  ::= \lstinline{(}\mm{E} \mm{\cdot}\lstinline{)}, \lstinline{+/*/)}],
+                     [\mm{E}  ::= \mm{E} \mm{\cdot} \lstinline{+} \mm{T}, \lstinline{+/)}]\}
+goto(\subs{s}{11}, \mm{T}) = \subs{s}{9}
+goto(\subs{s}{11}, \mm{F}) = \subs{s}{10}
+goto(\subs{s}{11}, \lstinline{(}) = \subs{s}{11}
+goto(\subs{s}{11}, \lstinline{id}) = \subs{s}{12}
+\end{production}
+\end{spaced}
+
+\pause
+
+There are no moves from $s_{12}$, but there is a move from $s_{13}$
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{13}, \lstinline{*}) = \subs{s}{7}
+\end{production}
+\end{spaced}
+
+\pause
+
+There are no moves from $s_{14}$ or $s_{15}$, but there are moves from $s_{16}$, $s_{17}$, $s_{18}$, and $s_{19}$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\text{ }
+\begin{spaced}
+\begin{production}
+goto(\subs{s}{16}, \mm{T}) = \subs{s}{19}
+ 		= \{[\mm{E}  ::= \mm{E} \lstinline{+} \mm{T} \mm{\cdot}, \lstinline{+/)}],
+                     [\mm{T}  ::= \mm{T} \mm{\cdot} \lstinline{*} \mm{F}, \lstinline{+/*/)}]\}
+goto(\subs{s}{16}, \mm{F}) = \subs{s}{10}
+goto(\subs{s}{16}, \lstinline{(}) = \subs{s}{11}
+goto(\subs{s}{16}, \lstinline{id}) = \subs{s}{12}
+goto(\subs{s}{17}, \mm{F}) = \subs{s}{20}
+                = \{[\mm{T}  ::= \mm{T} \lstinline{*} \mm{F} \mm{\cdot}, \lstinline{+/*/)}]\}
+goto(\subs{s}{17}, \lstinline{(}) = \subs{s}{11}
+goto(\subs{s}{17}, \lstinline{id}) = \subs{s}{12}
+goto(\subs{s}{18}, \lstinline{)}) = \subs{s}{21}
+		= \{[\mm{F}  ::= \lstinline{(}\mm{E}\lstinline{)} \mm{\cdot}, \lstinline{+/*/)}]\}
+goto(\subs{s}{18}, \lstinline{+}) = \subs{s}{16}
+goto(\subs{s}{19}, \lstinline{*}) = \subs{s}{17}
+\end{production}
+\end{spaced}
+
+\pause
+
+There are no moves from $s_{20}$ or $s_{21}$, so we are done; the LR(1) canonical collection consists of twenty-two states $s_0 \dots s_{21}$, and is shown in the following slide
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.28]{{figures/lr1_collection}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a context-free grammar $G=(N,T,S,P)$
+\ENSURE the LF(1) tables Action and Goto
+\begin{enumerate}
+\item Compute the LR(1) canonical collection $c = \{s_0, s_1, \dots, s_n\}$. State $i$ of the parser corresponds to the item set $s_i$. State 0, corresponding to the item set $s_0$, which contains the item [$S' ::= \cdot S$, \lstinline{#}], is the parser's initial state
+\item The Action table is constructed as follows:
+\begin{enumerate}[a.]
+\item For each transition, goto($s_i$, \lstinline{a}) = $s_j$, where $a$ is a terminal, set Action[$i$, \lstinline{a}] = $sj$.  The $s$ stands for ``shift''
+\item If the item set $s_k$ contains the item [$S' ::= S \cdot$, \lstinline{#}], set Action[$k$, \lstinline{#}] = accept
+\item For all item sets $s_i$, if $s_i$ contains an item of the form [$Y ::= \alpha \cdot$, \lstinline{a}], set Action[$i$, \lstinline{a}] = $rp$, where $p$ is the number corresponding to the rule $Y ::= \alpha$. The $r$ stands for ``reduce''
+\item All undefined entries in Action are set to error
+\end{enumerate}
+\item The Goto table is constructed as follows:
+\begin{enumerate}[a.]
+\item For each transition, goto($s_i$, $Y$) = $s_j$, where Y is a non-terminal, set Goto[$i$, $Y$] = $j$.
+\item All undefined entries in Goto are set to error
+\end{enumerate}
+\end{enumerate}
+\end{algorithmic}
+\caption{Constructing the LR(1) Parsing Tables for a Context-Free Grammar}
+\end{algorithm}
+
+\pause
+\bigskip
+
+If all entries in the Action table are unique then the grammar $G$ is said to be LR(1)
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The Action and Goto tables for our grammar for simple expressions are shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.4]{{figures/figure03.07}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+There are two different kinds of conflicts possible for an entry in the Action table
+
+\pause
+\bigskip
+
+The first is the shift-reduce conflict, which can occur when there are items of the forms
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{Y} ::= \mm{\alpha \cdot}, \lstinline{a}] and
+[\mm{Y} ::= \mm{\alpha \cdot}\lstinline{a}\mm{\beta}, \lstinline{b}]
+\end{production}
+\end{spaced}
+
+\pause
+
+The first item suggests a reduce if the next un-scanned token is an \lstinline{a}; the second suggests a shift of the \lstinline{a} onto the stack
+
+\pause
+\bigskip
+
+Although such conflicts may occur for unambiguous grammars, a common cause are ambiguous constructs such as
+
+\text{ }
+\begin{spaced}
+\begin{production}
+\mm{S} ::= \lstinline{if} \lstinline{(}\mm{E}\lstinline{)} \mm{S}
+\mm{S} ::= \lstinline{if} \lstinline{(}\mm{E}\lstinline{)} \mm{S} \lstinline{else} \mm{S}
+\end{production}
+\end{spaced}
+
+\pause
+\bigskip
+
+Most parser generators that are based on LR grammars permit one to supply an extra disambiguating rule; for example, to favor a shift of the \lstinline{else} over a reduce of the \lstinline{if} \lstinline{(}$E$\lstinline{)} $S$ to an $S$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The second kind of conflict that we can have is the reduce-reduce conflict, which can happen when we have a state containing two items of the form
+
+\text{ }
+\begin{spaced}
+\begin{production}
+[\mm{X} ::= \mm{\alpha \cdot}, \lstinline{a}] 
+[\mm{Y} ::= \mm{\beta \cdot}, \lstinline{a}]
+\end{production}
+\end{spaced}
+
+Here, the parser cannot distinguish which production rule to apply in the reduction
+
+\pause
+\bigskip
+
+The LR(1) parsing table for a typical programming language such as Java can have thousands of states, and so thousands of rows
+
+\pause
+\bigskip
+
+The LALR(1) parsing algorithm (see our text) is capable of reducing the number of states by an order of magnitude
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The following figure illustrates the relationships among the various categories of grammars we have been discussing
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure03.10}.jpg}}
+\end{center}
 \end{frame}
 
 \section{Parser Generation Using JavaCC}
 \begin{frame}[fragile]
 \pause
 
+Besides containing the regular expressions for the lexical structure for \jmm, the \lstinline{j--.jj} file also contains the syntactic rules for the language
+
+\pause
+\bigskip
+
+The Java code between the \lstinline{PARSER_BEGIN(JavaCCParser)} and \lstinline{PARSER_END(JavaCCParser)} block is copied verbatim to the generated \lstinline{JavaCCParser.java} file in the \lstinline{jminusminus} package
+
+\pause
+\bigskip
+
+The Java code defines helper functions, which are available for use within the generated parser; some of the helpers include: \lstinline{reportParserError()} for reporting errors, and \lstinline{recoverFromError()} for recovering from errors
+
+\pause
+\bigskip
+
+Following the block is the specification for the scanner for \jmm, and following that is the specification for the parser for \jmm
+
+\pause
+\bigskip
+
+The general layout for the syntactic specification is this: we define a start symbol, which is a high level non-terminal (\lstinline{compilationUnit} in case of \jmm) that references lower level non-terminals, which in turn reference the tokens defined in the lexical specification
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We are allowed to use the following BNF syntax in the syntactic specification
+\begin{itemize}
+\item $[a]$ for ``zero or one'', or an ``optional'' occurrence of $a$
+\item $(a)*$ for ``zero or more'' occurrences of $a$
+\item $a | b$ for alternation, ie, either $a$ or $b$
+\item $()$ for grouping
+\end{itemize}
+
+\pause
+\bigskip
+
+The syntax for a non-terminal declaration (or production rule) in the input file almost resembles that of a Java method declaration; it has a return type (could be \lstinline{void}), a name, can accept arguments, and has a body, which specifies the BNF rules along with any actions that we want performed as the production rule is parsed
+
+\pause
+\bigskip
+
+The method declaration also has a block preceding the body, which declares any local variables used within the body
+
+\pause
+\bigskip
+
+Syntactic actions, such as creating/returning an AST node, are Java code embedded within blocks
+
+\pause
+\bigskip
+
+JavaCC turns the specification for each non-terminal into a Java method within the generated parser
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The specification for the following rule for parsing a qualified identifier in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\<identifier\>}\}
+\end{production}
+\end{spaced}
+
+\noindent is shown below
+
+\begin{lstlisting}[language=Java]
+private TypeName qualifiedIdentifier(): {
+    int line = 0;
+    String qualifiedIdentifier = "";
+}
+{
+    try {
+        <IDENTIFIER>
+        {
+            line = token.beginLine;
+            qualifiedIdentifier = token.image;
+        }
+        (
+            <DOT> <IDENTIFIER>
+            { qualifiedIdentifier += "." + token.image; }
+        )*
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return new TypeName(line, qualifiedIdentifier); }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The specification for the following rule for parsing a statement in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+statement ::= block
+                  \mm{|} \lstinline{\<identifier\>} \lstinline{:} statement
+                  \mm{|} \lstinline{if} parExpression statement [\lstinline{else} statement]
+                  \mm{|} \lstinline{while} parExpression statement
+                  \mm{|} \lstinline{return} [expression] \lstinline{;}
+                  \mm{|} \lstinline{;}
+                  \mm{|} statementExpression \lstinline{;}
+\end{production}
+\end{spaced}
+
+\noindent is shown below
+
+\begin{lstlisting}[language=Java]
+private JStatement statement(): {
+    int line = 0;
+    JStatement statement = null;
+    JExpression test = null;
+    JStatement consequent = null;
+    JStatement alternate = null;
+    JStatement body = null;
+    JExpression expr = null;
+}
+{
+    try {
+        statement = block() |
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        <IF> { line = token.beginLine; }
+        test = parExpression()
+        consequent = statement()
+        [
+            LOOKAHEAD(<ELSE>)
+            <ELSE> alternate = statement()
+        ]
+        { statement =
+            new JIfStatement(line, test, consequent, alternate); } |
+        <WHILE> { line = token.beginLine; }
+        test = parExpression()
+        body = statement()
+        { statement = new JWhileStatement(line, test, body); } |
+        <RETURN> { line = token.beginLine; }
+        [
+            expr = expression()
+        ]
+        <SEMI>
+        { statement = new JReturnStatement(line, expr); } |
+        <SEMI>
+        { statement = new JEmptyStatement(line); } |
+        statement = statementExpression()
+        <SEMI>
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return statement; }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As in the case of a recursive descent parser, we cannot always decide which production rule to use in parsing a non-terminal just by looking at the current token; we have to look ahead at the next few symbols to decide
+
+\pause
+\bigskip
+
+For example, the specification for the following rule for parsing a simple unary expression in \jmm
+
+\text{ }
+\begin{spaced}
+\begin{production}
+simpleUnaryExpression ::= \lstinline{!} unaryExpression
+                                   \mm{|} \lstinline{(} basicType \lstinline{)}  unaryExpression //cast
+                                   \mm{|} \lstinline{(} referenceType \lstinline{)} simpleUnaryExpression // cast
+                                   \mm{|} postfixExpression
+\end{production}
+\end{spaced}
+\noindent involves lookahead and is shown below
+
+\begin{lstlisting}[language=Java]
+private JExpression simpleUnaryExpression(): {
+    int line = 0;
+    Type type = null;
+    JExpression expr = null, unaryExpr = null, simpleUnaryExpr = null;
+}
+{
+    try {
+        <LNOT> { line = token.beginLine; }
+        unaryExpr = unaryExpression()
+        { expr = new JLogicalNotOp(line, unaryExpr); } |
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        LOOKAHEAD(<LPAREN> basicType() <RPAREN>)
+        <LPAREN> { line = token.beginLine; }
+        type = basicType()
+        <RPAREN>
+        unaryExpr = unaryExpression()
+        { expr = new JCastOp(line, type, unaryExpr); } |
+        LOOKAHEAD(<LPAREN> referenceType() <RPAREN>)
+        <LPAREN> { line = token.beginLine; }
+        type = referenceType()
+        <RPAREN>
+        simpleUnaryExpr = simpleUnaryExpression()
+        { expr = new JCastOp(line, type, simpleUnaryExpr); } |
+        expr = postfixExpression()
+    }
+    catch (ParseException e) {
+        recoverFromError(new int[] { SEMI, EOF }, e);
+    }
+    { return expr; }
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The error recovery mechanism we use in our JavaCC parser for \jmm involves catching within the body of a non-terminal, the \lstinline{ParseException} that is raised in the event of a parsing error
+
+\pause
+\bigskip
+
+The exception instance \lstinline{e} along with skip-to tokens is passed to our \lstinline{recoverFromError()} error recovery function
+
+\pause
+\bigskip
+
+The exception instance has information about the erroneous token that was found and the token that was expected, and \lstinline{skipTo} is an array of tokens that we would like to skip to in order to recover from the error
+
+\pause
+\bigskip
+
+In the current error recovery scheme, all non-terminals specify \lstinline{SEMI} and \lstinline{EOF} as \lstinline{skipTo} tokens; this scheme could be made more sophisticated by specifying the follow set of the non-terminal as \lstinline{skipTo} tokens
+
+\pause
+\bigskip
+
+When \lstinline{ParseException} is raised, control is transferred to the calling non-terminal, and thus when an error occurs within higher non-terminals, the lower non-terminals go unparsed
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+    private void recoverFromError(int[] skipTo, ParseException e) {
+        // Get the possible expected tokens
+        StringBuffer expected = new StringBuffer();
+	for (int i = 0; i < e.expectedTokenSequences.length; i++) {
+            for (int j = 0; j < e.expectedTokenSequences[i].length; j++) {
+                expected.append("\n");
+                expected.append("    ");
+                expected.append(tokenImage[e.expectedTokenSequences[i][j]]);
+                expected.append("...");
+            }
+        }
+
+        // Print error message
+        if (e.expectedTokenSequences.length == 1) {
+            reportParserError("\"%s\" found where %s sought",                   
+                getToken(1), expected);
+        }
+        else {
+            reportParserError("\"%s\" found where one of %s sought",            
+                getToken(1), expected);
+        }
+
+        // Recover
+        boolean loop = true;
+        do {
+            token = getNextToken();
+            for (int i = 0; i < skipTo.length; i++) {
+                if (token.kind == skipTo[i]) {
+                    loop = false;
+                    break;
+                }
+            }
+        } while(loop);
+    }
+\end{lstlisting}
 \end{frame}
 \end{document}
