@@ -676,7 +676,12 @@ NFA for the regular expression $(a|b)a\!*\!b$ from before
 \pause
 \bigskip
 
-In the corresponding DFA, from the start state $s_0$, and scanning the symbol $a$, we want to go into a state that reflects all the states we could be in after scanning an $a$ in the NFA: 2, and then (via $\epsilon$-moves) 5, 6, 7, 9 and 10
+In the corresponding DFA, the start state $s_0 = \epsilon\text{-closure}(0) = \{0, 1, 3\}$
+
+\pause
+\bigskip
+
+From $s_0$, scanning the symbol $a$, we want to go into a state that reflects all the states we could be in after scanning an $a$ in the NFA, which are 2, and via $\epsilon$-moves 5, 6, 7, 9 and 10
 \begin{align}
 & m(s_0, a) = s_1, \text{ where } \nonumber \\
 & s_1 = \epsilon\text{-closure}(2) = \{2, 5, 6, 7, 9, 10\} \nonumber
@@ -766,10 +771,10 @@ The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown belo
 \STATE Moves $M_D$
 \STATE Stack $stk$.push($s_{D0}$)
 \STATE $i \gets 0$
-\WHILE {! $stk$.empty()}
+\WHILE {!$stk$.empty()}
 \STATE $t$ $\gets$ $stk$.pop()
 \FOR {$a$ in $\Sigma$}
-\STATE $s_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$);
+\STATE $s_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$)
 \IF {$s_{Di+1} \neq \{\}$}
 \IF {$s_{Di+1} \notin S_D$} 
 \STATE $S_D$.add($s_{Di+1}$) \COMMENT{We have a new state}
@@ -806,7 +811,7 @@ The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown belo
 \end{algorithm}
 \end{frame}
 
-\section{A Minimal DFA}
+\section{DFA to Minimal DFA}
 \begin{frame}[fragile]
 \pause
 
@@ -989,7 +994,7 @@ We apply the Thompson's construction procedure to produce the NFA shown below
 
 Using the powerset construction method, we derive a DFA having the following states
 \begin{align}
-& s_0: \{0, 1, 2, 4, 7, 8\} \nonumber \\
+& s_0 = \{0, 1, 2, 4, 7, 8\} \nonumber \\
 & m(s_0, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
 & m(s_0, b) : \{1, 2, 4, 5, 6,  7, 8, 9, 10\} = s_2 \nonumber \\
 & m(s_1, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
@@ -1153,6 +1158,6 @@ JavaCC takes a specification of the lexical syntax and produces several Java fil
 \pause
 \bigskip
 
-The entire lexical grammar for \jmm is specified in \lstinline{$j/j--/lexicalgrammar}
+The lexical specification for \jmm is contained in \lstinline{$j/j--/src/jminusminus/j--.jj}
 \end{frame}
 \end{document}
