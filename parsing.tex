@@ -1,4 +1,4 @@
-\documentclass[8pt,a4paper,compress]{beamer}
+\documentclass[8pt,a4paper,compress,handout]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
 
@@ -434,7 +434,7 @@ For example, the right-most derivation of \lstinline{id + id * id} would go as f
 
 \pause
 
-We use the term sentential form to refer to any string of (terminal and non-terminal) symbols that can be derived from the start symbol
+We use the term sentential form to refer to any string of (terminal and non-terminal) symbols that can be derived from the start symbol, and the term sentence for a string with only terminal symbols
 
 \pause
 \bigskip
@@ -447,14 +447,13 @@ For example, in the previous derivation
 \mm{E}
 \mm{E} \lstinline{+} \mm{T}
 \mm{E} \lstinline{+} \mm{T} \lstinline{*} \mm{F}
-\mm{E} \lstinline{+} \mm{T} \lstinline{* id}
-\mm{E} \lstinline{+} \mm{F} \lstinline{* id}
-\mm{E} \lstinline{+ id * id}
-\mm{T} \lstinline{+ id * id}
+...
 \mm{F} \lstinline{+ id * id}
 \lstinline{id + id * id}
 \end{production}
 \end{spaced}
+
+are all sentential forms, and \lstinline{id + id * id} is a sentence
 \end{frame}
 
 \begin{frame}[fragile]
