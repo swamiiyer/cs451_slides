@@ -625,84 +625,6 @@ As an illustrative example, let's add the division operator to \jmm, which invol
 \pause
 \bigskip
 
-Writing tests
-\begin{itemize}
-\item Place the following file (\lstinline{Division.java}) under \lstinline{$j/j--/tests/pass}
-
-\begin{lstlisting}[language=Java]
-package pass;
-
-public class Division {
-    public int divide(int x, int y) {
-        return x / y ;
-    }
-}  
-\end{lstlisting}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Writing tests (contd.)
-\begin{itemize}
-\item Place the following file (\lstinline{DivisionTest.java}) under \lstinline{$j/j--/tests/junit}
-
-\begin{lstlisting}[language=Java]
-public class DivisionTest extends TestCase {
-    private Division division;
-
-    protected void setUp() throws Exception {
-        super.setUp();
-        division = new Division();
-    }
-
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
-
-    public void testDivide() {
-        this.assertEquals(division.divide(0, 42), 0);
-        this.assertEquals(division.divide(42, 1), 42);
-        this.assertEquals(division.divide(127, 3), 42);
-    }
-}
-\end{lstlisting}
-
-\item Make the following entry in the \lstinline{suite()} method of \lstinline{junit.JMinusMinusTestRunner}
-
-\begin{lstlisting}[language=Java]
-TestSuite suite = new TestSuite();
-...
-suite.addTestSuite(DivisionTest.class);
-return suite;
-\end{lstlisting}
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Writing tests (contd.)
-\begin{itemize}
-\item Place the following file (\lstinline{Division.java}) under \lstinline{$j/j--/tests/fail}
-
-\begin{lstlisting}[language=Java]
-package fail;
-
-import java.lang.System;
-
-public class Division {
-    public static void main(String[] args) {
-        System.out.println('a' / 42);
-    }
-}
-\end{lstlisting}
-\end{itemize}
-
-\pause
-\bigskip
-
 Changes to lexical and syntactic grammars
 \begin{itemize}
 \item Add a line describing the division operator to \lstinline{$j/j--/lexicalgrammar} under the operators section
@@ -826,14 +748,45 @@ public void codegen(CLEmitter output) {
 }
 \end{lstlisting}
 \end{itemize}
+\end{frame}
 
+\begin{frame}[fragile]
 \pause
-\bigskip
 
-To test the changes, run the following command inside the \lstinline{$j} directory
-
+Testing the division operator
+\begin{itemize}
+\item Write a test \jmm program \lstinline{Division.java}
 \begin{lstlisting}[language=Java]
-$ ant
+import java.lang.Integer;
+import java.lang.System;
+
+public class Division {
+    public static void main(String[] args) {
+        int a = Integer.parseInt(args[0]);
+        int b = Integer.parseInt(args[1]);
+        System.out.println(a / b);
+    }
+}
 \end{lstlisting}
+
+\item Run the following command inside the \lstinline{$j} directory to compile the \jmm compiler
+
+\begin{lstlisting}[language={}]
+$ ant clean compile jar
+\end{lstlisting}
+
+\item Run the following command to compile the test program \lstinline{Division.java} using the \jmm compiler, which produces the JVM target program \lstinline{Division.class}
+
+\begin{lstlisting}[language={}]
+$ sh $j/j--/bin/j-- Division.java
+\end{lstlisting}
+
+\item Run the following command to run \lstinline{Division.class}
+
+\begin{lstlisting}[language={}]
+$ java Division 42 6
+7
+\end{lstlisting}
+\end{itemize}
 \end{frame}
 \end{document}
