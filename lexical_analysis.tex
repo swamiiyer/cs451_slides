@@ -400,30 +400,6 @@ The corresponding transition diagram is shown below
 \end{center}
 \end{frame}
 
-\begin{frame}[fragile]
-\pause
-
-An FSA recognizes strings in the same way that state transition diagrams do 
-
-\pause
-\bigskip
-
-For the previous FSA, given the input sentence $baaab$ and beginning in the start state 0, the following moves are prescribed
-
-\begin{itemize}
-\item $m(0, b)  = 1 \implies$ in state 0 we scan a $b$ and go into state 1
-\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1
-\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1 (again)
-\item $m(1, a)  = 1 \implies$ in state 1 we scan an $a$ and go back into state 1 (again)
-\item $m(1, b)  = 2 \implies$ finally, in state 1 we scan a $b$ and go into the final state 2
-\end{itemize}
-
-\begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.07}.jpg}}
-\end{center}
-\end{frame}
-
-
 \section{Non-deterministic (NFA) Versus Deterministic Finite State Automata (DFA)}
 \begin{frame}[fragile]
 \pause
@@ -679,61 +655,40 @@ NFA for the regular expression $(a|b)a\!*\!b$ from before
 In the corresponding DFA, the start state $s_0 = \epsilon\text{-closure}(0) = \{0, 1, 3\}$
 
 \pause
-\bigskip
 
-From $s_0$, scanning the symbol $a$, we want to go into a state that reflects all the states we could be in after scanning an $a$ in the NFA, which are 2, and via $\epsilon$-moves 5, 6, 7, 9 and 10
 \begin{align}
-& m(s_0, a) = s_1, \text{ where } \nonumber \\
-& s_1 = \epsilon\text{-closure}(2) = \{2, 5, 6, 7, 9, 10\} \nonumber
+& m(s_0, a) = s_1 = \epsilon\text{-closure}(2) = \{2, 5, 6, 7, 9, 10\} \nonumber
 \end{align}
 
 \pause
-\bigskip
 
-Similarly, scanning a symbol $b$ in state $s_0$, we get
 \begin{align}
-& m(s_0, b) = s_2, \text{where} \nonumber \\
-& s_2 = \epsilon\text{-closure}(4) = \{4, 5, 6, 7, 9, 10\} \nonumber
-\end{align}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-From state $s_1$, scanning an $a$, we have to consider where we could have gone from the states $\{2, 5, 6, 7, 9, 10\}$ in the NFA;  from state 7, scanning an $a$, we go into state 8, and then (by $\epsilon$-moves) 7, 9, and 10
-\begin{align}
-& m(s_1, a) = s_3, \text{where} \nonumber \\
-& s_3 = \epsilon\text{-closure}(8) = \{7, 8, 9, 10\} \nonumber
+& m(s_0, b) = s_2 = \epsilon\text{-closure}(4) = \{4, 5, 6, 7, 9, 10\} \nonumber
 \end{align}
 
 \pause
-\bigskip
 
-Now, from state $s_1$, scanning $b$, we have
 \begin{align}
-& m(s_1, b) = s_4, \text{where} \nonumber \\
-& s_4 = \epsilon\text{-closure}(11) = \{11\} \nonumber
+& m(s_1, a) = s_3 = \epsilon\text{-closure}(8) = \{7, 8, 9, 10\} \nonumber
+\end{align}
+
+\pause
+
+\begin{align}
+& m(s_1, b) = s_4 = \epsilon\text{-closure}(11) = \{11\} \nonumber
 \end{align}
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
 
-From state $s_2$, scanning an $a$ takes us into a state reflecting 8, and then (by $\epsilon$-moves) 7, 9 and 10, generating state $\{7, 8, 9, 10\}$, which is $s_3$
-
-\pause
-\bigskip
-
-Scanning a $b$ from state $s_2$ takes us into a state reflecting 11, generating state $\{11\}$, which is $s_4$
 \begin{align}
 & m(s_2, a) = s_3 \nonumber \\
 & m(s_2, b) = s_4 \nonumber
 \end{align}
 
 \pause
-\bigskip
 
-From state $s_3$, scanning an $a$ takes us back into $s_3$, and scanning a $b$ takes us into $s_4$
 \begin{align}
 & m(s_3, a) = s_3 \nonumber \\
 & m(s_3, b) = s_4 \nonumber
@@ -748,14 +703,13 @@ There are no moves at all out of state $s_4$, so we have found all of our transi
 \bigskip
 
 Any state reflecting a final state in the NFA is a final state in the DFA; in our example, only $s_4$ is a final state because it contains (the final) state 11 from the original NFA
-\end{frame}
 
-\begin{frame}[fragile]
 \pause
+\bigskip
 
 The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown below
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.16}.jpg}}
+\visible<2->{\includegraphics[scale=0.5]{{figures/figure02.16}.jpg}}
 \end{center}
 \end{frame}
 
