@@ -1,4 +1,4 @@
-\documentclass[8pt,a4paper,compress]{beamer}
+\documentclass[8pt,a4paper,compress,handout]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
 
@@ -1526,84 +1526,7 @@ Consider our example grammar
 \pause
 \bigskip
 
-The computation of first for the terminals, by step 1 of the first algorithm is trivial
-
-\text{ }
-\begin{spaced}
-\begin{production}
-first(\lstinline{+})  = \{\lstinline{\+}\}
-first(\lstinline{*})  = \{\lstinline{*}\}
-first(\lstinline{(})  = \{\lstinline{(}\}
-first(\lstinline{)})  = \{\lstinline{)}\}
-first(\lstinline{id}) = \{\lstinline{id}\}
-\end{production}
-\end{spaced}
-
-\pause
-\bigskip
-
-Step 2 of the first algorithm gives
-
-\text{ }
-\begin{spaced}
-\begin{production}
-first(\mm{E})  = \{\}
-first(\expo{E}{\prime}) = \{\}
-first(\mm{T})  = \{\}
-first(\expo{T}{\prime}) = \{\}
-first(\mm{F})  = \{\}
-\end{production}
-\end{spaced}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Step 3 of the first algorithm yields
-
-\text{ }
-\begin{spaced}
-\begin{production}
-first(\expo{E}{\prime}) = \{\mm{\epsilon}\}
-first(\expo{T}{\prime}) = \{\mm{\epsilon}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-Step 4 of the first algorithm is repeatedly executed until no further symbols are added; the first round yields
-
-\text{ }
-\begin{spaced}
-\begin{production}
-first(E)  = \{\}
-first(\expo{E}{\prime}) = \{\lstinline{+}, \mm{\epsilon}\}
-first(\mm{T})  = \{\}
-first(\expo{T}{\prime}) = \{\lstinline{*}, \mm{\epsilon}\}
-first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-Second round of step 4 yields
-
-\text{ }
-\begin{spaced}
-\begin{production}
-first(\mm{E})  = \{\}
-first(\expo{E}{\prime}) = \{\lstinline{\+}, \mm{\epsilon}\}
-first(\mm{T})  = \{\lstinline{(}, \lstinline{id}\}
-first(\expo{T}{\prime}) = \{\lstinline{\*}, \mm{\epsilon}\}
-first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
-\end{production}
-\end{spaced}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Third round of step 4 yields
+The first algorithms yield
 
 \text{ }
 \begin{spaced}
@@ -1615,13 +1538,10 @@ first(\expo{T}{\prime}) = \{\lstinline{\*}, \mm{\epsilon}\}
 first(\mm{F})  = \{\lstinline{\(}, \lstinline{id}\}
 \end{production}
 \end{spaced}
+\end{frame}
 
+\begin{frame}[fragile]
 \pause
-
-The fourth round of step 4 adds no symbols to any set, so we are done
-
-\pause
-\bigskip
 
 When is a rule $X ::= \epsilon$ applicable?  For this we need the notion of follow
 
@@ -1668,7 +1588,7 @@ if $X_i$ is the right-most symbol or $\text{first}(X_{i+1}X_{i+2} \dots X_n)$ co
 \begin{frame}[fragile]
 \pause
 
-Again, consider our example grammar
+Consider our example grammar
 
 \text{ }
 \begin{spaced}
@@ -1685,105 +1605,9 @@ Again, consider our example grammar
 \end{spaced}
 
 \pause
-
-From rule 1, $E  ::= T E'$,  $\text{follow}(T)$ contains first($E'$) - $\{\epsilon\} = \{+\}$, and because first($E'$) contains $\epsilon$, it also contains follow($E$); also, follow($E'$) contains follow($E$); so, round 1 of step 3 yields,
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\expo{E}{\prime}) = \{\lstinline{#}\}
-follow(\mm{T})  = \{\lstinline{+}, \lstinline{#}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-We get nothing additional from rule 2, $E'$ ::= \lstinline{+} $T E'$; follow($T$) contains first($E'$) - $\{\epsilon\}$, but we saw that in rule 1; also, follow($E'$) contains follow($E'$), but that says nothing; we get nothing additional from rule 3, $E' ::= \epsilon$
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-From rule 4, $T  ::= F T'$, follow($F$) contains first($T'$) - $\{\epsilon\}$ = \{\lstinline{*}\}, and because first($T'$) contains $\epsilon$, it also contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{#}\}
-follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{#}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-Rules 5 and 6 give us nothing new (for the same reasons rules 2 and 3 did not)
-
-\pause
 \bigskip
 
-Rule 7, $F$  ::= \lstinline{(}$E$\lstinline{)}, adds \lstinline{)} to follow($E$), so
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\mm{E}) = \{\lstinline{)}, \lstinline{#}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-Rule 8 gives us nothing
-
-\pause
-\bigskip
-
-So round 1 of step 3 gives
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\mm{E})  = \{\lstinline{)}, \lstinline{#}\}
-follow(\expo{E}{\prime}) = \{\lstinline{#}\}
-follow(\mm{T})  = \{\lstinline{+}, \lstinline{#}\}
-follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{#}\}
-follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{#}\}
-\end{production}
-\end{spaced}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Now, in round 2 of step 3, the \lstinline{)} that was added to follow($E$) trickles down into the other follow sets
-
-\pause
-\bigskip
-
-From rule 1, $E  ::= T E'$, because first($E'$) contains $\epsilon$, follow($T$) contains follow($E$); also, follow($E'$) contains follow($E$); so, we have
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\expo{E}{\prime}) = \{\lstinline{)}, \lstinline{#}\}
-follow(\mm{T})  = \{\lstinline{+}, \lstinline{)},  \lstinline{#}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-From rule 4, $T  ::= F T'$, because first($T'$) contains $\epsilon$, follow($F$) contains follow($T$); also, follow($T'$) contains follow($T$); so, we have
-
-\text{ }
-\begin{spaced}
-\begin{production}
-follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{)}, \lstinline{#}\}
-follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{)}, \lstinline{#}\}
-\end{production}
-\end{spaced}
-
-\pause
-
-So round 2 produces
+The follow algorithm yields
 
 \text{ }
 \begin{spaced}
@@ -1795,10 +1619,6 @@ follow(\expo{T}{\prime}) = \{\lstinline{+}, \lstinline{)}, \lstinline{#}\}
 follow(\mm{F})  = \{\lstinline{+}, \lstinline{*}, \lstinline{)}, \lstinline{#}\}
 \end{production}
 \end{spaced}
-
-\pause
-
-Round 3 of step 3 adds no new symbols to any set, so we are done
 \end{frame}
 
 \begin{frame}[fragile]
@@ -1837,7 +1657,7 @@ This definition, together with the functions, first and follow, suggests the fol
 \begin{frame}[fragile]
 \pause
 
-Let us construct a parse table for our example grammar
+Consider our example grammar
 
 \text{ }
 \begin{spaced}
@@ -1854,6 +1674,7 @@ Let us construct a parse table for our example grammar
 \end{spaced}
 
 \pause
+\bigskip
 
 For the non-terminal $E$, we consider rule 1: $E  ::= T E'$;  first($T E'$) = \{\lstinline{(},\lstinline{id}\}; so, we have
 
