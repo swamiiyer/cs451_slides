@@ -28,18 +28,11 @@ Type checking (aka semantic analysis) is the final step in the analysis phase, a
 \item A certain amount of storage analysis, for example determining the amount of storage that is required in the current stack frame to store a local variable (one word for \lstinline{int}s, two words for \lstinline{long}s); this information is used to allocate locations (at offsets from the base of the current stack frame) for parameters and local variables
 \item A certain amount of AST tree rewriting, usually to make implicit constructs more explicit
 \end{itemize}
-\end{frame}
 
-\begin{frame}[fragile]
 \pause
+\bigskip
 
-Semantic analysis of \jmm programs involves all of these operations
-\begin{itemize}
-\item Like Java, \jmm is strictly-typed, ie, we want to determine the types of all names and expressions at compile time
-\item A \jmm program must be well-typed, ie, the operands to all operations must have appropriate types
-\item All \jmm local variables (including formal parameters)  must be allocated storage and assigned locations within a method's stack frame
-\item The AST for \jmm requires a certain amount of sub-tree rewriting; for example, field references using simple names must be rewritten as explicit field selection operations, and declared variable initializations must be rewritten as explicit assignment statements
-\end{itemize}
+Semantic analysis of \jmm programs involves all of the above
 \end{frame}
 
 \section{The \protect\jmm Types}
@@ -497,6 +490,19 @@ public void preAnalyze(Context context) {
     }
 }
 \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+In a method declaration, \lstinline{preAnalyze()} does the following
+\begin{enumerate}
+\item It resolves the types of the formal parameters
+\item It resolves the return type
+\item It checks proper use of the \lstinline{abstract} modifier
+\item It computes the method descriptor
+\item It generates (partial) code for the method
+\end{enumerate}
 
 \pause
 \bigskip
@@ -508,6 +514,10 @@ public void preAnalyze(Context context, CLEmitter partial) {
     for (JFormalParameter param: params) {
         param.setType(param.type().resolve(context));
     }
+
+    // Resolve return type
+    returnType = returnType.resolve(context);
+    
 \end{lstlisting}
 \end{frame}
 
@@ -515,10 +525,6 @@ public void preAnalyze(Context context, CLEmitter partial) {
 \pause
 
 \begin{lstlisting}[language=Java]
-
-    // Resolve return type
-    returnType = returnType.resolve(context);
-
     // Check proper local use of abstract
     if (isAbstract && body != null) {
         JAST.compilationUnit.reportSemanticError(line(),
