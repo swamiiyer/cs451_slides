@@ -391,10 +391,6 @@ For example, consider the regular expression $(a|b)a\!*\!b$ over the alphabet $\
 
 An FSA $F$ that recognizes the language is $F = (\Sigma, S, s_0, M, F)$ where $\Sigma = \{a, b\}, S = \{0, 1, 2\}, s_0 = 0, M = \{m(0, a) = 1, m(0, b) = 1, m(1, a) = 1, m(1, b) = 2\}, F = \{2\}$
 
-\pause
-\bigskip
-
-The corresponding transition diagram is shown below
 \begin{center}
 \visible<4->{\includegraphics[scale=0.6]{{figures/figure02.07}.jpg}}
 \end{center}
@@ -422,10 +418,6 @@ A non-deterministic finite state automaton (NFA) is an automaton that allows eit
 
 For example, an NFA that recognizes all strings of $a$'s and $b$'s that begin with an $a$ and end with a $b$ is $N = (\Sigma, S, s_0, M, F)$ where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $M =  \{m(0, a) = 1, m(1, a) = 1, m(1, b) = 1, m(1, \epsilon) = 0, m(1, b) = 2\}$ and, $F = \{2\}$
 
-\pause
-\bigskip
-
-The corresponding transition diagram is shown below
 \begin{center}
 \visible<3->{\includegraphics[scale=0.6]{{figures/figure02.08}.jpg}}
 \end{center}
