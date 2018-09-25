@@ -846,12 +846,56 @@ This is the strategy we use in parsing \jmm programs
 \pause
 \bigskip
 
-We already saw the method \lstinline{compilationUnit()} that parses a \jmm \lstinline{compilationUnit}
+For example, consider the rule describing the syntax for a compilation unit
+\begin{lstlisting}[language={}]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} EOF 
+\end{lstlisting}
 
 \pause
 \bigskip
 
-As another example, consider the rule defining qualifiedIdentifier
+To parse a compilation unit, we define a method called \lstinline{compilationUnit()}
+
+\begin{lstlisting}[language=Java]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null; // Default
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java]
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, packageName,
+                imports, typeDeclarations);
+    }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As another example, consider the rule defining a qualified identifier, such as \lstinline{java.lang.Class}
 
 \text{ }
 \begin{spaced}
@@ -862,21 +906,7 @@ qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\
 
 \pause
 
-Parsing a qualifiedIdentifier such as \lstinline{java.lang.Class} is straightforward
-\begin{enumerate}
-\item We look at the next incoming token and if it is an identifier, we scan it; if it is not an identifier, then we raise an error
-\item Repeatedly, so long as the next incoming token is a period
-\begin{enumerate}[a.]
-\item We scan the period
-\item We look at the next incoming token and if it is an identifier, we scan it; otherwise, we raise an error
-\end{enumerate}
-\end{enumerate}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-The method for parsing qualifiedIdentifier not only parses the input, but also constructs an AST node for recording the fully qualified name as a string
+To parse qualifiedIdentifier, we define a method called \lstinline{qualifiedIdentifier()}
 
 \begin{lstlisting}[language=Java]
     private TypeName qualifiedIdentifier() {
@@ -910,7 +940,7 @@ The helper method \lstinline{mustBe()} requires that the next incoming token mat
 \begin{frame}[fragile]
 \pause
 
-As another example, consider our syntax for statements
+As yet another example, consider our syntax for statements
 
 \text{ }
 \begin{spaced}
