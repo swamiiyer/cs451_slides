@@ -11,328 +11,515 @@
 \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-\tableofcontents
-\end{frame}
-
 \section{Compilers}
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-A compiler is a program that translates a source program written in a high-level programming language such as Java, C\lstinline{#} or C, into a target program in a lower level language such as machine code
+A compiler translates a high-level source language program into a low-level target language program
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.01}.jpg}}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+  	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {Source \\ Language \\ Program};
+\node [block1] (2) [right=of 1] {Compiler};
+\node [block2] (3) [right=of 2] {Target \\ Language \\ Program};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\end{scope}
+\end{tikzpicture}
+}
 \end{center}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-A programming language is an artificial language in which a programmer writes a program to control the behavior of a computer
+Examples of source language: C, Java
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Like a natural language, in a programming language, one describes
+Examples of target language: MIPS instructions, JVM instructions
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+The description of a programming language consists of
 \begin{itemize}
-\item The tokens (aka lexemes)
+\pause\transdissolve
+\item Tokens (aka lexemes)
 
-\item The syntax of programs and language constructs such as classes, methods, statements and expressions
+\pause\transdissolve
+\item Syntax of constructs such as classes, methods, statements and expressions
 
-\item The meaning (aka semantics) of the various constructs
+\pause\transdissolve
+\item Meaning (aka semantics) of the constructs
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-A computer's machine language (ie, its instruction set) is designed so as to be easily interpreted by the computer itself
+A machine's instruction set and its behavior is referred to as its architecture
 
-\pause
-\bigskip
-
-A machine's instruction set and its behavior is often referred to as its architecture
-
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 Examples of architectures
 \begin{itemize}
-\item Intel i386, a complex instruction set computer (CISC) with powerful and complex instructions
+\pause\transdissolve
+\item Intel i386: a complex instruction set computer (CISC)
 
-\item MIPS, as a reduced instruction set computer (RISC) with relatively simple instructions
+\pause\transdissolve
+\item MIPS: a reduced instruction set computer (RISC)
 
-\item Java Virtual Machine (JVM), a virtual machine not necessarily implemented in hardware
-\end{itemize}
-
-\pause
-\bigskip
-
-Traditionally, a compiler analyzes the input program to synthesize the output program
-\begin{itemize}
-\item mapping names to memory addresses, stack frame offsets, and registers,
-
-\item generating a linear sequence of machine code instructions, and
-
-\item detecting any errors in the program that can be detected in compilation
+\pause\transdissolve
+\item Java Virtual Machine (JVM): a virtual machine
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-An interpreter executes a high-level language program directly, ie, the high-level program is first loaded into the interpreter, and then executed
+An interpreter executes a high-level source language program directly
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.02}.jpg}}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {Source \\ Language \\ Program};
+\node [block1] (2) [right=of 1] {Interpreter};
+\node [block2] (3) [right=of 2] {Results};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\end{scope}
+\end{tikzpicture}
+}
 \end{center}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Examples of programming languages whose programs may be interpreted directly are the UNIX shell languages, such as bash and csh, Python, and many versions of LISP
+Examples of interpreters: Bash, Python
 \end{frame}
 
 \section{Why Study Compilers?}
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Compilers are larger programs than the ones you have written in your programming courses
+Compilers are larger programs than the ones you have written so far
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Compilers make use of all those things you have learned about earlier: arrays, lists, queues, stacks, trees, graphs, maps, regular expressions and finite state automata, context-free grammars and parsers, recursion and patterns
+Compilers make use of all those things you have learned about earlier
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-You learn a lot about the language you are compiling (in our case, Java)
+You learn a lot about the source language (in our case, Java)
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-You learn a lot about the target machine (in our case, both the Java Virtual Machine and the MIPS computer)
+You learn a lot about the target machine (in our case, JVM and MIPS)
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Compilers are still being written for new languages and targeted to new computer architectures
+Compilers are still being written for new languages and targeted to new architectures
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-There is a good mix of theory and practice, and each is relevant to the other
+There is a good mix of theory and practice
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The organization of a compiler is such that it can be written in stages, and each stage makes use of earlier stages; compiler writing is a case study in software engineering
+Compiler writing is a case study in software engineering
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 Compilers are programs and writing programs is fun
 \end{frame}
 
 \section{The Phases of Compilation}
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-At the very least, a compiler can be broken into a front end and a back end
+A compiler can be broken into a front end and a back end
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.03}.jpg}}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+  	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {Source \\ Language \\ Program};
+\node [block1] (2) [right=of 1] {Front End};
+\node [block2] (3) [right=of 2] {IR};
+\node [block1] (4) [right=of 3] {Back End};
+\node [block2] (5) [right=of 4] {Target \\ Language \\ Program};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\path (3) edge node [above] {} (4);
+\path (4) edge node [above] {} (5);
+\end{scope}
+\end{tikzpicture}
+}
 \end{center}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The front end takes as input, a high-level language program, and produces as output an intermediate representation (IR) of that program
+The front end analyzes the source language program for its meaning and produces an intermediate representation (IR) of the program
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The back end then takes the IR of the program as input, and produces the target machine language program
+The frond end is source language dependent and target language independent
+
+\pause\transdissolve\bigskip
+
+The back end takes the IR and synthesizes a target language program
+
+\pause\transdissolve\bigskip
+
+The back end is target language dependent and source language independent
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-A compiler's front end analyzes the input program to determine its meaning, and so is source language dependent and target language independent
-
-\pause
-\bigskip
-
-The front end can be further decomposed into a sequence of analysis phases
+The front end can be decomposed into a sequence of analysis phases
 
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.04}.jpg}}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+  	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {Source \\ Language \\ Program};
+\node [block1] (2) [right=of 1] {Scanner};
+\node [block2] (3) [right=of 2] {Tokens};
+\node [block1] (4) [right=of 3] {Parser};
+\node [block2] (5) [right=of 4] {AST};
+\node [block1] (6) [right=of 5] {Semantics};
+\node [block2] (7) [right=of 6] {IR};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\path (3) edge node [above] {} (4);
+\path (4) edge node [above] {} (5);
+\path (5) edge node [above] {} (6);
+\path (6) edge node [above] {} (7);
+\end{scope}
+\end{tikzpicture}
+}
 \end{center}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The scanner breaks the input stream of characters to a stream of tokens: identifiers, literals, reserved words, operators, and separators
+The scanner breaks the input stream of characters to a sequence of tokens
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The parser takes a sequence of tokens and parses it against a grammar to produce an abstract syntax tree (AST), which makes the syntax that is implicit in the source program, explicit
+The parser takes a sequence of tokens and parses it against a grammar to produce an abstract syntax tree (AST)
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-The semantics phase does semantic analysis: declares names in a symbol table, looks up names as they are referenced to determine their types, assigns types to expressions, and checks the validity of types; sometimes, a certain amount of storage analysis (such as assigning addresses or offsets to variables) is also done
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-A compiler's back end takes the IR and synthesizes a target machine program having the same meaning, and so is target language dependent and source language independent
-
-\pause
-\bigskip
-
-The back end can be further decomposed into a sequence of synthesis phases
-
-\begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.05}.jpg}}
-\end{center}
-
-\pause
-\bigskip
-
-The code generation phase chooses what target machine instructions to generate, making use of information collected in earlier phases
-
-\pause
-\bigskip
-
-The peephole phase scans through the generated instructions looking locally for wasteful instruction sequences such as branches to branches and unnecessary load/store pairs
-
-\pause
-\bigskip
-
-The object phase links together any modules produced in code generation and it constructs a single machine code executable program
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-Sometimes, a compiler will have an optimizer (``middle end''), which sits between the front end and the back end
-
-\begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.06}.jpg}}
-\end{center}
-
-\pause
-\bigskip
-
-The purpose of the optimizer is both to improve the IR program and to collect information
-that the back end may use for producing better code
-
-\pause
-\bigskip
-
-The optimizer might do any number of the following
+The semantics phase
 \begin{itemize}
-\item Organize the program into what are called basic blocks: blocks of code from
-which there are no branches out and into which there are no branches
+\pause\transdissolve
+\item Declares names in a symbol table
 
-\item From the basic block structure, one may then compute next-use information for determining the lifetimes of variables, and gather loop information
+\pause\transdissolve
+\item Looks up names as they are referenced to determine their types 
 
-\item Next-use information is useful for eliminating common sub-expressions and constant folding (for example, replacing \lstinline{x + 5} by \lstinline{9} if we know \lstinline{x} has the value \lstinline{4})
+\pause\transdissolve
+\item Assigns types to expressions and checks the validity of types
 
-\item Loop information is useful for pulling loop invariants out of loops and for strength reduction (for example, replacing multiplication operations by addition operations)
+\pause\transdissolve
+\item Does certain amount of storage analysis 
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-There are several advantages to separating the front end from the back end:
-\begin{enumerate}
-\item Decomposition reduces complexity; it's easier to understand (and implement) the smaller programs
-
-\item Decomposition makes it possible for several individuals or teams to work concurrently on separate parts, reducing the overall implementation time
-
-\item Decomposition permits a certain amount of code re-use; for example, once one has written
-a front end for Java and a back end for the Intel Core Duo, one need only write a new C front end to get a C compiler, and one need only write a single SPARC back end to re-target both compilers to the SPARC architecture
+The back end can be decomposed into a sequence of synthesis phases
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure01.07}.jpg}}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+  	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {IR};
+\node [block1] (2) [right=of 1] {Codegen};
+\node [block2] (3) [right=of 2] {Target \\ Language \\ Instructions};
+\node [block1] (4) [right=of 3] {Peephole};
+\node [block2] (5) [right=of 4] {Better \\ Target \\ Language \\ Instructions};
+\node [block1] (6) [right=of 5] {Object};
+\node [block2] (7) [right=of 6] {Target \\ Language \\ Program};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\path (3) edge node [above] {} (4);
+\path (4) edge node [above] {} (5);
+\path (5) edge node [above] {} (6);
+\path (6) edge node [above] {} (7);
+\end{scope}
+\end{tikzpicture}
+}
 \end{center}
-\end{enumerate}
+
+\pause\transdissolve\bigskip
+
+The code generation phase chooses what target machine instructions to generate
+
+\pause\transdissolve\bigskip
+
+The peephole phase scans through the generated instructions locally for wasteful instructions such as branches to branches and unnecessary load/store pairs
+
+\pause\transdissolve\bigskip
+
+The object phase links together modules produced in code generation and constructs a single target language program
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The Java compiler, the program invoked when one types, for example
-\begin{lstlisting}[language={}]
-$ javac MyProgram.java
+A compiler sometimes has an optimizer between the front end and the back end
+
+\begin{center}
+\visible<2->{
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+	   node distance=0.5cm,
+  	   block1/.style={rectangle,draw,align=center},
+	   block2/.style={rectangle,align=center}]
+\node [block2] (1) {Source \\ Language \\ Program};
+\node [block1] (2) [right=of 1] {Front End};
+\node [block2] (3) [right=of 2] {IR};
+\node [block1] (4) [right=of 3] {Optimizer};
+\node [block2] (5) [right=of 4] {IR};
+\node [block1] (6) [right=of 5] {Back End};
+\node [block2] (7) [right=of 6] {Target \\ Language \\ Program};
+\path (1) edge node [above] {} (2);
+\path (2) edge node [above] {} (3);
+\path (3) edge node [above] {} (4);
+\path (4) edge node [above] {} (5);
+\path (5) edge node [above] {} (6);
+\path (6) edge node [above] {} (7);
+\end{scope}
+\end{tikzpicture}
+}
+\end{center}
+
+\pause\transdissolve\bigskip
+
+The optimizer might
+\begin{itemize}
+\pause\transdissolve
+\item Eliminate common sub-expressions
+
+\pause\transdissolve
+\item Perform constant folding
+
+\pause\transdissolve
+\item Lift loop invariants out of loops
+
+\pause\transdissolve
+\item Perform strength reduction
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+Advantages of separating the front end from the back end
+\begin{itemize}
+\pause\transdissolve
+\item It is easier to understand (and implement) smaller programs
+
+\pause\transdissolve
+\item Several individuals or teams can work concurrently on separate parts
+
+\pause\transdissolve
+\item Enables a certain amount of code re-use
+
+\bigskip
+\begin{minipage}[t]{\linewidth}
+\begin{center}
+\begin{overprint}
+\onslide<6>
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+              block1/.style={rectangle,draw,align=center},
+	          block2/.style={rectangle,align=center}]
+    \node [block2] (1) at (0,2) {Java \\ Program};
+%    \node [block2] (2) at (0,0) {C \\ Program};
+    \node [block1] (3) at (2,2) {Java \\ Front End};
+%    \node [block1] (4) at (2,0) {C \\ Front End};
+%    \node [block1] (5) at (6,2) {Intel \\ Back End};
+    \node [block1] (6) at (6,0) {SPARC \\ Back End};
+%    \node [block2] (7) at (8,2) {Intel Core Duo \\ Program};
+    \node [block2] (8) at (8,0) {SPARC \\ Program};
+    \node [block2] (9) at (4,1) {IR};
+    \path (1) edge node [above] {} (3);
+%    \path (2) edge node [above] {} (4);
+%    \path (5) edge node [above] {} (7);
+    \path (6) edge node [above] {} (8);
+    \path (3) edge node [above] {} (9);
+%    \path (4) edge node [above] {} (9);
+%    \path (9) edge node [above] {} (5);
+    \path (9) edge node [above] {} (6);
+\end{scope}
+\end{tikzpicture}
+
+\onslide<7>
+\begin{tikzpicture}
+\footnotesize
+\begin{scope}[->,thin,
+              block1/.style={rectangle,draw,align=center},
+	          block2/.style={rectangle,align=center}]
+    \node [block2] (1) at (0,2) {Java \\ Program};
+    \node [block2] (2) at (0,0) {C \\ Program};
+    \node [block1] (3) at (2,2) {Java \\ Front End};
+    \node [block1] (4) at (2,0) {C \\ Front End};
+    \node [block1] (5) at (6,2) {Intel \\ Back End};
+    \node [block1] (6) at (6,0) {SPARC \\ Back End};
+    \node [block2] (7) at (8,2) {Intel Core Duo \\ Program};
+    \node [block2] (8) at (8,0) {SPARC \\ Program};
+    \node [block2] (9) at (4,1) {IR};
+    \path (1) edge node [above] {} (3);
+    \path (2) edge node [above] {} (4);
+    \path (5) edge node [above] {} (7);
+    \path (6) edge node [above] {} (8);
+    \path (3) edge node [above] {} (9);
+    \path (4) edge node [above] {} (9);
+    \path (9) edge node [above] {} (5);
+    \path (9) edge node [above] {} (6);
+\end{scope}
+\end{tikzpicture} 
+\end{overprint}
+\end{center}
+\end{minipage}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+We will implement a compiler called \jmm to compile a non-trivial subset of Java, also called \jmm
+
+\pause\transdissolve\bigskip
+
+In the first instance, we will target the JVM, a stack-based architecture
+
+\pause\transdissolve\bigskip
+
+Compiling a \jmm program \lstinline{P.java} for JVM
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ j-- P.java
 \end{lstlisting}
-produces a \lstinline{MyProgram.class} file, a byte code program suitable for execution on the JVM
+\end{tcolorbox}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-To execute the \lstinline{MyProgram.class} file, one types
-\begin{lstlisting}[language={}]
-$ java MyProgram
+Running the JVM program \lstinline{P.class}
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ java P
 \end{lstlisting}
-which effectively interprets the JVM program
+\end{tcolorbox}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-In this course, we'll study the implementation of a compiler called \jmm to compile a (non-trivial) subset of Java, which we also call \jmm
+In the second instance, we will target the MIPS machine, a register-based architecture
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-In the first instance, we'll target the JVM
+Compiling a \jmm program \lstinline{P.java} for MIPS
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ j-- -s naive P.java
+\end{lstlisting}
+\end{tcolorbox}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Targeting the JVM is deficient in one respect: one does not learn about register allocation because the JVM is a stack-based architecture and has no registers
+Running the MIPS program \lstinline{P.s}
 
-\pause
-\bigskip
-
-To remedy this deficiency, we'll also study the compilation of JVM code to code for the MIPS machine, which is a register-based architecture; in doing this, we face the challenge of mapping possibly many variables to a limited number of fast registers
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ spim -f P.s
+\end{lstlisting}
+\end{tcolorbox}
 \end{frame}
 
 \section{Overview of the \protect \jmm to JVM Compiler}
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Our source language, \jmm, is a proper subset of the Java programming language; it is an object-oriented programming language, supporting classes, methods, fields, message expressions, and a variety of
-statements, expressions and primitive types
+\jmm is an object-oriented programming language, supporting classes, methods, fields, message expressions, and a variety of statements, expressions and primitive types
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 The \jmm compiler is organized in an object-oriented fashion
 
+\bigskip
+
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure01.08}.jpg}}
+\begin{overprint}
+\onslide<4>
+\includegraphics[scale=0.45]{figures/organization1.pdf}
+
+\onslide<5>
+\includegraphics[scale=0.45]{figures/organization2.pdf}
+
+\onslide<6>
+\includegraphics[scale=0.45]{figures/organization3.pdf}
+
+\onslide<7>
+\includegraphics[scale=0.45]{figures/organization4.pdf}
+
+\onslide<8>
+\includegraphics[scale=0.45]{figures/organization5.pdf}
+
+\onslide<9>
+\includegraphics[scale=0.45]{figures/organization6.pdf}
+
+\onslide<10>
+\includegraphics[scale=0.45]{figures/organization7.pdf}
+
+\onslide<11>
+\includegraphics[scale=0.45]{figures/organization8.pdf}
+
+\onslide<12>
+\includegraphics[scale=0.45]{figures/organization9.pdf}
+\end{overprint}
 \end{center}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The scanner supports the parser, scanning tokens from the input stream of characters comprising the source language program
+The scanner breaks down the source language program into a sequence of tokens
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-For example, the scanner breaks down the following source language \lstinline{HelloWorld} program
+For example, the following program
 
-\begin{lstlisting}[language=Java]
+\pause\transdissolve\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
 import java.lang.System;
 
 public class HelloWorld {
@@ -343,30 +530,27 @@ public class HelloWorld {
 }
 \end{lstlisting}
 
-into atomic tokens such as \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
+\pause\transdissolve\smallskip
 
-\pause
-\bigskip
+is broken down into tokens such as \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
 
-Some tokens such as \lstinline{java}, \lstinline{HelloWorld}, and \lstinline{main} are \lstinline{IDENTIFIER} tokens, carrying along their images as attributes
+\pause\transdissolve\bigskip
 
-\pause
-\bigskip
+Tokens such as \lstinline{java} and \lstinline{HelloWorld} are \lstinline{IDENTIFIER} tokens, carrying along their images (\lstinline{"java"} and \lstinline{"HelloWorld"}) as attributes
 
-Some tokens such as \lstinline{import}, \lstinline{public}, and \lstinline{class} are reserved words having the unique names such as \lstinline{IMPORT}, \lstinline{PUBLIC}, and \lstinline{CLASS}
+\pause\transdissolve\bigskip
 
-\pause
-\bigskip
+Tokens such as \lstinline{import} and \lstinline{public} are reserved words having the unique names such as \lstinline{IMPORT} and \lstinline{PUBLIC}
+
+\pause\transdissolve\bigskip
 
 Operators and separators such as \lstinline{+} and \lstinline{;} have distinct names such as \lstinline{PLUS} and \lstinline{SEMI}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 Literals such as \lstinline{"Hello, World!"} comprise a single token such as \lstinline{STRING_LITERAL}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 Comments are scanned and ignored altogether
 \end{frame}
@@ -385,32 +569,27 @@ In the first instance, our parser is hand-crafted from the \jmm grammar, to pars
 \bigskip
 
 For example, consider the following grammatical rule describing the syntax for a compilation unit
+
 \begin{lstlisting}[language={}]
 compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
                     {IMPORT  qualifiedIdentifier SEMI}
                     {typeDeclaration} EOF 
 \end{lstlisting}
+\end{frame}
 
-\pause
-\bigskip
+\begin{frame}[fragile]
+\pause\transdissolve
 
-To parse a compilation unit using the recursive descent technique, one would write a method, call it \lstinline{compilationUnit()}
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     public JCompilationUnit compilationUnit() {
         int line = scanner.token().line();
-        TypeName packageName = null; // Default
+        TypeName packageName = null;
         if (have(PACKAGE)) {
             packageName = qualifiedIdentifier();
             mustBe(SEMI);
         }
-\end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]
-\pause
-
-\begin{lstlisting}[language=Java]
         ArrayList<TypeName> imports = new ArrayList<TypeName>();
         while (have(IMPORT)) {
             imports.add(qualifiedIdentifier());
@@ -424,10 +603,17 @@ To parse a compilation unit using the recursive descent technique, one would wri
             }
         }
         mustBe(EOF);
-        return new JCompilationUnit(scanner.fileName(), line, packageName,
-                imports, typeDeclarations);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
     }
+
 \end{lstlisting}
+
+\tcblower
+
+\text{\\}
+
+\end{tcolorbox}
 \end{frame}
 
 
