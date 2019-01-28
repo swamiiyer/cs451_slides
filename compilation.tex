@@ -511,13 +511,15 @@ The \jmm compiler is organized in an object-oriented fashion
 \begin{frame}[fragile]
 \pause\transdissolve
 
-The scanner breaks down the source language program into a sequence of tokens
+The scanner breaks down a \jmm program into a sequence of tokens
 
 \pause\transdissolve\bigskip
 
-For example, the following program
+For example, consider the program
 
 \pause\transdissolve\smallskip
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
 
 \begin{lstlisting}[language=Java,style=focusin]
 import java.lang.System;
@@ -529,10 +531,11 @@ public class HelloWorld {
     }
 }
 \end{lstlisting}
+\end{tcolorbox}
 
 \pause\transdissolve\smallskip
 
-is broken down into tokens such as \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
+The program is broken down into tokens \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
 
 \pause\transdissolve\bigskip
 
@@ -556,31 +559,154 @@ Comments are scanned and ignored altogether
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The parsing of a \jmm program and the construction of its abstract syntax tree (AST) is driven by the language's syntax, and so is said to be syntax directed
+The parser validates the syntax of a \jmm program against the \jmm grammar and represents the program as an AST
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-In the first instance, our parser is hand-crafted from the \jmm grammar, to parse \jmm programs by a technique known as recursive descent
+In the first instance, the parser is hand-crafted from the grammar, to parse programs by a technique known as recursive descent
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-For example, consider the following grammatical rule describing the syntax for a compilation unit
+For example, consider the grammar rule describing a compilation unit
 
-\begin{lstlisting}[language={}]
+\pause\transdissolve\smallskip
+
+\begin{overprint}
+\onslide<5>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusin]
 compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
                     {IMPORT  qualifiedIdentifier SEMI}
-                    {typeDeclaration} EOF 
+                    {typeDeclaration} 
+                    EOF
 \end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<6>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusout]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} 
+                    EOF
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+optional package statement
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<7>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusout]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
+                    {IMPORT  qualifiedIdentifier SEMI}
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusout]
+                    {typeDeclaration} 
+                    EOF
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+zero or more import statements
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<8>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusout]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
+                    {typeDeclaration} 
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusout]
+                    EOF
+\end{lstlisting}
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+zero or more type (class) declarations
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<9>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusout]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} 
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
+                    EOF
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+end of file
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<10>
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusin]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} 
+                    EOF
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<11>
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusin]
+compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
+                    {IMPORT  qualifiedIdentifier SEMI}
+                    {typeDeclaration} 
+                    EOF
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+The rule is handled by the method \lstinline{compilationUnit()} defined in \lstinline{Parser.java} (the hand-crafted parser)
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
 \pause\transdissolve
 
-\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
 \begin{lstlisting}[language=Java,style=focusin]
     public JCompilationUnit compilationUnit() {
@@ -606,82 +732,375 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
         return new JCompilationUnit(scanner.fileName(), line, 
             packageName, imports, typeDeclarations);
     }
-
 \end{lstlisting}
 
 \tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
 
-\text{\\}
-
+\end{minipage}
 \end{tcolorbox}
 \end{frame}
 
-
 \begin{frame}[fragile]
-\pause
+\transdissolve
 
-An AST for the \lstinline{HelloWorld} program
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
-\begin{center}
-\visible<2->{\includegraphics[scale=0.35]{{figures/figure01.09}.jpg}}
-\end{center}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    public JCompilationUnit compilationUnit() {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        int line = scanner.token().line();
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+parse a compilation unit and return an AST representation for it
+\end{minipage}
+\end{tcolorbox}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\transdissolve
 
-As in Java, \jmm names and values have types, and since \jmm (like Java) is statically typed, its compiler must determine the types of all names and expressions
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
-\pause
-\bigskip
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        int line = scanner.token().line();
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
 
-Types in \jmm are represented using: \lstinline{Type} (wraps \lstinline{java.lang.Class}), \lstinline{Method} (wraps \lstinline{java.lang.reflect.Method}), \lstinline{Constructor} (wraps \lstinline{java.lang.reflect.Constructor}), \lstinline{Field} (wraps \lstinline{java.lang.reflect.Field}), and \lstinline{Member} (wraps \lstinline{java.lang.reflect.Member})
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+get line number of current token
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
 
-\pause
-\bigskip
+\begin{frame}[fragile]
+\transdissolve
 
-There are places where we want to denote a type by its name, before its type is known or defined, and for this we use \lstinline{TypeName} and (because we need array types) \lstinline{ArrayTypeName}
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
-\pause
-\bigskip
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
 
-The \jmm compiler maintains a symbol table (a singly-linked list of \lstinline{Context} objects) in which it declares names; each object in the symbol table represents some area of scope and contains a mapping from names to definitions
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+parse optional package statement
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
 
-\pause
-\bigskip
+\begin{frame}[fragile]
+\transdissolve
 
-A \lstinline{CompilationUnitContext} object represents the scope comprising the program, ie, the entire compilation unit
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
-\pause
-\bigskip
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+parse zero or more import statements
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile]
+\transdissolve
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        mustBe(EOF);
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+parse zero or more type (class) declarations
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile]
+\transdissolve
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        mustBe(EOF);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+parse end of file
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile]
+\transdissolve
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public JCompilationUnit compilationUnit() {
+        int line = scanner.token().line();
+        TypeName packageName = null;
+        if (have(PACKAGE)) {
+            packageName = qualifiedIdentifier();
+            mustBe(SEMI);
+        }
+        ArrayList<TypeName> imports = new ArrayList<TypeName>();
+        while (have(IMPORT)) {
+            imports.add(qualifiedIdentifier());
+            mustBe(SEMI);
+        }
+        ArrayList<JAST> typeDeclarations = new ArrayList<JAST>();
+        while (!see(EOF)) {
+            JAST typeDeclaration = typeDeclaration();
+            if (typeDeclaration != null) {
+                typeDeclarations.add(typeDeclaration);
+            }
+        }
+        mustBe(EOF);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        return new JCompilationUnit(scanner.fileName(), line, 
+            packageName, imports, typeDeclarations);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+return an AST representation for the compilation unit
+\end{minipage}
+\end{tcolorbox}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+\jmm (like Java) is statically typed, so it must determine the types of all names and expressions
+
+\pause\transdissolve\bigskip
+
+Types in \jmm are represented using
+\begin{itemize}
+\pause\transdissolve
+\item \lstinline{Type} (wraps \lstinline{java.lang.Class})
+
+\pause\transdissolve
+\item \lstinline{Method} (wraps \lstinline{java.lang.reflect.Method})
+
+\pause\transdissolve
+\item \lstinline{Constructor} (wraps \lstinline{java.lang.reflect.Constructor})
+
+\pause\transdissolve
+\item \lstinline{Field} (wraps \lstinline{java.lang.reflect.Field})
+
+\pause\transdissolve
+\item \lstinline{Member} (wraps \lstinline{java.lang.reflect.Member})
+\end{itemize}
+
+\pause\transdissolve\bigskip
+
+There are places where \jmm uses \lstinline{TypeName} and \lstinline{ArrayTypeName} to denote a type by its name, before the type is known or defined
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+\jmm maintains a symbol table (a singly-linked list of \lstinline{Context} objects) in which it declares names
+
+\pause\transdissolve\bigskip
+
+Each object in the symbol table represents some area of scope and contains a mapping from names to definitions
+
+\pause\transdissolve\bigskip
+
+A \lstinline{CompilationUnitContext} object represents the scope comprising the program
+
+\pause\transdissolve\bigskip
 
 A \lstinline{ClassContext} object represents the scope of a class declaration
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
 A \lstinline{LocalContext} object represents the scope of a block
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-A \lstinline{MethodContext} (subclass of \lstinline{LocalContext}) object represents the scopes of methods and, by extension, constructors
+A \lstinline{MethodContext} (subclass of \lstinline{LocalContext}) object represents the scopes of methods and constructors
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-\lstinline{preAnalyze()} is a first pass at type checking, which builds that part of the symbol table that is at the top of the AST, to declare both imported types and types introduced by class declarations, and to declare the members in those classes
+\lstinline{preAnalyze()} builds the part of the symbol table that is close to the top of the AST, declaring imported types, types introduced by class declarations, and the members in those classes
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-\lstinline{analyze()} picks up where \lstinline{preAnalyze()} left off and continues to build the symbol table, decorating the AST with type information and enforcing the \jmm type rules
+\lstinline{analyze()} builds the rest of the symbol table, decorating the AST with type information
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-\lstinline{analyze()} also performs other important tasks such as type checking, accessibility, member finding, tree rewriting, and storage allocation
+\lstinline{analyze()} also performs other important tasks such as type checking, accessibility checking, member finding, tree rewriting, and storage allocation
 \end{frame}
 
 \begin{frame}[fragile]
