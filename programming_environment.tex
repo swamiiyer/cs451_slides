@@ -135,6 +135,17 @@ $ unzip j--.zip
 
 \pause\transdissolve\bigskip
 
+List current directory
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ ls
+j--  j--.zip
+\end{lstlisting}
+\end{tcolorbox}
+
+\pause\transdissolve\bigskip
+
 Remove the zip file
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
@@ -148,6 +159,10 @@ $ rm j--.zip
 \begin{frame}[fragile]
 \pause\transdissolve
 
+We are now under \lstinline{/home/student/coursework}, which we refer to as \lstinline{$j}
+
+\pause\transdissolve\bigskip
+
 Change directory to \lstinline{j--}
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
@@ -155,10 +170,6 @@ Change directory to \lstinline{j--}
 $ cd j--
 \end{lstlisting}
 \end{tcolorbox}
-
-\pause\transdissolve\bigskip
-
-We are now under \lstinline{/home/student/coursework/j--}, which we refer to as \lstinline{$j}
 
 \pause\transdissolve\bigskip
 
@@ -172,7 +183,7 @@ $ ant
 
 \pause\transdissolve\bigskip
 
-Compile the \jmm program \lstinline{$j/tests/pass/HelloWorld.java} for the JVM architecture
+Compile the \jmm program \lstinline{$j/j--/tests/pass/HelloWorld.java} for the JVM architecture
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
 \begin{lstlisting}[style=terminal]
@@ -204,7 +215,7 @@ $ javap -p -v pass.HelloWorld
 \begin{frame}[fragile]
 \pause\transdissolve
 
-Compile the \jmm program \lstinline{$j/tests/spim/HelloWorld.java} for the MIPS architecture
+Compile the \jmm program \lstinline{$j/j--/tests/spim/HelloWorld.java} for the MIPS architecture
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
 \begin{lstlisting}[style=terminal]
