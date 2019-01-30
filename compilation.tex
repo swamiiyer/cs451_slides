@@ -53,7 +53,7 @@ The description of a programming language consists of
 \item Tokens (aka lexemes)
 
 \pause\transdissolve
-\item Syntax of constructs such as classes, methods, statements and expressions
+\item Syntax of constructs such as classes, methods, statements, and expressions
 
 \pause\transdissolve
 \item Meaning (aka semantics) of the constructs
@@ -177,7 +177,7 @@ The front end analyzes the source language program for its meaning and produces 
 
 \pause\transdissolve\bigskip
 
-The frond end is source language dependent and target language independent
+The front end is source language dependent and target language independent
 
 \pause\transdissolve\bigskip
 
@@ -221,11 +221,11 @@ The front end can be decomposed into a sequence of analysis phases
 
 \pause\transdissolve\bigskip
 
-The scanner breaks the input stream of characters to a sequence of tokens
+The scanner breaks the input stream of characters into a sequence of tokens
 
 \pause\transdissolve\bigskip
 
-The parser takes a sequence of tokens and parses it against a grammar to produce an abstract syntax tree (AST)
+The parser takes the sequence of tokens and parses it against a grammar to produce an abstract syntax tree (AST)
 
 \pause\transdissolve\bigskip
 
@@ -306,7 +306,7 @@ A compiler sometimes has an optimizer between the front end and the back end
 \node [block1] (2) [right=of 1] {Front End};
 \node [block2] (3) [right=of 2] {IR};
 \node [block1] (4) [right=of 3] {Optimizer};
-\node [block2] (5) [right=of 4] {IR};
+\node [block2] (5) [right=of 4] {Better \\ IR};
 \node [block1] (6) [right=of 5] {Back End};
 \node [block2] (7) [right=of 6] {Target \\ Language \\ Program};
 \path (1) edge node [above] {} (2);
@@ -442,7 +442,7 @@ $ java P
 
 \pause\transdissolve\bigskip
 
-In the second instance, we will target the MIPS machine, a register-based architecture
+Besides the JVM, we will also target the MIPS machine, a register-based architecture
 
 \pause\transdissolve\bigskip
 
@@ -555,7 +555,7 @@ Literals such as \lstinline{"Hello, World!"} comprise a single token such as \ls
 
 \pause\transdissolve\bigskip
 
-Comments are scanned and ignored altogether
+Comments are scanned and completely ignored
 \end{frame}
 
 \begin{frame}[fragile]
@@ -1036,6 +1036,16 @@ return an AST representation for the compilation unit
 \begin{frame}[fragile]
 \pause\transdissolve
 
+AST for the \lstinline{HelloWorld} program
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.3]{{figures/figure01.09}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
 \jmm (like Java) is statically typed, so it must determine the types of all names and expressions
 
 \pause\transdissolve\bigskip
@@ -1104,170 +1114,376 @@ A \lstinline{MethodContext} (subclass of \lstinline{LocalContext}) object repres
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The JVM is a stack machine: all computations are carried out atop the run-time stack
+The JVM is a stack machine, meaning all computations are carried out atop the run-time stack
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Each time a method is invoked, the JVM allocates a stack frame, a contiguous block of
-memory locations on top of the run-time stack; the actual arguments substituted for formal parameters, the values of local variables, and temporary results are all given positions within this stack frame
+Each time a method is invoked, the JVM
+\begin{itemize}
+\pause\transdissolve
+\item Allocates a stack frame (contiguous block of memory locations) on top of the stack
 
+\pause\transdissolve
+\item Assigns positions on the frame for formal parameters and substitutes actual arguments for the parameters
+
+\pause\transdissolve
+\item Assigns positions on the frame for values of local variables and temporary results
+\end{itemize}
+
+\pause\transdissolve\bigskip
+
+\begin{overprint}
+\onslide<7>
+Stack frame for a static method with $m$ formal parameters and $n$ local variables
+
+\smallskip
+
+\scriptsize{
 \begin{center}
-\visible<3->{\includegraphics[scale=0.5]{{figures/figure01.10}.jpg}}
+\begin{tabular}{c|c|} \cline{2-2}
+& \makecell{$\vdots$ \\ computations \\ $\vdots$} \\ \cline{2-2}
+$m+n-1$ & local variable $n$ \\ \cline{2-2}
+& $\vdots$ \\ \cline{2-2}
+$m+1$ & local variable $2$ \\ \cline{2-2}
+$m$ & local variable $1$ \\ \cline{2-2}
+$m-1$ & formal parameter $m$ \\ \cline{2-2}
+& $\vdots$ \\ \cline{2-2}
+$1$ & formal parameter $2$ \\ \cline{2-2}
+$0$ & formal parameter $1$ \\ \cline{2-2}
+\end{tabular}
 \end{center}
+}
+
+\onslide<8>
+Stack frame for an instance method with $m$ formal parameters and $n$ local variables
+
+\smallskip
+
+\scriptsize{
+\begin{center}
+\begin{tabular}{c|c|} \cline{2-2}
+& \makecell{$\vdots$ \\ computations \\ $\vdots$} \\ \cline{2-2}
+$m+n$ & local variable $n$ \\ \cline{2-2}
+& $\vdots$ \\ \cline{2-2}
+$m+2$ & local variable $2$ \\ \cline{2-2}
+$m+1$ & local variable $1$ \\ \cline{2-2}
+$m$ & formal parameter $m$ \\ \cline{2-2}
+& $\vdots$ \\ \cline{2-2}
+$2$ & formal parameter $2$ \\ \cline{2-2}
+$1$ & formal parameter $1$ \\ \cline{2-2}
+$0$ & \texttt{this} \\ \cline{2-2}
+\end{tabular}
+\end{center}
+}
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The purpose of \lstinline{codegen()} is to generate JVM byte code from the AST, based on information computed by \lstinline{preAnalyze()} and \lstinline{analyze()}
+The purpose of \lstinline{codegen()} is to generate JVM instructions (aka bytecode)
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-\lstinline{codegen()} is invoked by \lstinline{Main} on the root of the AST, and \lstinline{codegen()} recursively descends the AST, generating byte code
+\lstinline{codegen()} starts at the root of the AST and recursively descends the tree, generating JVM bytecode
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-\lstinline{CLEmitter} provides an abstraction for the JVM class file, hiding many of the gory details
+\lstinline{CLEmitter} provides an abstraction for the JVM class file
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-Here's the implementation of \lstinline{codegen()} in \lstinline{JMethodDeclaration} (AST representation for method declarations)
+\lstinline{codegen()} in \lstinline{JMethodDeclaration} (AST representation for method declarations)
 
-\begin{lstlisting}[language=Java]
+\begin{overprint}
+\onslide<5>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
+
+\begin{lstlisting}[language=Java,style=focusin]
     public void codegen(CLEmitter output) {
         output.addMethod(mods, name, descriptor, null, false);
         if (body != null) {
             body.codegen(output);
         }
-
-        // Add implicit RETURN
         if (returnType == Type.VOID) {
             output.addNoArgInstruction(RETURN);
         }
     }
 \end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<6>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    public void codegen(CLEmitter output) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        output.addMethod(mods, name, descriptor, null, false);
+        if (body != null) {
+            body.codegen(output);
+        }
+        if (returnType == Type.VOID) {
+            output.addNoArgInstruction(RETURN);
+        }
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+generate code for a method declaration using CLEmitter
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<7>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public void codegen(CLEmitter output) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        output.addMethod(mods, name, descriptor, null, false);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        if (body != null) {
+            body.codegen(output);
+        }
+        if (returnType == Type.VOID) {
+            output.addNoArgInstruction(RETURN);
+        }
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+declare the method
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<8>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public void codegen(CLEmitter output) {
+        output.addMethod(mods, name, descriptor, null, false);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        if (body != null) {
+            body.codegen(output);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+        if (returnType == Type.VOID) {
+            output.addNoArgInstruction(RETURN);
+        }
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+generate code for the method body (if any)
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<9>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+    public void codegen(CLEmitter output) {
+        output.addMethod(mods, name, descriptor, null, false);
+        if (body != null) {
+            body.codegen(output);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+        if (returnType == Type.VOID) {
+            output.addNoArgInstruction(RETURN);
+        }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    }
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+add implicit RETURN instruction
+\end{minipage}
+\end{tcolorbox}
+\end{overprint}
 \end{frame}
 
 \section{The \protect \jmm Compiler Source Tree}
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-The zip file \lstinline{j--.zip} containing the \jmm distribution may be unzipped into any directory of your choosing; we refer to this directory as \lstinline{$j}
+The zip file \lstinline{j--.zip} for the base \jmm compiler may be unzipped into any directory (referred to as \lstinline{$j}) of your choosing
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-\lstinline{$j/j--/src/jminusminus} contains the source files for the compiler, where \lstinline{jminusminus} is a package, and these include
+The directory \lstinline{$j/j--/src/jminusminus} contains
 \begin{itemize}
+\pause\transdissolve
 \item \lstinline{Main.java}, the driver program
+
+\pause\transdissolve
 \item A hand-written scanner (\lstinline{Scanner.java}) and parser (\lstinline{Parser.java})
+
+\pause\transdissolve
 \item \lstinline{J*.java} files defining classes representing the AST nodes
-\item \lstinline{CL*.java} files supplying the back-end code that is used by \jmm for creating JVM byte
-code; the most important file amongst these is \lstinline{CLEmitter.java}, which provides the interface between the front end and back end of the compiler
-\item \lstinline{S*.java} files that translate JVM code to SPIM files (SPIM is an interpreter for the
-MIPS machine’s symbolic assembly language)
-\item \lstinline{j--.jj}, the input file to JavaCC containing the specification for generating (as opposed to hand-writing) a scanner and parser for the \jmm language; \lstinline{JavaCCMain}, the driver program that uses the scanner and parser produced by JavaCC
+
+\pause\transdissolve
+\item \lstinline{CL*.java} files for creating JVM bytecode
+
+\pause\transdissolve
+\item \lstinline{S*.java} files for translating JVM bytecode into MIPS code
+
+\pause\transdissolve
+\item \lstinline{j--.jj}, the JavaCC specification file for generating (as opposed to hand-writing) a scanner and parser
+
+\pause\transdissolve
+\item \lstinline{JavaCCMain}, the driver program that uses the generated scanner and parser
+
+\pause\transdissolve
 \item Other Java files providing representation for types and the symbol table
 \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-\lstinline{$j/j--/bin/j--} is a script to run the compiler and has the following command-line
-syntax
-\begin{lstlisting}[language={}]
+Usage syntax for the \jmm compiler (\lstinline{$j/j--/bin/j--})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ sh $j/j--/bin/j--
 Usage: j-- <options> <source file>
 where possible options include:
   -t Only tokenize input and print tokens to STDOUT
   -p Only parse input and print AST to STDOUT
   -pa Only parse and pre-analyze input and print AST to STDOUT
-  -a Only parse, pre-analyze, and analyze input and print AST to STDOUT
+  -a Only parse, pre-analyze, and analyze input and print AST 
+     to STDOUT
   -s <naive|linear|graph> Generate SPIM code
-  -r <num> Max. physical registers (1-18) available for allocation; default = 8
+  -r <num> Max. physical registers (1-18) available for 
+     allocation; default = 8
   -d <dir> Specify where to place output files; default = .
 \end{lstlisting}
+\end{tcolorbox}
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-For example, the \jmm program \lstinline{$j/j--/tests/pass/HelloWorld.java} can be compiled
-using \lstinline{j--} as follows
+For example, to just tokenize the \jmm program \lstinline{$j/j--/tests/pass/HelloWorld.java}, run the command
 
-\begin{lstlisting}[language={}]
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ $j/j--/bin/j-- -t $j/j--/tests/pass/HelloWorld.java
+\end{lstlisting}
+\end{tcolorbox}
+
+\pause\transdissolve\bigskip
+
+And to compile the program for the JVM machine, run the command
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
 $ $j/j--/bin/j-- $j/j--/tests/pass/HelloWorld.java
 \end{lstlisting}
-
-to produce a \lstinline{HelloWorld.class} file under \lstinline{pass} folder within the current directory, which can then be run as
-
-\begin{lstlisting}[language={}]
-$ java pass.HelloWorld
-\end{lstlisting}
-
-to produce as output
-
-\begin{lstlisting}[language={}]
-$ Hello, World!
-\end{lstlisting}
+\end{tcolorbox}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-\jmm provides an elaborate framework with which one may add new Java constructs to the \jmm language
+\jmm provides an elaborate framework for adding new Java constructs to the \jmm language
 
-\pause
-\bigskip
+\pause\transdissolve\bigskip
 
-As an illustrative example, let's add the division operator to \jmm, which involves modifying the scanner to recognize \lstinline{/} as a token, modifying the parser to be able to parse division expressions, implementing semantic analysis, and finally, code generation for the division operation
+For example, to add the division operator (\lstinline{/}) to \jmm, we must
+\begin{enumerate}
+\pause\transdissolve
+\item Modify the \jmm grammar to include the division operator
 
-\pause
-\bigskip
+\pause\transdissolve
+\item Modify the scanner to recognize \lstinline{/} as a token
 
-Changes to lexical and syntactic grammars
-\begin{itemize}
-\item Add a line describing the division operator to \lstinline{$j/j--/lexicalgrammar} under the operators section
+\pause\transdissolve
+\item Modify the parser to be able to parse division expressions
 
-\begin{lstlisting}[language={}]
-DIV ::= "/"
+\pause\transdissolve
+\item Implement type checking (aka semantic analysis) for the division operation
+
+\pause\transdissolve
+\item Implement code generation for the division operation
+\end{enumerate}
+
+\pause\transdissolve\bigskip
+
+Modify the lexical grammar (\lstinline{$j/j--/lexicalgrammar})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language={},style=focusin]
+// Operators
+ASSIGN      ::= "="
+...
+STAR        ::= "*"
 \end{lstlisting}
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
+DIV         ::= "/"
+\end{lstlisting}
+\end{tcolorbox}
 
-\item Add a rule for the division operator to the rule describing multiplicative expressions in the \lstinline{$j/j--/grammar} file
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language={}]
+Modify the syntactic grammar (\lstinline{$j/j--/grammar})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+\begin{lstlisting}[language={},style=focusin]
 multiplicativeExpression ::= unaryExpression // level 2
+\end{lstlisting}
+\begin{lstlisting}[language={},style=focusin,backgroundcolor=\color{lime100}]
                                {(STAR | DIV) unaryExpression}
 \end{lstlisting}
-\end{itemize}
+\end{tcolorbox}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Changes to scanner
-\begin{itemize}
-\item Make the following change in \lstinline{TokenInfo}
+Modify the \lstinline{TokenKind} enumeration in \lstinline{TokenInfo.java}
 
-\begin{lstlisting}[language=Java]
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
 enum TokenKind {
-    EOF (" < EOF >") ,
+    EOF ("<EOF>") ,
     ... ,
     STAR ("*") ,
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
     DIV ("/") ,
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin]
     ...
 }
 \end{lstlisting}
+\end{tcolorbox}
 
-\item Make the following change in \lstinline{Scanner}
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language=Java]
-if (ch == '/'’) {
+Modify the scanner (\lstinline{Scanner.java})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
+if (ch == '/') {
     nextCh();
     if (ch == '/') {
         // CharReader maps all new lines to '\n'
@@ -1276,36 +1492,45 @@ if (ch == '/'’) {
         }
     }
     else {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
         return new TokenInfo(DIV, line);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin]
     }
 }
 \end{lstlisting}
-\end{itemize}
+\end{tcolorbox}
 \end{frame}
 
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Changes to parser
-\begin{itemize}
-\item Define a class called \lstinline{JDivideOp} in \lstinline{JBinaryExpression.java} to represent an AST node for the division operator
+Define a class \lstinline{JDivideOp} in \lstinline{JBinaryExpression.java} to represent an AST node for the division operator
 
-\begin{lstlisting}[language=Java]
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+\begin{lstlisting}[language=Java,style=focusin]
 class JDivideOp extends JBinaryExpression {
     public JDivideOp(int line, JExpression lhs, JExpression rhs) {
         super(line, "/", lhs, rhs);
     }
-    
-    public JExpression analyze (Context context) { return this ; }
+ 
+    public JExpression analyze (Context context) { return this; }
     
     public void codegen(CLEmitter output) { }
 }
 \end{lstlisting}
+\end{tcolorbox}
+\end{frame}
 
-\item To parse expressions involving division operator, modify the \lstinline{multiplicativeExpression()} method in \lstinline{Parser.java} as follows
+\begin{frame}[fragile]
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language=Java]
+Modify the parser (\lstinline{Parser.java})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+\begin{lstlisting}[language=Java,style=focusin]
 private JExpression multiplicativeExpression() {
     int line = scanner.token().line();
     boolean more = true;
@@ -1314,25 +1539,33 @@ private JExpression multiplicativeExpression() {
         if (have(STAR)) {
             lhs = new JMultiplyOp(line, lhs, unaryExpression());
         }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]]
         else if (have(DIV)) {
             lhs = new JDivideOp(line, lhs, unaryExpression());
         }
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin]
         else { more = false; }
     }
     return lhs;
 }
 \end{lstlisting}
-\end{itemize}
+\end{tcolorbox}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Semantic analysis and code generation
-\begin{itemize}
-\item Implement \lstinline{analyze()} in \lstinline{JDivideOp} as follows
+Implement \lstinline{analyze()} in \lstinline{JDivideOp}
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{overprint}
+\onslide<2>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     lhs = (JExpression) lhs.analyze(context);
     rhs = (JExpression) rhs.analyze(context);
@@ -1343,25 +1576,230 @@ public JExpression analyze(Context context) {
 }
 \end{lstlisting}
 
-\item Implement \lstinline{codegen()} in \lstinline{JDivideOp} as follows
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
 
-\begin{lstlisting}[language=Java]
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<3>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+public JExpression analyze(Context context) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+    type = Type.INT;
+    return this;
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+analyze the / expression in the given context
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<4>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+public JExpression analyze(Context context) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+    type = Type.INT;
+    return this;
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+analyze lhs and rhs operands of /
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<5>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+public JExpression analyze(Context context) {
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    type = Type.INT;
+    return this;
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+lhs and rhs must be of type int
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<6>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+public JExpression analyze(Context context) {
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    type = Type.INT;
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    return this;
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+type of the / expression is int
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<7>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+\begin{lstlisting}[language=Java,style=focusout]
+public JExpression analyze(Context context) {
+    lhs = (JExpression) lhs.analyze(context);
+    rhs = (JExpression) rhs.analyze(context);
+    lhs.type().mustMatchExpected(line(), Type.INT);
+    rhs.type().mustMatchExpected(line(), Type.INT);
+    type = Type.INT;
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    return this;
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+return the analyzed / expression
+\end{minipage}
+\end{tcolorbox}
+
+\end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause\transdissolve
+
+Implement \lstinline{codegen()} in \lstinline{JDivideOp}
+
+\smallskip
+
+\begin{overprint}
+\onslide<2>
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
 public void codegen(CLEmitter output) {
     lhs.codegen(output);
     rhs.codegen(output);
     output.addNoArgInstruction(IDIV);
 }
 \end{lstlisting}
-\end{itemize}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<3>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+public void codegen(CLEmitter output) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    lhs.codegen(output);
+    rhs.codegen(output);
+    output.addNoArgInstruction(IDIV);
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+generate code for the / expression using CLEmitter
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<4>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+public void codegen(CLEmitter output) {
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    lhs.codegen(output);
+    rhs.codegen(output);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+    output.addNoArgInstruction(IDIV);
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+generate code for lhs and rhs operands of /
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<5>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusout]
+public void codegen(CLEmitter output) {
+    lhs.codegen(output);
+    rhs.codegen(output);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusin,backgroundcolor=\color{lime100}]
+    output.addNoArgInstruction(IDIV);
+\end{lstlisting}
+\begin{lstlisting}[language=Java,style=focusout]
+}
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+generate code for the / operation
+\end{minipage}
+\end{tcolorbox}
+
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\transdissolve
 
-Testing the division operator
-\begin{itemize}
-\item Write a test \jmm program \lstinline{Division.java}
-\begin{lstlisting}[language=Java]
+Write a test \jmm program \lstinline{Division.java} (say under \lstinline{$j/j--/tests})
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
 import java.lang.Integer;
 import java.lang.System;
 
@@ -1373,25 +1811,37 @@ public class Division {
     }
 }
 \end{lstlisting}
+\end{tcolorbox}
 
-\item Run the following command inside the \lstinline{$j} directory to compile the \jmm compiler
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language={}]
+To compile the changes to the \jmm compiler, go to \lstinline{$j/j--}, and run
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
 $ ant clean compile jar
 \end{lstlisting}
+\end{tcolorbox}
 
-\item Run the following command to compile the test program \lstinline{Division.java} using the \jmm compiler, which produces the JVM target program \lstinline{Division.class}
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language={}]
-$ sh $j/j--/bin/j-- Division.java
+To compile the test program using the \jmm, run
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
+$ sh ./bin/j-- tests/Division.java
 \end{lstlisting}
+\end{tcolorbox}
 
-\item Run the following command to run \lstinline{Division.class}
+\pause\transdissolve\bigskip
 
-\begin{lstlisting}[language={}]
+To run the test program (\lstinline{Division.class}), run
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
+\begin{lstlisting}[style=terminal]
 $ java Division 42 6
 7
 \end{lstlisting}
-\end{itemize}
+\end{tcolorbox}
 \end{frame}
 \end{document}
