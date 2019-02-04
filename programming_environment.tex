@@ -16,15 +16,15 @@
 
 \section{Programming Environment}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 VirtualBox
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Linux-based virtual machine (ElementaryOS)
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 \begin{center}
 \visible<4->{\includegraphics[scale=0.2]{figures/vbox.png}}
@@ -33,32 +33,32 @@ Linux-based virtual machine (ElementaryOS)
 
 \section{ElementaryOS}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 Click ``Start'' to start the machine
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Login as Uber Student (username \lstinline{student}) with password \lstinline{enigma}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 \begin{center}
 \visible<4->{\includegraphics[scale=0.2]{figures/elementaryos.png}}
 \end{center}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 On the dock: Web Browser \visible<5->{\includegraphics[height=\myMheight]{figures/web_browser.pdf}}, Editor \visible<5->{\includegraphics[height=\myMheight]{figures/editor.pdf}}, Terminal \visible<5->{\includegraphics[height=\myMheight]{figures/terminal.pdf}}, File manager \visible<5->{\includegraphics[height=\myMheight]{figures/file_manager.pdf}}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 To stop the machine, click \visible<6->{\includegraphics[height=\myMheight]{figures/shutdown.pdf}} and select ``Shut Down...''
 \end{frame}
 
 \section{Editing Files}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 Use editor \visible<2->{\includegraphics[height=\myMheight]{figures/editor.pdf}}
 
@@ -71,7 +71,7 @@ Use editor \visible<2->{\includegraphics[height=\myMheight]{figures/editor.pdf}}
 
 \section{Navigating the File System}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 Use file manager \visible<2->{\includegraphics[height=\myMheight]{figures/file_manager.pdf}} and terminal \visible<2->{\includegraphics[height=\myMheight]{figures/terminal.pdf}}
 
@@ -84,11 +84,11 @@ Use file manager \visible<2->{\includegraphics[height=\myMheight]{figures/file_m
 
 \section{Obtaining the Base \protect \jmm Compiler}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 Launch terminal (opens in \lstinline{/home/student} by default)
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Change directory to \lstinline{coursework}
 
@@ -98,7 +98,7 @@ $ cd coursework
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Download the base \jmm compiler
 
@@ -108,7 +108,7 @@ $ wget https://swamiiyer.net/cs451/j--.zip
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Extract the downloaded zip file
 
@@ -118,7 +118,7 @@ $ unzip j--.zip
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 List current directory
 
@@ -129,7 +129,7 @@ j--  j--.zip
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Remove the zip file
 
@@ -142,11 +142,11 @@ $ rm j--.zip
 
 \section{Working with the \protect \jmm Compiler}
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 We are now under \lstinline{/home/student/coursework}, which we refer to as \lstinline{$j}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Change directory to \lstinline{j--}
 
@@ -156,7 +156,7 @@ $ cd j--
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Compile the \jmm compiler
 
@@ -166,7 +166,7 @@ $ ant
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Compile the \jmm program \lstinline{$j/j--/tests/pass/HelloWorld.java} for the JVM architecture
 
@@ -176,7 +176,7 @@ $ sh ./bin/j-- tests/pass/HelloWorld.java
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Run the JVM program \lstinline{HelloWorld.class}
 
@@ -186,7 +186,7 @@ $ java pass.HelloWorld
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Disassemble \lstinline{HelloWorld.class}
 
@@ -198,7 +198,7 @@ $ javap -p -v pass.HelloWorld
 \end{frame}
 
 \begin{frame}[fragile]
-\pause\transdissolve
+\pause
 
 Compile the \jmm program \lstinline{$j/j--/tests/spim/HelloWorld.java} for the MIPS architecture
 
@@ -208,7 +208,7 @@ $ sh ./bin/j-- -s naive tests/spim/HelloWorld.java
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Run the MIPS program \lstinline{HelloWorld.s}
 
@@ -218,7 +218,7 @@ $ spim -f HelloWorld.s
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Create file \lstinline{j--.tar.gz} for submission on Gradescope
 
@@ -231,7 +231,7 @@ $ gzip j--.tar
 \end{lstlisting}
 \end{tcolorbox}
 
-\pause\transdissolve\bigskip
+\pause\bigskip
 
 Use web browser \visible<5->{\includegraphics[height=\myMheight]{figures/web_browser.pdf}} to sign on to Gradescope and upload your project files
 \end{frame}
