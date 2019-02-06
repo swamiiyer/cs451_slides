@@ -522,6 +522,8 @@ Consider the program
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
 
 \begin{lstlisting}[language=Java,style=focusin]
+package pass;
+
 import java.lang.System;
 
 public class HelloWorld {
@@ -535,7 +537,7 @@ public class HelloWorld {
 
 \pause\smallskip
 
-The program is broken down into tokens \lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System}, \lstinline{;}, and so on
+The program is broken down into tokens \lstinline{package}, \lstinline{pass}, \lstinline{;}, \lstinline{import}, \lstinline{java}, \lstinline{.}, and so on
 
 \pause\bigskip
 
@@ -543,7 +545,7 @@ Tokens such as \lstinline{java} and \lstinline{HelloWorld} are \lstinline{IDENTI
 
 \pause\bigskip
 
-Tokens such as \lstinline{import} and \lstinline{public} are reserved words having the unique names such as \lstinline{IMPORT} and \lstinline{PUBLIC}
+Tokens such as \lstinline{package} and \lstinline{import} are reserved words having the unique names such as \lstinline{PACKAGE} and \lstinline{IMPORT}
 
 \pause\bigskip
 
@@ -990,7 +992,7 @@ return an AST representation for the compilation unit
 \pause
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.3]{{figures/helloworld_ast}.pdf}}
+\visible<2->{\includegraphics[scale=0.27]{{figures/helloworld_ast}.pdf}}
 \end{center}
 \end{frame}
 
