@@ -1,6 +1,6 @@
 digraph G {
- node [fontname="Courier Bold",fontsize=8,height=.1];
- edge [fontname="Courier Bold",fontsize=8,arrowhead="vee"]; 
+ node [fontname="Courier Bold",fontsize=12,height=.15];
+ edge [fontname="Courier Bold",fontsize=12,arrowhead="vee"]; 
 
  n1[label="JCompilationUnit"];
 
@@ -42,13 +42,12 @@ digraph G {
  n16[label="",shape=record];
  n12->n16[label="params"];
 
- n17[label="JFormalParameter"];
- n16->n17[label="type"];
+ n17[label="JFormalParameter"];n16->n17;
 
  n18[label="\"args\"",shape=plaintext];
  n17->n18[label="name"];
  
- n19[label="ArrayTypeName"]; n18->n19;
+ n19[label="ArrayTypeName"];  n17->n19[label="type"];
  n20[label="TypeName"];
  n19->n20[label="componentType"];
 
