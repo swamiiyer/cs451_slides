@@ -11,18 +11,19 @@
 \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-\tableofcontents
-\end{frame}
-
 \section{Scanning Tokens}
 \begin{frame}[fragile]
 \pause
 
-The first step in compiling a program is to break it into tokens (aka lexemes); for example, given the \jmm program
+The first step in compiling a program is to break it into tokens (aka lexemes)
 
-\begin{lstlisting}[language=Java]
+\pause\bigskip
+
+Consider the \jmm program
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Java,style=focusin]
 package pass;
 
 import java.lang.System;
@@ -45,42 +46,55 @@ public class Factorial {
 }
 \end{lstlisting}
 
-we want to produce the sequence of tokens \lstinline{package}, \lstinline{pass}, \lstinline{;},\lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System},\lstinline{;}, \lstinline{public},\lstinline{class}, \lstinline{Factorial}, \lstinline${$,\lstinline{public}, \lstinline{static}, \lstinline{int},\lstinline{factorial}, \lstinline{(},\lstinline{int}, \lstinline{n,)}, \lstinline${$, \lstinline{if}, \lstinline{(}, \lstinline{n},\lstinline{<=}, \lstinline{0}, \lstinline{)}, \lstinline$}$, \lstinline{return}, \lstinline{1},\lstinline{;}, \lstinline{else},\lstinline{return}, \lstinline{n}, \lstinline{*}, \lstinline{factorial}, \lstinline{(}, \lstinline{n}, \lstinline{-}, \lstinline{1}, \lstinline{)}, \lstinline$}$, \lstinline{;}, \lstinline$}$, \lstinline{public}, \lstinline{static}, \lstinline{void}, \lstinline{main}, \lstinline{(}, \lstinline{String}, \lstinline{[}, \lstinline{]}, \lstinline{args}, \lstinline{)}, \lstinline$}$, \lstinline${$, \lstinline{int}, \lstinline{x}, \lstinline{=}, \lstinline{n}, \lstinline{;}, \lstinline{System}, \lstinline{.}, \lstinline{out}, \lstinline{.}, \lstinline{println}, \lstinline{(}, \lstinline{x}, \lstinline{+}, \lstinline{"!="}, \lstinline{+}, \lstinline{factorial}, \lstinline{(}, \lstinline{x}, \lstinline{)}, \lstinline{)}, \lstinline$}$, \lstinline{;}, \lstinline$}$, \lstinline{static}, \lstinline{int}, \lstinline{n}, \lstinline{=}, \lstinline{5},\lstinline{;}, and \lstinline$}$
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
 
+\end{minipage}
+\end{tcolorbox}
+
+\pause
+
+For \lstinline{Factorial.java}, we want to produce the sequence of tokens \lstinline{package}, \lstinline{pass}, \lstinline{;},\lstinline{import}, \lstinline{java}, \lstinline{.}, \lstinline{lang}, \lstinline{.}, \lstinline{System},\lstinline{;}, \lstinline{public}, \lstinline{class}, \lstinline{Factorial}, \lstinline${$, and so on
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
 
-We separate the lexemes into categories; in our example program
+We separate the lexemes into categories
+
+\pause\bigskip
+
+In \lstinline{Factorial.java}
 \begin{itemize}
+\pause
 \item \lstinline{public}, \lstinline{class}, \lstinline{static}, and \lstinline{void} are reserved words
 
+\pause
 \item \lstinline{Factorial}, \lstinline{main}, \lstinline{String}, \lstinline{args}, \lstinline{System}, \lstinline{out}, and \lstinline{println} are all identifiers
 
-\item The string \lstinline{!=} is a literal, a string literal in this instance
+\pause
+\item The token \lstinline{"!="} is a literal, a string literal in this instance
 
+\pause
 \item The rest are operators and separators
 \end{itemize}
 
-\pause
-\bigskip
+\pause\bigskip
 
-The program that breaks the input stream of characters into tokens is called a lexical analyzer or a scanner
+The program that breaks the source program into a sequence of tokens is called a lexical analyzer or a scanner
 
-\pause
-\bigskip
+\pause\bigskip
 
-A scanner may be hand-crafted or it may be generated automatically from a specification consisting of a sequence of regular expressions
-
-\pause
-\bigskip
-
-A state transition diagram is a natural way of describing a scanner
+A scanner may be hand-crafted or it may be generated from a specification consisting of regular expressions
 \end{frame}
 
 \begin{frame}[fragile]
 \pause
+
+A state transition diagram is a natural way of describing a scanner
+
+\pause
+\bigskip
 
 A state transition diagram for identifiers and integers and the corresponding code
 \begin{center}
