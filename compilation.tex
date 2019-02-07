@@ -1,6 +1,11 @@
 \documentclass[8pt,a4paper,compress]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
+\usepackage{tabularx}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
 
 \title{Compilation}
 \date{}
@@ -1099,7 +1104,7 @@ Stack frame for a static method with $m$ formal parameters and $n$ local variabl
 
 \scriptsize{
 \begin{center}
-\begin{tabular}{c|c|} \cline{2-2}
+\begin{tabular}{R{1.3cm}|C{1.7cm}|} \cline{2-2}
 & \makecell{$\vdots$ \\ computations \\ $\vdots$} \\ \cline{2-2}
 $m+n-1$ & local variable $n$ \\ \cline{2-2}
 & $\vdots$ \\ \cline{2-2}
@@ -1120,7 +1125,7 @@ Stack frame for an instance method with $m$ formal parameters and $n$ local vari
 
 \scriptsize{
 \begin{center}
-\begin{tabular}{c|c|} \cline{2-2}
+\begin{tabular}{R{1.3cm}|C{1.7cm}|} \cline{2-2}
 & \makecell{$\vdots$ \\ computations \\ $\vdots$} \\ \cline{2-2}
 $m+n$ & local variable $n$ \\ \cline{2-2}
 & $\vdots$ \\ \cline{2-2}
