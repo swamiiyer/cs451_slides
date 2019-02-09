@@ -524,7 +524,7 @@ Consider the program
 
 \pause\smallskip
 
-\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver100]
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
 \begin{lstlisting}[language=Java,style=focusin]
 package pass;
@@ -538,6 +538,11 @@ public class HelloWorld {
     }
 }
 \end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+HelloWorld.java
+\end{minipage}
 \end{tcolorbox}
 
 \pause\smallskip
@@ -1842,7 +1847,7 @@ generate code for the division operation
 \begin{frame}[fragile]
 \pause
 
-Write a test \jmm program \lstinline{Division.java} (say under \lstinline{$j/j--/tests})
+Write a test program for the division operation, say under \lstinline{$j/j--/tests}
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
@@ -1858,6 +1863,11 @@ public class Division {
     }
 }
 \end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+Division.java
+\end{minipage}
 \end{tcolorbox}
 
 \pause\bigskip
@@ -1872,7 +1882,7 @@ $ ant clean compile jar
 
 \pause\bigskip
 
-To compile the test program using the \jmm, run
+To compile the test program using \jmm, run
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=black]
 \begin{lstlisting}[style=terminal]
