@@ -1,0 +1,23 @@
+digraph G {
+ rankdir=LR;
+ margin="0,0";
+ node [fontname="Courier Bold",fontsize=8,shape=circle,fixedsize=true];
+ edge [fontname="Courier Bold",fontsize=8,arrowhead="vee"]; 
+
+ n1[label="",shape=point];
+ n2[label="start"];
+ n1->n2;
+ n2->n2[label="whitespace"];
+
+ n3[label="/"];
+ n2->n3[label="/"];
+ n3->n2[label="error!"]
+
+ n4[label="comment"];
+ n3->n4[label="/"];
+ n4->n4;
+ n4->n2[label="'\\n'"]
+
+ n5[label="...", shape=plaintext];
+ n2->n5;
+}

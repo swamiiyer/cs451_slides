@@ -1,0 +1,19 @@
+digraph G {
+ rankdir=LR;
+
+ node [fontname="Courier Bold",fontsize=8,shape=circle,fixedsize=true];
+ edge [fontname="Courier Bold",fontsize=8,arrowhead="vee"]; 
+
+ n1[label="",shape=point];
+
+ subgraph cluster_0{
+  label=<N<SUB>r</SUB> (recognizes L(r))>;
+  n2[label="start"];
+  n3[label="final"];
+  n2->n3[style=invis];
+ }
+
+ n1->n2;
+ n4[label="final",shape=doublecircle];
+ n2->n4[label="&epsilon;"];
+}
