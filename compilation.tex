@@ -1001,9 +1001,41 @@ return an AST representation for the compilation unit
 \begin{frame}[fragile]
 \pause
 
+\bigskip
+
+\begin{overprint}
+\onslide<2|handout:1>
 \begin{center}
-\visible<2->{\includegraphics[scale=0.27]{{figures/helloworld_ast}.pdf}}
+\includegraphics[scale=0.25]{{figures/helloworld_ast1}.pdf}
+\tcbox[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white]{
+AST for \lstinline{HelloWorld.java}
+}
 \end{center}
+
+\onslide<3|handout:2>
+\begin{center}
+\includegraphics[scale=0.25]{{figures/helloworld_ast2}.pdf}
+\tcbox[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white]{
+The compilation unit
+}
+\end{center}
+
+\onslide<4|handout:3>
+\begin{center}
+\includegraphics[scale=0.25]{{figures/helloworld_ast3}.pdf}
+\tcbox[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white]{
+The class \lstinline{HelloWorld}
+}
+\end{center}
+
+\onslide<5|handout:4>
+\begin{center}
+\includegraphics[scale=0.25]{{figures/helloworld_ast4}.pdf}
+\tcbox[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white]{
+The method \lstinline{main()}
+}
+\end{center}
+\end{overprint}
 \end{frame}
 
 \begin{frame}[fragile]
