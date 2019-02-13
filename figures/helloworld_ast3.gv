@@ -1,0 +1,81 @@
+digraph G {
+ margin="0,0";
+ node [fontname="Courier Bold",fontsize=12,height=.15];
+ edge [fontname="Courier Bold",fontsize=12,arrowhead="vee"]; 
+
+ n1[label="JCompilationUnit"];
+
+ n2[label="TypeName"];
+ n3[label="\"pass\"",shape=plaintext];
+ n1->n2[label="packageName"];
+ n2->n3[label="name"];
+
+ n4[label="",shape=record];
+ n5[label="TypeName"];
+ n6[label="\"java.lang.System\"",shape=plaintext];
+ n1->n4[label="imports"];
+ n4->n5[label=""];
+ n5->n6[label="name"];
+
+ n7[label="",shape=record];
+ n1->n7[label="typeDeclarations"];
+
+ n8[label="JClassDeclaration",style=filled,fillcolor="#d1ff82ff"]; n7->n8;
+ n9[label="",shape=record,label="{\"public\"}",style=filled,fillcolor="#d1ff82ff"];
+ n8->n9[label="mods"];
+
+ n10[label="\"HelloWorld\"",shape=plaintext,style=filled,fillcolor="#d1ff82ff"];
+ n8->n10[label="name"];
+
+ n11[label="",shape=record,style=filled,fillcolor="#d1ff82ff"];
+ n8->n11[label="classBlock"];
+
+ n12[label="JMethodDeclaration"]; n11->n12;
+ n13[label="",shape=record,label="{\"public\"|\"static\"}"];
+ n12->n13[label="mods"];
+
+ n14[label="\"main\"",shape=plaintext];
+ n12->n14[label="name"];
+
+ n15[label="Type.VOID",shape=plaintext];
+ n12->n15[label="returnType"];
+
+ n16[label="",shape=record];
+ n12->n16[label="params"];
+
+ n17[label="JFormalParameter"];n16->n17;
+
+ n18[label="\"args\"",shape=plaintext];
+ n17->n18[label="name"];
+ 
+ n19[label="ArrayTypeName"];  n17->n19[label="type"];
+ n20[label="TypeName"];
+ n19->n20[label="componentType"];
+
+ n21[label="\"String\"",shape=plaintext];
+ n20->n21[label="name"];
+
+ n22[label="JBlock"];
+ n12->n22[label="body"];
+ 
+ n23[label="",shape=record];
+ n22->n23[label="statements"];
+
+ n24[label="JStatementExpression"]; n23->n24;
+
+ n25[label="JMessageExpression"]; n24->n25[label="expr"];
+
+ n26[label="AmbiguousName"]; n25->n26[label="ambiguousPart"];
+ n27[label="\"System.out\"",shape=plaintext];
+ n26->n27[label="name"];
+
+ n28[label="\"println\"",shape=plaintext];
+ n25->n28[label="messageName"];
+
+ n29[label="",shape=record];
+ n25->n29[label="arguments"];
+
+ n30[label="JLiteralString"]; n29->n30;
+ n31[label="\"Hello, World!\"",shape=plaintext];
+ n30->n31[label="text"];
+}
