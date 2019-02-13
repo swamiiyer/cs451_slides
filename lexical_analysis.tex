@@ -2,6 +2,8 @@
 
 \usepackage{/home/siyer/lib/slides}
 
+\usetikzlibrary{arrows,shapes,automata}
+
 \title{Lexical Analysis}
 \date{}
 
@@ -95,8 +97,22 @@ State transition diagrams can be used for describing scanners
 \pause\bigskip
 
 A state transition diagram for recognizing identifiers and integers
+
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.01}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state] (1) at (2, 1) {id};
+  \node[state] (2) at (2, -1) {int};
+  \node[state,accepting] (3) at (4, 1) {idEnd};
+  \node[state,accepting] (4) at (4, -1) {intEnd};
+  \path[->] (0)  edge node             {\lstinline{letter, _, $}} (1);
+  \path[->] (0)  edge node             {\lstinline{1...9}} (2);  
+  \path[->] (0)  edge [bend right=100,below] node             {\lstinline{0}} (4);    
+  \path[->] (1)  edge [loop above] node             {\lstinline{letter, digit, _, $}} (1);    
+  \path[->] (2)  edge [loop below] node             {\lstinline{digit}} (2);      
+  \path[->] (1)  edge node {} (3);    
+  \path[->] (2)  edge node {} (4);    
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
@@ -250,8 +266,20 @@ scan and return an integer different from 0
 \pause
 
 A state transition diagram for recognizing keywords
+
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.03}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state] (1) at (2.5, 0) {id};
+  \node[state,accepting] (2) at (4.5, 0) {idEnd};
+  \node[] (3) at (7, 1.2) {keyword};
+  \node[] (4) at (7, -1.2) {identifier};
+  \path[->] (0)  edge node             {\lstinline{letter, _, $}} (1);
+  \path[->] (1)  edge [loop above] node             {\lstinline{letter, digit, _, $}} (1);    
+  \path[->] (1)  edge node {} (2);    
+  \path[->] (2)  edge node {\lstinline{reserved}} (3);    
+  \path[->] (2)  edge node {\lstinline{!reserved}} (4);      
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
@@ -407,7 +435,23 @@ return as identifier otherwise
 A state transition diagram for recognizing separators and operators
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.04}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state,accepting] (1) at (2, 0) {\lstinline{!}};
+  \node[state] (2) at (2, 1) {\lstinline{=}};
+  \node[state,accepting] (3) at (2, 2) {\lstinline{;}};  
+  \node[state,accepting] (4) at (2, -1) {\lstinline{*}};  
+  \node[] (5) at (2, -2) {\lstinline{...}};  
+  \node[state,accepting] (6) at (4, 1.5) {\lstinline{==}};
+  \node[state,accepting] (7) at (4, .5) {\lstinline{=}};
+  \path[->] (0)  edge node             {\lstinline{!}} (1);  
+  \path[->] (0)  edge node             {\lstinline{=}} (2);    
+  \path[->] (0)  edge node             {\lstinline{;}} (3);    
+  \path[->] (0)  edge node             {\lstinline{*}} (4);    
+  \path[->] (0)  edge node             {} (5);    
+  \path[->] (2)  edge node             {\lstinline{=}} (6);    
+  \path[->] (2)  edge node             {} (7);    
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
@@ -608,8 +652,14 @@ scan and return *
 \pause
 
 A state transition diagram for recognizing whitespace
+
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.05}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[] (1) at (2, 0) {\lstinline{...}};  
+  \path[->] (0)  edge [loop above] node             {\lstinline{' ', '\\t', '\\f', '\\b', '\\r', '\\n'}} (0);  
+  \path[->] (0)  edge node             {} (1);    
+\end{tikzpicture}
 \end{center}
 
 \pause\bigskip
@@ -633,8 +683,20 @@ scanning whitespace
 \pause
 
 A state transition diagram for recognizing comments
+
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.06}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state] (1) at (3, 0) {comment};  
+  \node[state] (2) at (3, 2) {\lstinline{/}};    
+  \node[] (3) at (3, -2) {\lstinline{...}};      
+  \path[->] (0)  edge [loop above] node             {whitespace} (0);  
+  \path[->] (2)  edge[bend left=-20,above,inner sep=7] node             {error!} (0);      
+  \path[->] (0)  edge[bend right=20] node             {\lstinline{/}} (2);    
+  \path[->] (2)  edge node             {\lstinline{/}} (1);      
+  \path[->] (1)  edge node             {\lstinline{'\\n'}} (0);        
+  \path[->] (0)  edge node             {} (3);          
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
@@ -849,7 +911,15 @@ For example, consider the regular expression $(a|b)a\!*\!b$ over the alphabet $\
 An FSA $F$ that recognizes the language described by the regular expression
 
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.07}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state]   (0)               {0};
+  \node[state]           (1) [right of=0]  {1};
+  \node[state,accepting] (2) [right of=1]  {2};
+  \path[->] (0)  edge node             {$a$} (1);
+  \path[->] (0)  edge[bend right] node {$b$} (1);
+  \path[->] (1)  edge[loop above] node {$a$} (1);
+  \path[->] (1)  edge node             {$b$} (2);
+\end{tikzpicture}
 \end{center}
 
 \pause\bigskip
@@ -888,7 +958,15 @@ For example, consider the regular expression $a(a|b)\!*\!b$ over the alphabet $\
 An NFA $N$ that recognizes the language described by the regular expression
 
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.08}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state]   (0)               {0};
+  \node[state]           (1) [right of=0]  {1};
+  \node[state,accepting] (2) [right of=1]  {2};
+  \path[->] (0)  edge node             {$a$} (1);
+  \path[->] (1)  edge[bend left] node {$\epsilon$} (0);
+  \path[->] (1)  edge[loop above] node {$a, b$} (1);
+  \path[->] (1)  edge node             {$b$} (2);
+\end{tikzpicture}
 \end{center}
 
 \pause\bigskip
@@ -907,7 +985,11 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 (Rule 1) NFA $N_r$ for recognizing $L(r = \epsilon)$
 
 \begin{center}
-\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.13}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state]   (0)               {start};
+  \node[state,accepting] (1) [right of=0]  {final};
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+\end{tikzpicture}
 \end{center}
 
 \pause\bigskip
@@ -915,27 +997,54 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 (Rule 2) NFA $N_r$ for recognizing $L(r = a)$
 
 \begin{center}
-\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.09}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state]   (0)               {start};
+  \node[state,accepting] (1) [right of=0]  {final};
+  \path[->] (0)  edge node             {$a$} (1);
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
 \begin{frame}[fragile]
-\pause
+\pause\bigskip
 
 (Rule 3) NFA $N_{rs}$ for recognizing $L(rs)$
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.10}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state]   (0)               {start};
+  \node[state]           (1) [right of=0]  {final};
+  \node[state]           (2) [right of=1]  {start};
+  \node[state,accepting] (3) [right of=2]  {final};
+  \path[->] (1)  edge node             {$\epsilon$} (2);  
+  \path[draw=black,fill=black!10,opacity=0.2] (-.5,-1) -- (-.5,1) -- (2.5,1) -- (2.5,-1) -- cycle; 
+  \node[] at (1, 0.8) {$N_r$};
+  \path[draw=black,fill=black!10,opacity=0.2] (3.5,-1) -- (3.5,1) -- (6.5,1) -- (6.5,-1) -- cycle; 
+  \node[] at (5, 0.8) {$N_s$};
+\end{tikzpicture}
 \end{center}
-\end{frame}
 
-\begin{frame}[fragile]
-\pause
+\pause\bigskip
 
 (Rule 4) NFA $N_{r|s}$ for recognizing $L(r|s)$
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.11}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state] (1) at (1.5, 1) {start};
+  \node[state] (2) at (1.5, -1) {start};  
+  \node[state] (3) at (3.5, 1) {final};
+  \node[state] (4) at (3.5, -1) {final};  
+  \node[state,accepting] (5) at (5, 0) {final};
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (0)  edge node             {$\epsilon$} (2);
+  \path[->] (3)  edge node             {$\epsilon$} (5);
+  \path[->] (4)  edge node             {$\epsilon$} (5);
+  \path[draw=black,fill=black!10,opacity=0.2] (1,.5) -- (1,1.5) -- (4,1.5) -- (4,.5) -- cycle; 
+  \node[] at (2.5, 1.2) {$N_r$};
+  \path[draw=black,fill=black!10,opacity=0.2] (1,-1.5) -- (1,-.5) -- (4,-.5) -- (4,-1.5) -- cycle; 
+  \node[] at (2.5, -1.2) {$N_s$};
+\end{tikzpicture}
 \end{center}
 \end{frame}
 
@@ -945,7 +1054,18 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 (Rule 5) NFA $N_{r*}$ for recognizing $L(r*)$
 
 \begin{center}
-\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.12}.pdf}}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \node[initial,state] (0) at (0, 0)  {start};
+  \node[state] (1) at (1.5, 0) {start};
+  \node[state] (2) at (3.5, 0) {final};
+  \node[state,accepting] (3) at (5, 0) {final};
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (2)  edge node             {$\epsilon$} (3);
+  \path[->] (2)  edge [bend left=100] node {$\epsilon$} (1);
+  \path[->] (0)  edge [bend right=100] node {$\epsilon$} (3);
+  \path[draw=black,fill=black!10,opacity=0.2] (1,-.5) -- (1,.5) -- (4,.5) -- (4,-.5) -- cycle; 
+  \node[] at (2.5, .3) {$N_r$};
+\end{tikzpicture}
 \end{center}
 
 \pause\bigskip
