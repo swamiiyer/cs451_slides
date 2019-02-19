@@ -1,8 +1,12 @@
 \documentclass[8pt,a4paper,compress]{beamer}
 
 \usepackage{/home/siyer/lib/slides}
-
 \usetikzlibrary{arrows,shapes,automata}
+\usepackage{tabularx}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
 
 \title{Lexical Analysis}
 \date{}
@@ -689,12 +693,13 @@ A state transition diagram for recognizing comments
   \node[initial,state] (0) at (0, 0)  {start};
   \node[state] (1) at (3, 0) {comment};  
   \node[state] (2) at (3, 2) {\lstinline{/}};    
-  \node[] (3) at (3, -2) {\lstinline{...}};      
+  \node[] (3) at (0, -2) {\lstinline{...}};      
   \path[->] (0)  edge [loop above] node             {whitespace} (0);  
-  \path[->] (2)  edge[bend left=-20,above,inner sep=7] node             {error!} (0);      
+  \path[->] (2)  edge[bend left=-20,above,inner sep=7] node             {not \lstinline{/}} (0);      
   \path[->] (0)  edge[bend right=20] node             {\lstinline{/}} (2);    
   \path[->] (2)  edge node             {\lstinline{/}} (1);      
   \path[->] (1)  edge node             {\lstinline{'\\n'}} (0);        
+  \path[->] (1)  edge[loop below] node {not \lstinline{'\\n'} and not \lstinline{EOF}} (1);
   \path[->] (0)  edge node             {} (3);          
 \end{tikzpicture}
 \end{center}
@@ -882,7 +887,7 @@ For any language described by a regular expression, there is a state transition 
 
 \pause\bigskip
 
-A Finite State Automaton (FSA) $F$ is a quintuple $F = (\Sigma, S, s_0, M, F)$, where
+A Finite State Automaton (FSA) $F$ is a quintuple $F = (\Sigma, S, s_0, F, M)$, where
 \begin{enumerate}
 \pause
 \item $\Sigma$ is the input alphabet
@@ -894,10 +899,10 @@ A Finite State Automaton (FSA) $F$ is a quintuple $F = (\Sigma, S, s_0, M, F)$, 
 \item $s_0 \in S$ is a special start state
 
 \pause
-\item $M$ is a set of moves or state transitions of the form $m(r, a) = s$, where $r,s \in S$ and $a \in \Sigma$
+\item $F \in S$ is a set of final states
 
 \pause
-\item $F \in S$ is a set of final states
+\item $M$ is a set of moves or state transitions of the form $m(r, a) = s$, where $r,s \in S$ and $a \in \Sigma$
 \end{enumerate}
 \end{frame}
 
@@ -912,9 +917,9 @@ An FSA $F$ that recognizes the language described by the regular expression
 
 \begin{center}
 \begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
-  \node[initial,state]   (0)               {0};
-  \node[state]           (1) [right of=0]  {1};
-  \node[state,accepting] (2) [right of=1]  {2};
+  \node[initial,state]   (0) at (0, 0)  {0};
+  \node[state]           (1) at (2, 0)  {1};
+  \node[state,accepting] (2) at (4, 0)  {2};
   \path[->] (0)  edge node             {$a$} (1);
   \path[->] (0)  edge[bend right] node {$b$} (1);
   \path[->] (1)  edge[loop above] node {$a$} (1);
@@ -923,7 +928,16 @@ An FSA $F$ that recognizes the language described by the regular expression
 \end{center}
 
 \pause\bigskip
-Formally, $F = (\Sigma, S, s_0, M, F)$, where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $M = \{m(0, a) = 1, m(0, b) = 1, m(1, a) = 1, m(1, b) = 2\}$, and $F = \{2\}$
+Formally, $F = (\Sigma, S, s_0, F, M)$, where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $F = \{2\}$, and $M$ is
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$0$ & $a$ & $1$ \\ \hline
+$0$ & $b$ & $1$ \\ \hline
+$1$ & $a$ & $1$ \\ \hline
+$1$ & $b$ & $2$ \\ \hline
+\end{tabular}
+\end{center}
 \end{frame}
 
 \section{Non-deterministic (NFA) Versus Deterministic Finite State Automata (DFA)}
@@ -959,9 +973,9 @@ An NFA $N$ that recognizes the language described by the regular expression
 
 \begin{center}
 \begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
-  \node[initial,state]   (0)               {0};
-  \node[state]           (1) [right of=0]  {1};
-  \node[state,accepting] (2) [right of=1]  {2};
+  \node[initial,state]   (0) at (0, 0)  {0};
+  \node[state]           (1) at (2, 0)  {1};
+  \node[state,accepting] (2) at (4, 0)  {2};
   \path[->] (0)  edge node             {$a$} (1);
   \path[->] (1)  edge[bend left] node {$\epsilon$} (0);
   \path[->] (1)  edge[loop above] node {$a, b$} (1);
@@ -971,7 +985,17 @@ An NFA $N$ that recognizes the language described by the regular expression
 
 \pause\bigskip
 
-Formally, $N = (\Sigma, S, s_0, M, F)$ where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $M =  \{m(0, a) = 1, m(1, \epsilon) = 0, m(1, a) = 1, m(1, b) = 1, m(1, b) = 2\}$, and $F = \{2\}$
+Formally, $N = (\Sigma, S, s_0, F, M)$ where $\Sigma = \{a, b\}$, $S = \{0, 1, 2\}$, $s_0 = 0$, $F = \{2\}$, and $M$ is
+\begin{center}
+\begin{tabular}{|c|c|c|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$0$ & $a$ & $1$ \\ \hline
+$1$ & $\epsilon$ & $0$ \\ \hline
+$1$ & $a$ & $1$ \\ \hline
+$1$ & $b$ & $1$ \\ \hline
+$1$ & $b$ & $2$ \\ \hline
+\end{tabular}
+\end{center}
 \end{frame}
 
 \section{Regular Expressions to NFA}
@@ -986,8 +1010,8 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 
 \begin{center}
 \begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
-  \node[initial,state]   (0)               {start};
-  \node[state,accepting] (1) [right of=0]  {final};
+  \node[initial,state]   (0) at (0, 0) {start};
+  \node[state,accepting] (1) at (2, 0) {final};
   \path[->] (0)  edge node             {$\epsilon$} (1);
 \end{tikzpicture}
 \end{center}
@@ -998,8 +1022,8 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 
 \begin{center}
 \begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
-  \node[initial,state]   (0)               {start};
-  \node[state,accepting] (1) [right of=0]  {final};
+  \node[initial,state]   (0) at (0, 0) {start};
+  \node[state,accepting] (1) at (2, 0) {final};
   \path[->] (0)  edge node             {$a$} (1);
 \end{tikzpicture}
 \end{center}
@@ -1012,10 +1036,10 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 
 \begin{center}
 \begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
-  \node[initial,state]   (0)               {start};
-  \node[state]           (1) [right of=0]  {final};
-  \node[state]           (2) [right of=1]  {start};
-  \node[state,accepting] (3) [right of=2]  {final};
+  \node[initial,state]   (0) at (0, 0)              {start};
+  \node[state]           (1) at (2, 0)  {final};
+  \node[state]           (2) at (4, 0)  {start};
+  \node[state,accepting] (3) at (6, 0)  {final};
   \path[->] (1)  edge node             {$\epsilon$} (2);  
   \path[draw=black,fill=black!10,opacity=0.2] (-.5,-1) -- (-.5,1) -- (2.5,1) -- (2.5,-1) -- cycle; 
   \node[] at (1, 0.8) {$N_r$};
@@ -1073,623 +1097,1183 @@ Given any regular expression $r$, we can construct (using Thompson's constructio
 (Rule 6) NFA $N_r$ for recognizing $L(r)$ also recognizes $L((r))$
 \end{frame}
 
-%\begin{frame}[fragile]
-%\pause
-%
-%As an example, let's construct an NFA for the regular expression $(a|b)a\!*\!b$, which has the following syntactic structure
-%
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.14}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%We start with the first $a$ and $b$; the automata recognizing these are easy enough to construct using Rule 1
-%
-%\begin{center}
-%\visible<3->{\includegraphics[scale=0.6]{{figures/construction-a1}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We then put them together using Rule 3 to produce an NFA recognizing $a|b$
-%
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a2}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%The NFA recognizing $(a|b)$ is the same as that recognizing $a|b$, by Rule 6
-%
-%\pause
-%\bigskip
-%
-%An NFA recognizing the second instance of $a$ is simple enough, by Rule 1 again
-%
-%\begin{center}
-%\visible<4->{\includegraphics[scale=0.6]{{figures/construction-a3}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%The NFA recognizing $a*$ can be constructed from the NFA for $a$, by applying Rule 4
-%
-%\begin{center}
-%\visible<5->{\includegraphics[scale=0.6]{{figures/construction-a4}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We then apply Rule 2 to construct an NFA recognizing the concatenation $(a|b)a*$
-%
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a5}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%An NFA recognizing the second instance of $b$ is simple enough, by Rule 1 again
-%
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/construction-a6}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%Finally, we can apply Rule 2 again to produce an NFA recognizing $(a|b)a\!*\!b$
-%
-%\begin{center}
-%\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.15}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\section{NFA to DFA}
-%\begin{frame}[fragile]
-%\pause
-%
-%For any NFA, there is an equivalent DFA that can be constructed using the powerset (or subset) construction procedure
-%
-%\pause
-%\bigskip
-%
-%The DFA that we construct is always in a state that simulates all the possible states that the NFA could possibly be in having scanned the same portion of the input
-%
-%\pause
-%\bigskip
-%
-%The computation of all states reachable from a given state $s$ based on $\epsilon$-moves alone is called taking the $\epsilon$-closure of that state
-%
-%\pause
-%\bigskip
-%
-%The $\epsilon$-closure$(s)$ for a state $s$ includes $s$ and all states reachable from $s$ using $\epsilon$-moves alone, ie, $\epsilon$-closure$(s) = \{s\} \cup \{r \in S | \text{ there is a path of only } \epsilon\text{-moves from } s \text{ to } r\}$
-%
-%\pause
-%\bigskip
-%
-%The $\epsilon$-closure$(S)$ for a set of states $S$ includes $S$ and all states reachable from any state $s \in S$ using  $\epsilon$-moves alone
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%\begin{algorithm}[H]
-%\begin{algorithmic}
-%\REQUIRE a set of states, $S$
-%\ENSURE $\epsilon$-closure($S$)
-%\STATE {Stack $P$.addAll($S$)}   \COMMENT{a stack containing all states in $S$}
-%\STATE {Set $C$.addAll($S$)}     \COMMENT{the closure initially contains the states in $S$}
-%\WHILE {! $P$.empty()}
-%\STATE $s$ $\gets$ $P$.pop()
-%\FOR {$r$ in $m(s, \epsilon)$}
-%\STATE{} \COMMENT{$m(s, \epsilon)$ is a set of states}
-%\IF {$r \notin C$}
-%\STATE $P$.push($r$)
-%\STATE $C$.add($r$)
-%\ENDIF
-%\ENDFOR
-%\ENDWHILE
-%\RETURN $C$
-%\end{algorithmic}
-%\caption{$\epsilon$-closure($S$) for a Set of States $S$}
-%\end{algorithm}
-%
-%\pause
-%\bigskip
-%
-%\begin{algorithm}[H]
-%\begin{algorithmic}
-%\REQUIRE a state, $s$
-%\ENSURE $\epsilon$-closure($s$)
-%\STATE {Set $S$.add($s$)}  \COMMENT{$S = \{s\}$}
-%\RETURN $\epsilon$-closure($S$)
-%\end{algorithmic}
-%\caption{$\epsilon$-closure($s$) for a State $s$}
-%\end{algorithm}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%NFA for the regular expression $(a|b)a\!*\!b$ from before
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.4]{{figures/figure02.15}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%In the corresponding DFA, the start state $s_0 = \epsilon\text{-closure}(0) = \{0, 1, 3\}$
-%
-%\pause
-%
-%\begin{align}
-%& m(s_0, a) = s_1 = \epsilon\text{-closure}(2) = \{2, 5, 6, 7, 9, 10\} \nonumber
-%\end{align}
-%
-%\pause
-%
-%\begin{align}
-%& m(s_0, b) = s_2 = \epsilon\text{-closure}(4) = \{4, 5, 6, 7, 9, 10\} \nonumber
-%\end{align}
-%
-%\pause
-%
-%\begin{align}
-%& m(s_1, a) = s_3 = \epsilon\text{-closure}(8) = \{7, 8, 9, 10\} \nonumber
-%\end{align}
-%
-%\pause
-%
-%\begin{align}
-%& m(s_1, b) = s_4 = \epsilon\text{-closure}(11) = \{11\} \nonumber
-%\end{align}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%\begin{align}
-%& m(s_2, a) = s_3 \nonumber \\
-%& m(s_2, b) = s_4 \nonumber
-%\end{align}
-%
-%\pause
-%
-%\begin{align}
-%& m(s_3, a) = s_3 \nonumber \\
-%& m(s_3, b) = s_4 \nonumber
-%\end{align}
-%
-%\pause
-%\bigskip
-%
-%There are no moves at all out of state $s_4$, so we have found all of our transitions and all of our states
-%
-%\pause
-%\bigskip
-%
-%Any state reflecting a final state in the NFA is a final state in the DFA; in our example, only $s_4$ is a final state because it contains (the final) state 11 from the original NFA
-%
-%\pause
-%\bigskip
-%
-%The DFA derived from our NFA for the regular expression $(a|b)a*b$ is shown below
-%\begin{center}
-%\visible<6->{\includegraphics[scale=0.5]{{figures/figure02.16}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%\begin{algorithm}[H]
-%\begin{algorithmic}
-%\REQUIRE an NFA, $N = (\Sigma, S, s_0, M, F)$
-%\ENSURE DFA, $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
-%\STATE Set $s_{D0} \gets$  $\epsilon$-closure($s_0$)
-%\STATE Set $S_D$.add($s_{D0}$)
-%\STATE Moves $M_D$
-%\STATE Stack $stk$.push($s_{D0}$)
-%\STATE $i \gets 0$
-%\WHILE {!$stk$.empty()}
-%\STATE $t$ $\gets$ $stk$.pop()
-%\FOR {$a$ in $\Sigma$}
-%\STATE $s_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$)
-%\IF {$s_{Di+1} \neq \{\}$}
-%\IF {$s_{Di+1} \notin S_D$} 
-%\STATE $S_D$.add($s_{Di+1}$) \COMMENT{We have a new state}
-%\STATE $stk$.push($s_{Di+1}$)
-%\STATE $i \gets i + 1$
-%\STATE $M_D$.add($m_D(t,a) = i$)
-%\ELSIF {$\exists j, s_j \in S_D \text{ and } s_{Di+1} = s_j$} 
-%\STATE $M_D$.add($m_D(t, a) = j$) \COMMENT{In the case the state already exists}
-%\ENDIF
-%\ENDIF
-%\ENDFOR
-%\ENDWHILE
-%\end{algorithmic}
-%\caption{NFA to DFA Construction}
-%\end{algorithm}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%\begin{algorithm}[H]
-%\begin{algorithmic}
-%\STATE Set $F_D$
-%\FOR {$s_D$ in $S_D$}
-%\FOR {$s$ in $s_D$}
-%\IF {$s \in F$}
-%\STATE $F_D$.add($s_D$)
-%\ENDIF
-%\ENDFOR
-%\ENDFOR
-%\RETURN $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
-%\end{algorithmic}
-%\caption{NFA to DFA Construction (contd.)}
-%\end{algorithm}
-%\end{frame}
-%
-%\section{DFA to Minimal DFA}
-%\begin{frame}[fragile]
-%\pause
-%
-%How do we come up with a smaller DFA that recognizes the same language?
-%
-%\pause
-%\bigskip
-%
-%Given an input string in our language, there must be a sequence of moves taking us from the start state to one of the final states
-%
-%\pause
-%\bigskip
-%
-%Given an input string that is not in our language, we must get stuck with no move to take or end up in a non-final state
-%
-%\pause
-%\bigskip
-%
-%We must combine as many states together as we can, so that the states in our new DFA are partitions of the states in the original (perhaps larger) DFA
-%
-%\pause
-%\bigskip
-%
-%A good strategy is to start with just one or two partitions of the states, and then split states when it is necessary to produce the necessary DFA 
-%
-%\pause
-%\bigskip
-%
-%An obvious first partition has two sets: the set of final states and the set of non-final states; the latter could be empty, leaving us with a single partition containing all states
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%For example, consider the DFA for $(a|b)a*b$, partitioned as follows
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.17}.jpg}}
-%\end{center}
-%
-%\pause
-%\bigskip
-%
-%The two states in this new DFA consist of the start state, $\{0, 1, 2, 3\}$ and the final state $\{4\}$ 
-%
-%\pause
-%\bigskip
-%
-%We must make sure that from a particular partition, each input symbol must move us to an identical partition
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%Beginning in any state in the partition $\{0, 1, 2, 3\}$, an $a$ takes us to one of the states in $\{0, 1, 2, 3\}$
-%\begin{align}
-%& m(0, a) = 1 \nonumber \\
-%& m(1, a) = 3 \nonumber \\
-%& m(2, a) = 3 \nonumber \\
-%& m(3, a) = 3 \nonumber
-%\end{align}
-%
-%So, our partition $\{0, 1, 2, 3\}$ is fine so far as moves on the symbol $a$ are concerned
-%
-%\pause
-%\bigskip
-%
-%For the symbol $b$,
-%\begin{align}
-%& m(0, b) = 2 \nonumber \\
-%& m(1, b) = 4 \nonumber \\
-%& m(2, b) = 4 \nonumber \\
-%& m(3, b) = 4 \nonumber
-%\end{align}
-%
-%So we must split the partition $\{0, 1, 2, 3\}$ into two new partitions, $\{0\}$ and $\{1, 2, 3\}$
-%
-%\pause
-%\bigskip
-%
-%If we are in state $s$, and for an input symbol $a$ in our alphabet there is no defined move $m(s, a) = t$, we invent a special dead state $d$, so that we can say $m(s, a) = d$
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We are left with a partition into three sets: $\{0\}$, $\{1, 2, 3\}$ and $\{4\}$, as shown below
-%
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.18}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We need not worry about $\{0\}$ and $\{4\}$ as they contain just one state and so correspond to (those) states in the original machine
-%
-%\pause
-%\bigskip
-%
-%We consider $\{1, 2, 3\}$ to see if it is necessary to split it
-%\begin{align}
-%& m(1,a) = 3\nonumber \\
-%& m(2,a) = 3 \nonumber \\
-%& m(3, a) = 3 \nonumber
-%\end{align}
-%\begin{align}
-%& m(1, b) = 4 \nonumber \\
-%& m(2,b) = 4 \nonumber \\
-%& m(3, b) = 4 \nonumber
-%\end{align}
-%
-%\pause
-%\bigskip
-%
-%Thus, there is no further state splitting to be done, and we are left with the following smaller DFA
-%
-%\begin{center}
-%\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.19}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%\begin{algorithm}[H]
-%\begin{algorithmic}
-%\REQUIRE a DFA, $D = (\Sigma, S, s_0, M, F)$
-%\ENSURE a partition of $S$
-%\STATE Set $partition \gets \{S - F, F\}$  \COMMENT{start with two sets: the non-final states and the final states} \\
-%\STATE{} \COMMENT {Splitting the states}
-%\WHILE {splitting occurs}
-%\FOR {Set $set$  in $partition$}
-%\IF {$set$.size() $>$ 1}
-%\FOR {Symbol $a$ in $\Sigma$}
-%\STATE{} \COMMENT{Determine if  moves from this `state' force a split}
-%\STATE State $s \gets$ a state chosen from $set$
-%\STATE $targetSet \gets$ the set in the partition containing $m(s, a)$
-%\STATE Set $set1 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \in targetSet\}$
-%\STATE Set $set2 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \notin targetSet\}$
-%\IF {$set2 \neq \{\}$}
-%\STATE{} \COMMENT{Yes, split the states.}
-%\STATE{replace $set$ in $partition$ by $set1$ and $set2$ and break out of the for-loop to continue with the next set in the partition}
-%\ENDIF
-%\ENDFOR
-%\ENDIF
-%\ENDFOR
-%\ENDWHILE
-%\end{algorithmic}
-%\caption{Minimizing a DFA}
-%\end{algorithm}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%Let us run through another example, starting from a regular expression, producing an NFA, then a DFA, and finally a minimal DFA
-%
-%\pause
-%\bigskip
-%
-%Consider the regular expression $(a|b)*baa$ having the following syntactic structure
-%
-%\begin{center}
-%\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.20}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We apply the Thompson's construction procedure to produce the NFA shown below
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.21}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%Using the powerset construction method, we derive a DFA having the following states
-%\begin{align}
-%& s_0 = \{0, 1, 2, 4, 7, 8\} \nonumber \\
-%& m(s_0, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
-%& m(s_0, b) : \{1, 2, 4, 5, 6,  7, 8, 9, 10\} = s_2 \nonumber \\
-%& m(s_1, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
-%& m(s_1, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
-%& m(s_2, a) : \{1, 2, 3, 4, 6, 7, 8, 11, 12\} = s_3 \nonumber \\
-%& m(s_2, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
-%& m(s_3, a) : \{1, 2, 3, 4, 6, 7, 8, 13\} = s_4 \nonumber \\
-%& m(s_3, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
-%& m(s_4, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
-%& m(s_4, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber
-%\end{align}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%The DFA itself is shown below
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.22}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%Finally, we use partitioning to produce the minimal DFA shown below
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.23}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%We re-number the states to produce the equivalent DFA shown below
-%\begin{center}
-%\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.24}.jpg}}
-%\end{center}
-%\end{frame}
-%
-%\section{JavaCC: a Tool for Generating Scanners}
-%\begin{frame}[fragile]
-%\pause
-%
-%JavaCC (the CC stands for compiler-compiler) is a tool for generating lexical analyzers from regular expressions and parsers from context-free grammars
-%
-%\pause
-%\bigskip
-%
-%A lexical grammar specification consists a set of regular expressions and a set of lexical states; from any particular state, only certain regular expressions may be matched in scanning the input
-%
-%\pause
-%\bigskip
-%
-%There is a standard \lstinline{DEFAULT} state, in which scanning generally begins; one may specify additional states as required
-%
-%\pause
-%\bigskip
-%
-%Scanning a token proceeds by considering all regular expressions in the current state and choosing the one which consumes the greatest number of input characters
-%
-%\pause
-%\bigskip
-%
-%After a match, one can specify a state in which the scanner should go into; otherwise the scanner stays in the current state
-%
-%\pause
-%\bigskip
-%
-%There are four kinds of regular expressions, determining what happens when the regular expression has been matched
-%\begin{enumerate}
-%\item \lstinline{SKIP}: throws away the matched string
-%\item \lstinline{MORE}: continues to the next state, taking the matched string along
-%\item \lstinline{TOKEN}: creates a token from the matched string and returns it to the parser (or any caller)
-%\item \lstinline{SPECIAL_TOKEN}: creates a special token that does not participate in the parsing
-%\end{enumerate}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%For example, a \lstinline{SKIP} can be used for ignoring white space
-%\begin{lstlisting}[language={}]
-%SKIP: {" "|"\t"|"\n"|"\r"|"\f"}
-%\end{lstlisting}
-%
-%\pause
-%\bigskip
-%
-%We can deal with single-line comments with the following regular expressions
-%
-%\begin{lstlisting}
-%MORE: { "//": IN_SINGLE_LINE_COMMENT }
-%<IN_SINGLE_LINE_COMMENT>
-%SPECIAL_TOKEN: { <SINGLE_LINE_COMMENT: "\n"|"\r"|"\r\n" > : DEFAULT }
-%<IN_SINGLE_LINE_COMMENT>
-%MORE: { < ~[] > }
-%\end{lstlisting}
-%
-%\pause
-%\bigskip
-%
-%An alternative regular expression dealing with single-line comments
-%
-%\begin{lstlisting}
-%SPECIAL_TOKEN: {
-%  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
-%}
-%\end{lstlisting}
-%
-%\pause
-%\bigskip
-%
-%Reserved words and symbols are specified by simply spelling them out; for example
-%
-%\begin{lstlisting}
-%TOKEN: {
-%  < ABSTRACT: "abstract" >
-%| < BOOLEAN: "boolean" >
-%...
-%
-%| < COMMA: "," >
-%| < DOT: "." >
-%}
-%\end{lstlisting}
-%\end{frame}
-%
-%\begin{frame}[fragile]
-%\pause
-%
-%A token for scanning identifiers
-%
-%\begin{lstlisting}
-%TOKEN: {
-%  < IDENTIFIER: (<LETTER>|"_"|"$") (<LETTER>|<DIGIT>|"_"|"$")* >
-%| < #LETTER: ["a"-"z","A"-"Z"] >
-%| < #DIGIT: ["0"-"9"] >
-%}
-%\end{lstlisting}
-%
-%\pause
-%\bigskip
-%
-%A token for scanning literals
-%
-%\begin{lstlisting}
-%TOKEN: {
-%  < INT_LITERAL: ("0" | <NON_ZERO_DIGIT> (<DIGIT>)*) >
-%| < #NON_ZERO_DIGIT: ["1"-"9"] >
-%| < CHAR_LITERAL: "'" (<ESC> | ~["'","\\","\n","\r"]) "'" >
-%| < STRING_LITERAL: "\"" (<ESC> | ~["\"","\\","\n","\r"])* "\"" >
-%| < #ESC: "\\" ["n","t","b","r","f","\\","'","\""] >
-%}
-%\end{lstlisting}
-%
-%\pause
-%\bigskip
-%
-%JavaCC takes a specification of the lexical syntax and produces several Java files, one of which is  \lstinline{TokenManager.java}, a program that implements a state machine; this is our scanner
-%
-%\pause
-%\bigskip
-%
-%The lexical specification for \jmm is contained in \lstinline{$j/j--/src/jminusminus/j--.jj}
-%\end{frame}
+\begin{frame}[fragile]
+\pause
+
+As an example, let's construct an NFA for the regular expression $(a|b)a\!*\!b$, proceeding from left to right
+
+\pause\bigskip
+
+Using Rule 2, we get the NFAs $N_a$ and $N_b$ for recognizing $a$ and $b$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state]   (1) at (0, 0) {1};
+  \node[state,accepting] (2) at (1, 0) {2};
+  \path[->] (1)  edge node             {$a$} (2);
+\end{tikzpicture}
+\end{center}
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state]   (3) at (0, 0) {3};
+  \node[state,accepting] (4) at (1, 0) {4};
+  \path[->] (3)  edge node             {$b$} (4);
+\end{tikzpicture}
+\end{center}
+
+\pause\smallskip
+
+Using Rules 4 and 6, we get the NFA $N_{(a|b)}$ for recognizing $(a|b)$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (0) at (0, 0)  {0};
+  \node[state] (1) at (1, 1) {1};
+  \node[state] (3) at (1, -1) {3};  
+  \node[state] (2) at (2, 1) {2};
+  \node[state] (4) at (2, -1) {4};  
+  \node[state,accepting] (5) at (3, 0) {5};
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (0)  edge node             {$\epsilon$} (3);
+  \path[->] (1)  edge node             {$a$} (2); 
+  \path[->] (3)  edge node             {$b$} (4); 
+  \path[->] (2)  edge node             {$\epsilon$} (5);
+  \path[->] (4)  edge node             {$\epsilon$} (5);
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Using Rule 2, we get the NFAs $N_a$ for recognizing the second instance of $a$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state]   (7) at (0, 0)  {7};
+  \node[state,accepting] (8) at (1, 0)  {8};
+  \path[->] (7)  edge node             {$a$} (8);
+\end{tikzpicture}
+\end{center}
+
+\pause\smallskip
+
+Using Rule 5, we get the NFA $N_{a*}$ for recognizing $a*$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (6) at (0, 0)  {6};
+  \node[state] (7) at (1, 0) {7};
+  \node[state] (8) at (2, 0) {8};
+  \node[state,accepting] (9) at (3, 0) {9};
+  \path[->] (6)  edge node             {$\epsilon$} (7);
+  \path[->] (7)  edge node             {$a$} (8);
+  \path[->] (8)  edge [bend left=100] node {$\epsilon$} (7);
+  \path[->] (6)  edge [bend right=100] node {$\epsilon$} (9);
+  \path[->] (8)  edge node             {$\epsilon$} (9);  
+\end{tikzpicture}
+\end{center}
+
+\pause\smallskip
+
+Using Rule 3, we get the NFA $N_{(a|b)a*}$ for recognizing $(a|b)a*$
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (0) at (0, 0)  {0};
+  \node[state] (1) at (1, 1) {1};
+  \node[state] (3) at (1, -1) {3};  
+  \node[state] (2) at (2, 1) {2};
+  \node[state] (4) at (2, -1) {4};  
+  \node[state] (5) at (3, 0) {5};
+  \node[state] (6) at (4, 0)  {6};
+  \node[state] (7) at (5, 0) {7};
+  \node[state] (8) at (6, 0) {8};
+  \node[state,accepting] (9) at (7, 0) {9};
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (0)  edge node             {$\epsilon$} (3);
+  \path[->] (1)  edge node             {$a$} (2); 
+  \path[->] (3)  edge node             {$b$} (4); 
+  \path[->] (2)  edge node             {$\epsilon$} (5);
+  \path[->] (4)  edge node             {$\epsilon$} (5); 
+  \path[->] (6)  edge node             {$\epsilon$} (7);
+  \path[->] (7)  edge node             {$a$} (8);
+  \path[->] (8)  edge [bend left=100] node {$\epsilon$} (7);
+  \path[->] (6)  edge [bend right=100] node {$\epsilon$} (9);
+  \path[->] (8)  edge node             {$\epsilon$} (9);  
+  \path[->] (5)  edge node {$\epsilon$} (6);  
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Using Rule 2, we get the NFAs $N_b$ for recognizing the second instance of $b$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state]   (10) at (0, 0)  {10};
+  \node[state,accepting] (11) at (1, 0)  {11};
+  \path[->] (10)  edge node             {$b$} (11);
+\end{tikzpicture}
+\end{center}
+
+\pause\smallskip
+
+Finally, using Rule 3, we get the NFA $N_{(a|b)a*b}$ for recognizing $(a|b)a\!*\!b$ as
+
+\pause
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (0) at (0, 0)  {0};
+  \node[state] (1) at (1, 1) {1};
+  \node[state] (3) at (1, -1) {3};  
+  \node[state] (2) at (2, 1) {2};
+  \node[state] (4) at (2, -1) {4};  
+  \node[state] (5) at (3, 0) {5};
+  \node[state] (6) at (4, 0)  {6};
+  \node[state] (7) at (5, 0) {7};
+  \node[state] (8) at (6, 0) {8};
+  \node[state] (9) at (7, 0) {9};
+  \node[state] (10) at (8, 0) {10};  
+  \node[state,accepting] (11) at (9, 0) {11};  
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (0)  edge node             {$\epsilon$} (3);
+  \path[->] (1)  edge node             {$a$} (2); 
+  \path[->] (3)  edge node             {$b$} (4); 
+  \path[->] (2)  edge node             {$\epsilon$} (5);
+  \path[->] (4)  edge node             {$\epsilon$} (5); 
+  \path[->] (6)  edge node             {$\epsilon$} (7);
+  \path[->] (7)  edge node             {$a$} (8);
+  \path[->] (8)  edge [bend left=100] node {$\epsilon$} (7);
+  \path[->] (6)  edge [bend right=100] node {$\epsilon$} (9);
+  \path[->] (8)  edge node             {$\epsilon$} (9);  
+  \path[->] (5)  edge node {$\epsilon$} (6);  
+  \path[->] (9)  edge node             {$\epsilon$} (10);
+  \path[->] (10)  edge node             {$b$} (11);  
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\section{NFA to DFA}
+\begin{frame}[fragile]
+\pause
+
+For any NFA, there is an equivalent DFA that can be constructed using the powerset (or subset) construction procedure
+
+\pause\bigskip
+
+The DFA is always in a state that simulates all the possible states that the NFA could possibly be in having scanned the same portion of the input
+
+\pause\bigskip
+
+The computation of all states reachable from a given state $s$ based on $\epsilon$-moves alone is called taking the $\epsilon$-closure of that state
+
+\pause\bigskip
+
+The $\epsilon$-closure$(s)$ for a state $s$ includes $s$ and all states reachable from $s$ using $\epsilon$-moves alone, ie, $\epsilon$-closure$(s) = \{s\} \cup \{r \in S | \text{ there is a path of only } \epsilon\text{-moves from } s \text{ to } r\}$
+
+\pause\bigskip
+
+The $\epsilon$-closure$(S)$ for a set of states $S$ includes $S$ and all states reachable from any state $s \in S$ using  $\epsilon$-moves alone
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white]
+\begin{minipage}{\textwidth}
+Algorithm: $\epsilon$-closure$(S)$ for a set of states $S$
+
+\smallskip
+
+Input: set of states $S$, set of moves $M$
+
+\smallskip
+
+Output: $\epsilon$-closure$(S)$
+\end{minipage}
+\end{tcolorbox}
+
+\begin{overprint}
+\onslide<2|handout:1>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusin]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+    while len(P) != 0:
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<3|handout:2>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+    P = list(S)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+    C = set(S)
+    while len(P) != 0:
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+stack containing all states in S
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<4|handout:3>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+    C = set(S)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+    while len(P) != 0:
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+closure initially contains states in S
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<5|handout:4>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+    while len(P) != 0:
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+while P is not empty
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<6|handout:5>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+    while len(P) != 0:
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+        r = P.pop()
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+pop a state r off P
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<7|handout:6>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+    while len(P) != 0:
+        r = P.pop()
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+        for s in M.m({r}, "epsilon"):
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+            if s not in C:
+                P.append(s)
+                C.add(s)
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+for each state s reachable from r via an $\epsilon$-move
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<8|handout:7>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+    while len(P) != 0:
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+            if s not in C:
+                P.append(s)
+                C.add(s)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusout]
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+add s to P and C if it is not in C
+\end{minipage}
+\end{tcolorbox}
+
+\onslide<9|handout:8>
+\begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
+
+\begin{lstlisting}[language=Python,style=focusout]
+def epsilonClosure(S, M):
+    P = list(S)
+    C = set(S)
+    while len(P) != 0:
+        r = P.pop()
+        for s in M.m({r}, "epsilon"):
+            if s not in C:
+                P.append(s)
+                C.add(s)
+\end{lstlisting}
+\begin{lstlisting}[language=Python,style=focusin,backgroundcolor=\color{lime100}]
+    return C
+\end{lstlisting}
+
+\tcblower
+\begin{minipage}[t][.25cm][t]{\textwidth}
+return C, the closure
+\end{minipage}
+\end{tcolorbox}
+\end{overprint}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+As an example, let's convert the NFA $N_{(a|b)a*b}$ to a DFA
+
+\begin{center}
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (0) at (0, 0)  {0};
+  \node[state] (1) at (1, 1) {1};
+  \node[state] (3) at (1, -1) {3};  
+  \node[state] (2) at (2, 1) {2};
+  \node[state] (4) at (2, -1) {4};  
+  \node[state] (5) at (3, 0) {5};
+  \node[state] (6) at (4, 0)  {6};
+  \node[state] (7) at (5, 0) {7};
+  \node[state] (8) at (6, 0) {8};
+  \node[state] (9) at (7, 0) {9};
+  \node[state] (10) at (8, 0) {10};  
+  \node[state,accepting] (11) at (9, 0) {11};  
+  \path[->] (0)  edge node             {$\epsilon$} (1);
+  \path[->] (0)  edge node             {$\epsilon$} (3);
+  \path[->] (1)  edge node             {$a$} (2); 
+  \path[->] (3)  edge node             {$b$} (4); 
+  \path[->] (2)  edge node             {$\epsilon$} (5);
+  \path[->] (4)  edge node             {$\epsilon$} (5); 
+  \path[->] (6)  edge node             {$\epsilon$} (7);
+  \path[->] (7)  edge node             {$a$} (8);
+  \path[->] (8)  edge [bend left=100] node {$\epsilon$} (7);
+  \path[->] (6)  edge [bend right=100] node {$\epsilon$} (9);
+  \path[->] (8)  edge node             {$\epsilon$} (9);  
+  \path[->] (5)  edge node {$\epsilon$} (6);  
+  \path[->] (9)  edge node             {$\epsilon$} (10);
+  \path[->] (10)  edge node             {$b$} (11);  
+\end{tikzpicture}
+\end{center}
+
+\pause\bigskip
+
+\begin{overprint}
+\onslide<3|handout:1>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<4|handout:2>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\epsilon\text{-closure}(0)$ & & \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<5|handout:3>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & & \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<6|handout:4>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ & \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<7|handout:5>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\epsilon\text{-closure}(2)$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<8|handout:6>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<9|handout:7>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ &   \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<10|handout:8>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\epsilon\text{-closure}(4)$  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<11|handout:9>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<12|handout:10>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ &   \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<13|handout:11>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\epsilon\text{-closure}(8)$  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<14|handout:12>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<15|handout:13>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ &   \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<16|handout:14>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\epsilon\text{-closure}(11)$  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<17|handout:15>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state)  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<18|handout:16>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state)  \\ \hline
+$2$ & $a$ &   \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<19|handout:17>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state)  \\ \hline
+$2$ & $a$ & $\epsilon\text{-closure}(8) = \{7, 8, 9, 10\}$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<20|handout:18>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<21|handout:19>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ &  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<22|handout:20>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ &  $\epsilon\text{-closure}(11) = \{11\}$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<23|handout:21>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<24|handout:22>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ &  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<25|handout:23>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state)  \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ & $\epsilon\text{-closure}(8) = \{7, 8, 9, 10\}$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<26|handout:24>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state)  \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ & $3$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<27|handout:25>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ & $3$ \\ \hline
+$3$ & $b$ &  \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<28|handout:26>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ & $3$ \\ \hline
+$3$ & $b$ & $\epsilon\text{-closure}(11) = \{11\}$ \\ \hline
+\end{tabular}
+\end{center}
+
+\onslide<29|handout:27>
+\begin{center}
+\begin{tabular}{|C{4cm}|C{.5cm}|C{4cm}|} \hline
+$r$ & $a$ & $m(r, a)$ \\ \hline \hline
+$\{0, 1, 3\} = 0$ (start state) & $a$ &  $\{2, 5, 6, 7, 9, 10\} = 1$ \\ \hline
+$0$ & $b$ & $\{4, 5, 6, 7, 9, 10\} = 2$  \\ \hline
+$1$ & $a$ & $\{7, 8, 9, 10\} = 3$  \\ \hline
+$1$ & $b$ & $\{11\} = 4$ (accept state) \\ \hline
+$2$ & $a$ & $3$ \\ \hline
+$2$ & $b$ & $4$ \\ \hline
+$3$ & $a$ & $3$ \\ \hline
+$3$ & $b$ & $4$ \\ \hline
+\end{tabular}
+\end{center}
+\end{overprint}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\pause
+The DFA $D_{(a|b)a*b}$ for recognizing $(a|b)a\!*\!b$
+
+\begin{center}
+\tiny
+\begin{tikzpicture}[>=stealth',shorten >=1pt,auto,node distance=2cm,initial text=]
+  \tikzset{every state/.style={inner sep=2pt,minimum size=0pt}}
+  \node[initial,state] (0) at (0, 0)  {\parbox{1.2cm}{\centering $0$ \\ $\{0, 1, 3\}$}};
+  \node[state] (1) at (2, 1)  {\parbox{1.2cm}{\centering $1$ \\ $\{2,5,6,$ \\ $7,9,10\}$}};
+  \node[state] (2) at (2, -1)  {\parbox{1.2cm}{\centering $2$ \\ $\{4,5,6,$ \\ $7,9,10\}$}};  
+  \node[state] (3) at (4, 0)  {\parbox{1.2cm}{\centering $3$ \\ $\{7,8,9,10\}$}};  
+  \node[state,accepting] (4) at (6, 0)  {\parbox{1cm}{\centering $4$ \\ $\{11\}$}};   
+  \path[->] (0)  edge node             {$a$} (1);
+  \path[->] (0)  edge node             {$b$} (2);
+  \path[->] (1)  edge node             {$a$} (3);
+  \path[->] (2)  edge node             {$a$} (3);
+  \path[->] (3)  edge node             {$b$} (4);
+  \path[->] (1)  edge[bend right=-50] node             {$b$} (4);
+  \path[->] (2)  edge[bend right=50] node             {$b$} (4);
+  \path[->] (3)  edge[loop above] node             {$a$} (3); 
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE an NFA, $N = (\Sigma, S, s_0, M, F)$
+\ENSURE DFA, $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
+\STATE Set $s_{D0} \gets$  $\epsilon$-closure($s_0$)
+\STATE Set $S_D$.add($s_{D0}$)
+\STATE Moves $M_D$
+\STATE Stack $stk$.push($s_{D0}$)
+\STATE $i \gets 0$
+\WHILE {!$stk$.empty()}
+\STATE $t$ $\gets$ $stk$.pop()
+\FOR {$a$ in $\Sigma$}
+\STATE $s_{Di+1}$ $\gets$ $\epsilon$-closure($m(t, a)$)
+\IF {$s_{Di+1} \neq \{\}$}
+\IF {$s_{Di+1} \notin S_D$} 
+\STATE $S_D$.add($s_{Di+1}$) \COMMENT{We have a new state}
+\STATE $stk$.push($s_{Di+1}$)
+\STATE $i \gets i + 1$
+\STATE $M_D$.add($m_D(t,a) = i$)
+\ELSIF {$\exists j, s_j \in S_D \text{ and } s_{Di+1} = s_j$} 
+\STATE $M_D$.add($m_D(t, a) = j$) \COMMENT{In the case the state already exists}
+\ENDIF
+\ENDIF
+\ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\caption{NFA to DFA Construction}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\STATE Set $F_D$
+\FOR {$s_D$ in $S_D$}
+\FOR {$s$ in $s_D$}
+\IF {$s \in F$}
+\STATE $F_D$.add($s_D$)
+\ENDIF
+\ENDFOR
+\ENDFOR
+\RETURN $D = (\Sigma, S_D, s_{D0}, M_D, F_D)$
+\end{algorithmic}
+\caption{NFA to DFA Construction (contd.)}
+\end{algorithm}
+\end{frame}
+
+\section{DFA to Minimal DFA}
+\begin{frame}[fragile]
+\pause
+
+To obtain a smaller but equivalent DFA, we must combine states such that  the states in the new DFA are partitions of the states in the original (perhaps larger) DFA
+
+\pause\bigskip
+
+A good strategy is to start with just one or two partitions and then split them as necessary
+
+\pause\bigskip
+
+An obvious first partition has two sets: the set of final states and the set of non-final states
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, consider the DFA for $(a|b)a*b$, partitioned as follows
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.17}.jpg}}
+\end{center}
+
+\pause
+\bigskip
+
+The two states in this new DFA consist of the start state, $\{0, 1, 2, 3\}$ and the final state $\{4\}$ 
+
+\pause
+\bigskip
+
+We must make sure that from a particular partition, each input symbol must move us to an identical partition
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Beginning in any state in the partition $\{0, 1, 2, 3\}$, an $a$ takes us to one of the states in $\{0, 1, 2, 3\}$
+\begin{align}
+& m(0, a) = 1 \nonumber \\
+& m(1, a) = 3 \nonumber \\
+& m(2, a) = 3 \nonumber \\
+& m(3, a) = 3 \nonumber
+\end{align}
+
+So, our partition $\{0, 1, 2, 3\}$ is fine so far as moves on the symbol $a$ are concerned
+
+\pause
+\bigskip
+
+For the symbol $b$,
+\begin{align}
+& m(0, b) = 2 \nonumber \\
+& m(1, b) = 4 \nonumber \\
+& m(2, b) = 4 \nonumber \\
+& m(3, b) = 4 \nonumber
+\end{align}
+
+So we must split the partition $\{0, 1, 2, 3\}$ into two new partitions, $\{0\}$ and $\{1, 2, 3\}$
+
+\pause
+\bigskip
+
+If we are in state $s$, and for an input symbol $a$ in our alphabet there is no defined move $m(s, a) = t$, we invent a special dead state $d$, so that we can say $m(s, a) = d$
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We are left with a partition into three sets: $\{0\}$, $\{1, 2, 3\}$ and $\{4\}$, as shown below
+
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.18}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We need not worry about $\{0\}$ and $\{4\}$ as they contain just one state and so correspond to (those) states in the original machine
+
+\pause
+\bigskip
+
+We consider $\{1, 2, 3\}$ to see if it is necessary to split it
+\begin{align}
+& m(1,a) = 3\nonumber \\
+& m(2,a) = 3 \nonumber \\
+& m(3, a) = 3 \nonumber
+\end{align}
+\begin{align}
+& m(1, b) = 4 \nonumber \\
+& m(2,b) = 4 \nonumber \\
+& m(3, b) = 4 \nonumber
+\end{align}
+
+\pause
+\bigskip
+
+Thus, there is no further state splitting to be done, and we are left with the following smaller DFA
+
+\begin{center}
+\visible<4->{\includegraphics[scale=0.6]{{figures/figure02.19}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{algorithm}[H]
+\begin{algorithmic}
+\REQUIRE a DFA, $D = (\Sigma, S, s_0, M, F)$
+\ENSURE a partition of $S$
+\STATE Set $partition \gets \{S - F, F\}$  \COMMENT{start with two sets: the non-final states and the final states} \\
+\STATE{} \COMMENT {Splitting the states}
+\WHILE {splitting occurs}
+\FOR {Set $set$  in $partition$}
+\IF {$set$.size() $>$ 1}
+\FOR {Symbol $a$ in $\Sigma$}
+\STATE{} \COMMENT{Determine if  moves from this `state' force a split}
+\STATE State $s \gets$ a state chosen from $set$
+\STATE $targetSet \gets$ the set in the partition containing $m(s, a)$
+\STATE Set $set1 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \in targetSet\}$
+\STATE Set $set2 \gets \{\text{states } s \text{ from set } S, \text{ such that } m(s, a) \notin targetSet\}$
+\IF {$set2 \neq \{\}$}
+\STATE{} \COMMENT{Yes, split the states.}
+\STATE{replace $set$ in $partition$ by $set1$ and $set2$ and break out of the for-loop to continue with the next set in the partition}
+\ENDIF
+\ENDFOR
+\ENDIF
+\ENDFOR
+\ENDWHILE
+\end{algorithmic}
+\caption{Minimizing a DFA}
+\end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Let us run through another example, starting from a regular expression, producing an NFA, then a DFA, and finally a minimal DFA
+
+\pause
+\bigskip
+
+Consider the regular expression $(a|b)*baa$ having the following syntactic structure
+
+\begin{center}
+\visible<3->{\includegraphics[scale=0.6]{{figures/figure02.20}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We apply the Thompson's construction procedure to produce the NFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.21}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Using the powerset construction method, we derive a DFA having the following states
+\begin{align}
+& s_0 = \{0, 1, 2, 4, 7, 8\} \nonumber \\
+& m(s_0, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
+& m(s_0, b) : \{1, 2, 4, 5, 6,  7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_1, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
+& m(s_1, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_2, a) : \{1, 2, 3, 4, 6, 7, 8, 11, 12\} = s_3 \nonumber \\
+& m(s_2, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_3, a) : \{1, 2, 3, 4, 6, 7, 8, 13\} = s_4 \nonumber \\
+& m(s_3, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber \\
+& m(s_4, a) : \{1, 2, 3, 4, 6, 7, 8\} = s_1 \nonumber \\
+& m(s_4, b) : \{1, 2, 4, 5, 6, 7, 8, 9, 10\} = s_2 \nonumber
+\end{align}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+The DFA itself is shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.22}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+Finally, we use partitioning to produce the minimal DFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.23}.jpg}}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+We re-number the states to produce the equivalent DFA shown below
+\begin{center}
+\visible<2->{\includegraphics[scale=0.6]{{figures/figure02.24}.jpg}}
+\end{center}
+\end{frame}
+
+\section{JavaCC: a Tool for Generating Scanners}
+\begin{frame}[fragile]
+\pause
+
+JavaCC (the CC stands for compiler-compiler) is a tool for generating lexical analyzers from regular expressions and parsers from context-free grammars
+
+\pause
+\bigskip
+
+A lexical grammar specification consists a set of regular expressions and a set of lexical states; from any particular state, only certain regular expressions may be matched in scanning the input
+
+\pause
+\bigskip
+
+There is a standard \lstinline{DEFAULT} state, in which scanning generally begins; one may specify additional states as required
+
+\pause
+\bigskip
+
+Scanning a token proceeds by considering all regular expressions in the current state and choosing the one which consumes the greatest number of input characters
+
+\pause
+\bigskip
+
+After a match, one can specify a state in which the scanner should go into; otherwise the scanner stays in the current state
+
+\pause
+\bigskip
+
+There are four kinds of regular expressions, determining what happens when the regular expression has been matched
+\begin{enumerate}
+\item \lstinline{SKIP}: throws away the matched string
+\item \lstinline{MORE}: continues to the next state, taking the matched string along
+\item \lstinline{TOKEN}: creates a token from the matched string and returns it to the parser (or any caller)
+\item \lstinline{SPECIAL_TOKEN}: creates a special token that does not participate in the parsing
+\end{enumerate}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+For example, a \lstinline{SKIP} can be used for ignoring white space
+\begin{lstlisting}[language={}]
+SKIP: {" "|"\t"|"\n"|"\r"|"\f"}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+We can deal with single-line comments with the following regular expressions
+
+\begin{lstlisting}
+MORE: { "//": IN_SINGLE_LINE_COMMENT }
+<IN_SINGLE_LINE_COMMENT>
+SPECIAL_TOKEN: { <SINGLE_LINE_COMMENT: "\n"|"\r"|"\r\n" > : DEFAULT }
+<IN_SINGLE_LINE_COMMENT>
+MORE: { < ~[] > }
+\end{lstlisting}
+
+\pause
+\bigskip
+
+An alternative regular expression dealing with single-line comments
+
+\begin{lstlisting}
+SPECIAL_TOKEN: {
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+Reserved words and symbols are specified by simply spelling them out; for example
+
+\begin{lstlisting}
+TOKEN: {
+  < ABSTRACT: "abstract" >
+| < BOOLEAN: "boolean" >
+...
+
+| < COMMA: "," >
+| < DOT: "." >
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+A token for scanning identifiers
+
+\begin{lstlisting}
+TOKEN: {
+  < IDENTIFIER: (<LETTER>|"_"|"$") (<LETTER>|<DIGIT>|"_"|"$")* >
+| < #LETTER: ["a"-"z","A"-"Z"] >
+| < #DIGIT: ["0"-"9"] >
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+A token for scanning literals
+
+\begin{lstlisting}
+TOKEN: {
+  < INT_LITERAL: ("0" | <NON_ZERO_DIGIT> (<DIGIT>)*) >
+| < #NON_ZERO_DIGIT: ["1"-"9"] >
+| < CHAR_LITERAL: "'" (<ESC> | ~["'","\\","\n","\r"]) "'" >
+| < STRING_LITERAL: "\"" (<ESC> | ~["\"","\\","\n","\r"])* "\"" >
+| < #ESC: "\\" ["n","t","b","r","f","\\","'","\""] >
+}
+\end{lstlisting}
+
+\pause
+\bigskip
+
+JavaCC takes a specification of the lexical syntax and produces several Java files, one of which is  \lstinline{TokenManager.java}, a program that implements a state machine; this is our scanner
+
+\pause
+\bigskip
+
+The lexical specification for \jmm is contained in \lstinline{$j/j--/src/jminusminus/j--.jj}
+\end{frame}
 \end{document}
