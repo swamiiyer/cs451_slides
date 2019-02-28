@@ -32,11 +32,6 @@
 \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-\tableofcontents
-\end{frame}
-
 \section{Introduction}
 \begin{frame}[fragile]
 \pause
@@ -69,7 +64,9 @@ The parser should produce some representation of the parsed program that is suit
 
 For example, given the following \jmm program
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
 package pass;
 
 import java.lang.System;
@@ -91,6 +88,9 @@ public class Factorial {
     static int n = 5;
 }
 \end{lstlisting}
+
+\smallskip
+
 we would like to produce an AST shown in the following slide
 \end{frame}
 
@@ -858,7 +858,9 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
 
 To parse a compilation unit, we define a method called \lstinline{compilationUnit()}
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
     public JCompilationUnit compilationUnit() {
         int line = scanner.token().line();
         TypeName packageName = null; // Default
@@ -872,7 +874,7 @@ To parse a compilation unit, we define a method called \lstinline{compilationUni
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
         ArrayList<TypeName> imports = new ArrayList<TypeName>();
         while (have(IMPORT)) {
             imports.add(qualifiedIdentifier());
@@ -908,7 +910,9 @@ qualifiedIdentifier ::= \lstinline{\<identifier\>} \{\lstinline{\.} \lstinline{\
 
 To parse qualifiedIdentifier, we define a method called \lstinline{qualifiedIdentifier()}
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
     private TypeName qualifiedIdentifier() {
         int line = scanner.token().line();
         mustBe(IDENTIFIER);
@@ -959,7 +963,9 @@ statement ::= block
 
 The method for parsing a statement decides which rule to apply when looking at the next un-scanned token
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
     private JStatement statement() {
         int line = scanner.token().line();
         if (see(LCURLY)) {
@@ -975,7 +981,7 @@ The method for parsing a statement decides which rule to apply when looking at t
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
         } else if (have(WHILE)) {
             JExpression test = parExpression();
             JStatement statement = statement();
@@ -1045,7 +1051,9 @@ For this, we must not only differentiate between the two kinds (basic type and r
 
 Consider the code for parsing a simple unary expression
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
     private JExpression simpleUnaryExpression() {
         int line = scanner.token().line();
         if (have(LNOT)) {
@@ -1075,7 +1083,8 @@ We use the predicate \lstinline{seeCast()} to distinguish casts from parenthesiz
 
 Now, consider the two predicates
 
-\begin{lstlisting}[language=Java]
+\smallskip
+\begin{lstlisting}[language=Java,style=focusin]
     private boolean seeBasicType() {
         if (see(BOOLEAN) || see(CHAR) || see(INT)) {
             return true;
@@ -1089,7 +1098,7 @@ Now, consider the two predicates
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     private boolean seeCast() {
 	scanner.recordPosition();
         if (!have(LPAREN)) {
@@ -1118,6 +1127,13 @@ Now, consider the two predicates
                 return false;
             }
         }
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\pause
+
+\begin{lstlisting}[language=Java,style=focusin]
         if (!have(RPAREN)) {
             scanner.returnToPosition();
             return false;
@@ -1195,7 +1211,9 @@ For the \jmm parser, we provide limited error recovery in the \lstinline{mustBe(
 
 First, consider the definitions for \lstinline{see()} and \lstinline{have()}
 
-\begin{lstlisting}[language=Java]
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
     private boolean see(TokenKind sought) {
 	return (sought == scanner.token().kind());
     }
@@ -1219,7 +1237,7 @@ The helper method \lstinline{mustBe()}, defined in the next slide, makes use of 
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     boolean isRecovered = true;
 
     private void mustBe(TokenKind sought) {
