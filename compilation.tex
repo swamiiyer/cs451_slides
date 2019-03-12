@@ -520,9 +520,7 @@ The scanner breaks down a \jmm program into a sequence of tokens
 
 \pause\bigskip
 
-Consider the program
-
-\pause\smallskip
+For example, the program
 
 \begin{tcolorbox}[enhanced,drop shadow southwest,sharp corners,size=fbox,colback=white,fontlower=\small\ttfamily,collower=silver900]
 
@@ -540,14 +538,12 @@ public class HelloWorld {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 HelloWorld.java
 \end{minipage}
 \end{tcolorbox}
 
-\pause\smallskip
-
-The program is broken down into tokens \lstinline{package}, \lstinline{pass}, \lstinline{;}, \lstinline{import}, \lstinline{java}, \lstinline{.}, and so on
+\noindent is broken down into tokens \lstinline{package}, \lstinline{pass}, \lstinline{;}, \lstinline{import}, \lstinline{java}, \lstinline{.}, and so on
 
 \pause\bigskip
 
@@ -600,7 +596,7 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -618,7 +614,7 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 optional package statement
 \end{minipage}
 \end{tcolorbox}
@@ -638,7 +634,7 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 zero or more import statements
 \end{minipage}
 \end{tcolorbox}
@@ -657,7 +653,7 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
                     EOF
 \end{lstlisting}
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 zero or more type (class) declarations
 \end{minipage}
 \end{tcolorbox}
@@ -675,7 +671,7 @@ compilationUnit ::= [PACKAGE qualifiedIdentifier SEMI]
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 end of file
 \end{minipage}
 \end{tcolorbox}
@@ -720,7 +716,7 @@ A compilation unit is parsed by the method \lstinline{compilationUnit()} defined
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -757,7 +753,7 @@ A compilation unit is parsed by the method \lstinline{compilationUnit()} defined
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 parse a compilation unit and return an AST representation for it
 \end{minipage}
 \end{tcolorbox}
@@ -796,7 +792,7 @@ parse a compilation unit and return an AST representation for it
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 get line number of current token
 \end{minipage}
 \end{tcolorbox}
@@ -835,7 +831,7 @@ get line number of current token
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 parse optional package statement
 \end{minipage}
 \end{tcolorbox}
@@ -874,7 +870,7 @@ parse optional package statement
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 parse zero or more import statements
 \end{minipage}
 \end{tcolorbox}
@@ -913,7 +909,7 @@ parse zero or more import statements
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 parse zero or more type (class) declarations
 \end{minipage}
 \end{tcolorbox}
@@ -952,7 +948,7 @@ parse zero or more type (class) declarations
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 parse end of file
 \end{minipage}
 \end{tcolorbox}
@@ -991,7 +987,7 @@ parse end of file
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 return an AST representation for the compilation unit
 \end{minipage}
 \end{tcolorbox}
@@ -1213,7 +1209,7 @@ The purpose of \lstinline{codegen()} is to generate JVM instructions (aka byteco
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -1236,7 +1232,7 @@ The purpose of \lstinline{codegen()} is to generate JVM instructions (aka byteco
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 generate code for a method declaration using CLEmitter
 \end{minipage}
 \end{tcolorbox}
@@ -1261,7 +1257,7 @@ generate code for a method declaration using CLEmitter
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 declare the method
 \end{minipage}
 \end{tcolorbox}
@@ -1286,7 +1282,7 @@ declare the method
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 generate code for the method body (if any)
 \end{minipage}
 \end{tcolorbox}
@@ -1311,7 +1307,7 @@ generate code for the method body (if any)
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 add implicit RETURN instruction
 \end{minipage}
 \end{tcolorbox}
@@ -1526,7 +1522,7 @@ class JDivideOp extends JBinaryExpression {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -1551,7 +1547,7 @@ class JDivideOp extends JBinaryExpression {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 constructor
 \end{minipage}
 \end{tcolorbox}
@@ -1576,7 +1572,7 @@ class JDivideOp extends JBinaryExpression {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 for analysis
 \end{minipage}
 \end{tcolorbox}
@@ -1601,7 +1597,7 @@ class JDivideOp extends JBinaryExpression {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 for code generation
 \end{minipage}
 \end{tcolorbox}
@@ -1661,7 +1657,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -1683,7 +1679,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 analyze the expression in the given context
 \end{minipage}
 \end{tcolorbox}
@@ -1707,7 +1703,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 analyze lhs and rhs operands
 \end{minipage}
 \end{tcolorbox}
@@ -1731,7 +1727,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 lhs and rhs must be of type int
 \end{minipage}
 \end{tcolorbox}
@@ -1755,7 +1751,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 type of the expression is int
 \end{minipage}
 \end{tcolorbox}
@@ -1778,7 +1774,7 @@ public JExpression analyze(Context context) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 return the analyzed expression
 \end{minipage}
 \end{tcolorbox}
@@ -1807,7 +1803,7 @@ public void codegen(CLEmitter output) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 
 \end{minipage}
 \end{tcolorbox}
@@ -1826,7 +1822,7 @@ public void codegen(CLEmitter output) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 generate code for the expression using CLEmitter
 \end{minipage}
 \end{tcolorbox}
@@ -1847,7 +1843,7 @@ public void codegen(CLEmitter output) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 generate code for lhs and rhs operands
 \end{minipage}
 \end{tcolorbox}
@@ -1868,7 +1864,7 @@ public void codegen(CLEmitter output) {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 generate code for the division operation
 \end{minipage}
 \end{tcolorbox}
@@ -1897,7 +1893,7 @@ public class Division {
 \end{lstlisting}
 
 \tcblower
-\begin{minipage}[t][.25cm][t]{\textwidth}
+\begin{minipage}[t][.2cm][t]{\textwidth}
 Division.java
 \end{minipage}
 \end{tcolorbox}
