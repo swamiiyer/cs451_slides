@@ -11,11 +11,6 @@
 \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-\tableofcontents
-\end{frame}
-
 \section{Introduction}
 \begin{frame}[fragile]
 \pause
@@ -23,9 +18,13 @@
 Type checking (aka semantic analysis) is the final step in the analysis phase, and includes the following
 
 \begin{itemize}
+\pause
 \item Determining the types of all names and expressions.
+\pause
 \item Insuring that all expressions are properly typed, for example that the operands of an operator have the proper types
+\pause
 \item A certain amount of storage analysis, for example determining the amount of storage that is required in the current stack frame to store a local variable (one word for \lstinline{int}s, two words for \lstinline{long}s); this information is used to allocate locations (at offsets from the base of the current stack frame) for parameters and local variables
+\pause
 \item A certain amount of AST tree rewriting, usually to make implicit constructs more explicit
 \end{itemize}
 
@@ -46,8 +45,11 @@ A type in \jmm is either a primitive type or a reference type
 
 \jmm primitive types
 \begin{itemize}
+\pause
 \item \lstinline{int} - 32 bit two's complement integers
+\pause
 \item \lstinline{boolean} - taking the value \lstinline{true} or \lstinline{false}
+\pause
 \item \lstinline{char} - 16 bit Unicode (but many systems deal only with the lower 8 bits)
 \end{itemize}
 
@@ -56,8 +58,11 @@ A type in \jmm is either a primitive type or a reference type
 
 \jmm reference types
 \begin{itemize}
+\pause
 \item arrays
+\pause
 \item objects of a type described by a class declaration
+\pause
 \item built-in objects \lstinline{java.lang.Object} and \lstinline{java.lang.String}
 \end{itemize}
 
@@ -87,7 +92,9 @@ We want the ability to interact with the existing Java class libraries
 
 Possible solutions
 \begin{enumerate}
+\pause
 \item Java types are represented by objects of (Java) type \lstinline{java.lang.Class}; since \jmm is a subset of Java, why not use \lstinline{Class} objects to represent its types? 
+\pause
 \item Define an abstract class (or interface) \lstinline{Type}, and concrete sub-classes (or implementations) \lstinline{PrimitiveType}, \lstinline{ReferenceType}, and \lstinline{ArrayType}
 \end{enumerate}
 \end{frame}
@@ -102,7 +109,9 @@ Our solution is to define our own class \lstinline{Type} for representing types,
 
 Since the parser does not know anything about types, we define two placeholder type representations
 \begin{enumerate}
+\pause
 \item \lstinline{TypeName} - for representing named types recognized by the parser like user-defined classes or imported classes until such time as they may be resolved to their proper \lstinline{Type} representation
+\pause
 \item \lstinline{ArrayTypeName} - for representing array types recognized by the parser like \lstinline{String[]}, until such time that they may resolved to their proper \lstinline{Type} representation
 \end{enumerate}
 
@@ -116,8 +125,11 @@ During analysis, \lstinline{TypeName}s and \lstinline{ArrayTypeName}s are resolv
 
 More specifically
 \begin{itemize}
+\pause
 \item A \lstinline{TypeName} is resolved by looking it up in the current context, our symbol table representation, and the \lstinline{Type} found replaces the \lstinline{TypeName}, and finally, the \lstinline{Type}'s accessibility from the place the \lstinline{TypeName} is encountered is checked
+\pause
 \item Since an \lstinline{ArrayTypeName} has a base type, the base type is resolved to a \lstinline{Type}, whose \lstinline{Class} representation becomes the base type for representing the array type
+\pause
 \item A \lstinline{Type} resolves to itself
 \end{itemize}
 \end{frame}
@@ -138,7 +150,7 @@ In the \jmm compiler, the symbol table is a tree of \lstinline{Context} objects,
 
 For example, reconsider the simple \lstinline{Factorial} program.  In this version we mark two locations in the program using comments: \lstinline{position 1} and \lstinline{position 2}
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 package pass;
 
 import java.lang.System;
@@ -189,9 +201,13 @@ A \lstinline{context}, ie, a node in this tree, captures the region of scope cor
 
 For example, in the above figure
 \begin{enumerate}
+\pause
 \item The context pointer from the AST's \lstinline{JCompilationUnit} node points to the \lstinline{JCompilationUnitContext} that is at the root of the symbol table
+\pause
 \item The context pointer from the AST's \lstinline{JClassDeclaration} points to a \lstinline{ClassContext}
+\pause
 \item The context pointer from the AST's two \lstinline{JMethodDeclaration}s each point to a \lstinline{MethodContext}
+\pause
 \item The context pointer from the AST's two \lstinline{JBlock}s each point to a \lstinline{LocalContext}
 \end{enumerate}
 
@@ -226,8 +242,11 @@ Type names are looked up in the \lstinline{CompilationUnitContext}; to facilitat
 
 A \lstinline{CompilationUnitContext} represents the scope of the entire program and contains a mapping from names to types
 \begin{itemize}
+\pause
 \item The implicitly declared types, \lstinline{java.lang.Object}, and \lstinline{java.lang.String}
+\pause
 \item Imported types
+\pause
 \item User-defined types, that is, types introduced in clss declarations
 \end{itemize}
 
@@ -265,7 +284,9 @@ The inheritance tree for contexts is illustrated in the following figure
 
 An \lstinline{IDefn} is the interface type for symbol table definitions, which has two implementations
 \begin{enumerate}
+\pause
 \item A \lstinline{TypeNameDefn}, which defines a type name; an \lstinline{IDefn} of this sort encapsulates the \lstinline{Type} that it denotes
+\pause
 \item A \lstinline{LocalVariableDefn} defines a local variable and encapsulates the name, its \lstinline{Type} and an offset in the current run-time stack frame
 \end{enumerate}
 \end{frame}
@@ -285,7 +306,7 @@ We rely on the encapsulated \lstinline{Class} object to store the interface info
 
 For example, \lstinline{Type} supports a method \lstinline{fieldFor()} which, when given a name returns a \lstinline{Field} with the given name that is defined for that type
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public Field fieldFor(String name) {
     Class<?> cls = classRep;
     while (cls != null) {
@@ -318,9 +339,13 @@ The traversals are accomplished by the method \lstinline{preAnalyze()} for the f
 
 The \lstinline{preAnalyze()} method must traverse down the AST only far enough for
 \begin{itemize}
+\pause
 \item Declaring imported type names
+\pause
 \item Declaring user-defined class names
+\pause
 \item Declaring fields
+\pause
 \item Declaring methods (including their signatures - the types of their parameters)
 \end{itemize}
 
@@ -329,10 +354,15 @@ The \lstinline{preAnalyze()} method must traverse down the AST only far enough f
 
 Therefore, \lstinline{preAnalyze()}need be defined only in the following types of AST nodes
 \begin{itemize}
+\pause
 \item \lstinline{JCompilationUnit}
+\pause
 \item \lstinline{JClassDeclaration}
+\pause
 \item \lstinline{JFieldDeclaration}
+\pause
 \item \lstinline{JMethodDeclaration}
+\pause
 \item \lstinline{JConstructorDeclaration}
 \end{itemize}
 \end{frame}
@@ -342,13 +372,18 @@ Therefore, \lstinline{preAnalyze()}need be defined only in the following types o
 
 For the \lstinline{JCompilationUnit} node at the top of the AST, \lstinline{preAnalyze()} does the following
 \begin{enumerate}
+\pause
 \item It creates a \lstinline{CompilationUnitContext}
+\pause
 \item It declares the implicit \jmm types, \lstinline{java.lang.String} and \lstinline{java.lang.Object}
+\pause
 \item It declares any imported types
+\pause
 \item It declares the types defined by class declaration, ie, creates a \lstinline{Type} for each declared class, whose \lstinline{classRep} refers to a \lstinline{Class} object for an empty class; for example, in the pre-analysis phase of our \lstinline{Factorial} program above, the \lstinline{Type} for \lstinline{Factorial} would have a \lstinline{classRep}, the \lstinline{Class} object for the class
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 class Factorial {}
 \end{lstlisting}
+\pause
 \item Finally, \lstinline{preAnalyze()} invokes itself for each of the type declarations in the compilation unit
 \end{enumerate}
 
@@ -356,7 +391,7 @@ class Factorial {}
 \bigskip
 
 Here is the code for \lstinline{preAnalyze()} in \lstinline{JCompilationUnit}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void preAnalyze() {
     context = new CompilationUnitContext();
 
@@ -371,7 +406,7 @@ public void preAnalyze() {
 \pause
 
 Here is the code for \lstinline{preAnalyze()} in \lstinline{JCompilationUnit}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 
     // Declare any imported types
     for (TypeName imported: imports) {
@@ -412,17 +447,24 @@ Here is the code for \lstinline{preAnalyze()} in \lstinline{JCompilationUnit}
 
 In a class declaration, \lstinline{preAnalyze()} does the following
 \begin{enumerate}
+\pause
 \item It firstly creates a new \lstinline{ClassContext}, whose \lstinline{surroundingContext} points to the \lstinline{CompilationUnitContext}
+\pause
 \item It resolves the class's super type
+\pause
 \item It creates a new \lstinline{CLEmitter} instance, which will eventually be converted to the \lstinline{Class} object for representing the declared class
+\pause
 \item It adds a class header, defining a name and any modifiers, to this \lstinline{CLEmitter} instance
+\pause
 \item It recursively invokes \lstinline{preAnalyze()} on each of the class's members, which causes field declarations, constructors and method declarations (but with empty bodies) to be added to the \lstinline{CLEmitter} instance
+\pause
 \item If there is no explicit constructor (having no arguments) in the set of members, it adds the implicit constructor to the \lstinline{CLEmitter} instance; for example, for the \lstinline{Factorial} program above, the following implicit constructor is added
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public Factorial() {
     super();
 }
 \end{lstlisting}
+\pause
 \item Finally, the \lstinline{CLEmitter} instance produces a \lstinline{Class} object, and that replaces the \lstinline{classRep} for the \lstinline{Type} of the declared class name in the (parent) \lstinline{ClassContext}
 \end{enumerate}
 \end{frame}
@@ -431,7 +473,7 @@ public Factorial() {
 \pause
 
 Here is the code for \lstinline{preAnalyze()} in \lstinline{JClassDeclaration}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void preAnalyze(Context context) {
     // Construct a class context
     this.context = new ClassContext(this, context);
@@ -464,7 +506,7 @@ public void preAnalyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 
     // Pre-analyze the members and add them to the partial class
     for (JMember member: classBlock) {
@@ -497,10 +539,15 @@ public void preAnalyze(Context context) {
 
 In a method declaration, \lstinline{preAnalyze()} does the following
 \begin{enumerate}
+\pause
 \item It resolves the types of the formal parameters
+\pause
 \item It resolves the return type
+\pause
 \item It checks proper use of the \lstinline{abstract} modifier
+\pause
 \item It computes the method descriptor
+\pause
 \item It generates (partial) code for the method
 \end{enumerate}
 
@@ -508,7 +555,7 @@ In a method declaration, \lstinline{preAnalyze()} does the following
 \bigskip
 
 Here is the code for \lstinline{preAnalyze()} in \lstinline{JMethodDeclaration}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void preAnalyze(Context context, CLEmitter partial) {
     // Resolve types of the formal parameters
     for (JFormalParameter param: params) {
@@ -524,7 +571,7 @@ public void preAnalyze(Context context, CLEmitter partial) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     // Check proper local use of abstract
     if (isAbstract && body != null) {
         JAST.compilationUnit.reportSemanticError(line(),
@@ -560,7 +607,7 @@ public void preAnalyze(Context context, CLEmitter partial) {
 \pause
 
 The code for \lstinline{partialCodegen()} is as follows
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void partialCodegen(Context context, CLEmitter partial) {
     // Generate a method with an empty body; need a return to
     // make the class verifier happy.
@@ -590,8 +637,11 @@ public void partialCodegen(Context context, CLEmitter partial) {
 
 Pre-analysis for a \lstinline{JFieldDeclaration} is similar to that for a \lstinline{JMethodDeclaration}, and does the following
 \begin{enumerate}
+\pause
 \item Enforces the rule that fields may not be declared \lstinline{abstract}
+\pause
 \item Resolves the field's declared type
+\pause
 \item Generates the JVM code for the field declaration, via the \lstinline{CLEmitter} created for the enclosing class declaration
 \end{enumerate}
 
@@ -599,7 +649,7 @@ Pre-analysis for a \lstinline{JFieldDeclaration} is similar to that for a \lstin
 \bigskip
 
 The code itself is rather simple
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void preAnalyze(Context context, CLEmitter partial) {
     // Fields may not be declared abstract.
     if (mods.contains("abstract")) {
@@ -633,11 +683,17 @@ The following figure illustrates how much of the symbol table is constructed for
 
 The analysis phase, ie, the \lstinline{analyze()} method, recursively descends throughout the AST all the way to its leaves
 \begin{itemize}
+\pause
 \item Re-writing field and local variable initializations as assignments
+\pause
 \item Declaring both formal parameters and local variables
+\pause
 \item Allocating locations in the stack frame for the formal parameters and local variables
+\pause
 \item Computing the types of expressions and enforcing the language type rules
+\pause
 \item Reclassifying ambiguous names
+\pause
 \item Doing a limited amount of tree surgery
 \end{itemize}
 
@@ -645,7 +701,7 @@ The analysis phase, ie, the \lstinline{analyze()} method, recursively descends t
 \bigskip
 
 At the top of the AST, \lstinline{analyze()} simply recursively descends into each of the  type (class) declarations, delegating analysis to one class declaration at a time
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JAST analyze(Context context) {
     for (JAST typeDeclaration : typeDeclarations) {
         typeDeclaration.analyze(this.context);
@@ -659,7 +715,7 @@ public JAST analyze(Context context) {
 \pause
 
 In \lstinline{JFieldDeclaration}, \lstinline{analyze()} rewrites the field initializer as an explicit assignment statement, analyzes that and then stores it in the \lstinline{JFieldDeclaration}'s initializations list
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JFieldDeclaration analyze(Context context) {
     for (JVariableDeclarator decl : decls) {
         // All initializations must be turned into assignment
@@ -681,7 +737,7 @@ public JFieldDeclaration analyze(Context context) {
 \bigskip
 
 In \lstinline{JClassDeclaration}, \lstinline{analyze()} separates the assignment statements into two lists: one for the static fields and one for the instance fields
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 // Copy declared fields for purposes of initialization.
 for (JMember member : classBlock) {
     if (member instanceof JFieldDeclaration) {
@@ -714,7 +770,7 @@ Both formal parameters and local variables are declared in the symbol table and 
 \bigskip
 
 For example, consider the following class declaration
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public class Locals {
     public int foo(int t, String u) {
         int v = u.length();
@@ -746,9 +802,13 @@ The stack frame allocated for an invocation of \lstinline{foo()} at run time by 
 
 The code for analyzing a \lstinline{JMethodDeclaration} performs four steps
 \begin{enumerate}
+\pause
 \item It creates a new \lstinline{MethodContext}, whose \lstinline{surroundingContext} points back to the previous \lstinline{ClassContext}
+\pause
 \item The first stack frame offset is 0; but if this is an instance method then offset 0 must be allocated to \lstinline{this}, and the \lstinline{nextOffset} is incremented to 1
+\pause
 \item The formal parameters are declared as local variables and allocated consecutive offsets in the stack frame
+\pause
 \item It analyzes the method's body
 \end{enumerate}
 \end{frame}
@@ -756,7 +816,7 @@ The code for analyzing a \lstinline{JMethodDeclaration} performs four steps
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JAST analyze(Context context) {
     this.context = new MethodContext(context, returnType);
 
@@ -785,14 +845,16 @@ public JAST analyze(Context context) {
 
 The code for analyzing a \lstinline{JBlock} performs two steps
 \begin{enumerate}
+\pause
 \item It creates a new \lstinline{LocalContext}, whose \lstinline{surroundingContext} points back to the previous \lstinline{MethodContext} (or \lstinline{LocalContext} in the case of nested blocks); its \lstinline{nextOffset} value is copied from the previous context
+\pause
 \item It analyzes each of the body's statements; any \lstinline{JVariableDeclaration}s declare their variables in the \lstinline{LocalContext} created in step 1; any nested \lstinline{JBlock} simply invokes this two-step process recursively, creating yet another \lstinline{LocalContext} for the nested block
 \end{enumerate}
 
 \pause
 \bigskip
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JBlock analyze(Context context) {
     // { ... } defines a new level of scope.
     this.context = new LocalContext(context);
@@ -819,7 +881,7 @@ The stages of the symbol table in analyzing \lstinline{Locals.foo()}
 \pause
 
 A local variable declaration is represented in the AST with a \lstinline{JVariableDeclaration}; for example, consider the local variable declaration from \lstinline{Locals}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 int w = v + 5, x = w + 7;
 \end{lstlisting}
 
@@ -838,16 +900,20 @@ Before the \lstinline{JVariableDeclaration} is analyzed, it appears exactly as i
 
 Analysis of a \lstinline{JVariableDeclaration} involves the following
 \begin{enumerate}
+\pause
 \item \lstinline{LocalVariableDefn}s and their corresponding stack frame offsets are allocated for each of the declared variables
+\pause
 \item The code checks to make sure that the declared variables do not shadow existing local variables
+\pause
 \item The variables are declared in the local context
+\pause
 \item Any initializations are rewritten as explicit assignment statements; those assignments are re-analyzed and stored in an \lstinline{initializations} list
 \end{enumerate}
 
 \pause
 \bigskip
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JStatement analyze(Context context) {
     for (JVariableDeclarator decl : decls) {
         // Local variables are declared here (fields are
@@ -861,7 +927,7 @@ public JStatement analyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 
         // First, check for shadowing
         IDefn previousDefn = context.lookup(decl.name());
@@ -919,7 +985,7 @@ If a variable is not found in the symbol table, we examine the \lstinline{Type} 
 \pause
 \bigskip
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     iDefn = context.lookup(name);
     if (iDefn == null) {
@@ -949,7 +1015,7 @@ public JExpression analyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     } else {
         if (!analyzeLhs && iDefn instanceof LocalVariableDefn &&
             !((LocalVariableDefn) iDefn).isInitialized()) {
@@ -1001,8 +1067,11 @@ Unfortunately, the parser cannot always make out the syntactic structure of a ta
 
 For example, consider the field selection \lstinline{w.x.y.z}; the parser knows this is a field selection of some sort and that \lstinline{z} is the field, but, without knowing the types of \lstinline{w}, \lstinline{x} and \lstinline{y}, the parser cannot know whether
 \begin{itemize}
+\pause
 \item \lstinline{w} is a class name,  \lstinline{x} is a static field in \lstinline{w}, and \lstinline{y} is a field of \lstinline{x};
+\pause
 \item \lstinline{w} is a package containing class \lstinline{x}, and \lstinline{y} is a static field in \lstinline{x}; or
+\pause
 \item \lstinline{w.x.y} is a fully qualified class name like \lstinline{java.lang.System}
 \end{itemize}
 
@@ -1020,7 +1089,7 @@ The \lstinline{reclassify()} method in \lstinline{AmbiguousName} is based on the
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression reclassify(Context context) {
     // Easier because we require all types to be imported.
     JExpression result = null;
@@ -1058,7 +1127,7 @@ public JExpression reclassify(Context context) {
 \pause
 
 For example, consider the message expression
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 java.lang.System.out.println(...);
 \end{lstlisting}
 
@@ -1069,10 +1138,15 @@ The parser will have encapsulated the target \lstinline{java.lang.System.out} in
 
 The first thing \lstinline{analyze()} does for a \lstinline{JMessageExpression} is to reclassify the \lstinline{AmbiguousName} to determine the structure of the expression that it denotes, which it does by looking at the ambiguous \lstinline{java.lang.System.out} from left to right
 \begin{enumerate}
+\pause
 \item Firstly, \lstinline{reclassify(}) looks up the simple name, \lstinline{java} in the symbol table.
+\pause
 \item Not finding that, it looks up \lstinline{java.lang}
+\pause
 \item Not finding that, it looks up \lstinline{java.lang.System}, which (assuming \lstinline{java.lang.System} has been properly imported) it finds to be a class.
+\pause
 \item It then assumes that the rest of the ambiguous part, that is \lstinline{out}, is a field
+\pause
 \item Thus the target is a field selection whose target is \lstinline{java.lang.System} and whose field name is \lstinline{out}
 \end{enumerate}
 \end{frame}
@@ -1082,16 +1156,20 @@ The first thing \lstinline{analyze()} does for a \lstinline{JMessageExpression} 
 
 After reclassifying any ambiguous part and making that the target, analysis of a \lstinline{JFieldSelection} proceeds as follows
 \begin{enumerate}
+\pause
 \item It analyzes the target and determines the target's type
+\pause
 \item It then considers the special case where the target is an array and the field is \lstinline{length}.  In this case, the type of the ``field selection'' is \lstinline{Type.INT}
+\pause
 \item Otherwise, it ensures that the target is not a primitive and determines whether or not it can find a field of the appropriate name in the target's type; if it cannot, then an error is reported
+\pause
 \item Otherwise, it checks to make sure the field is accessible to this region, a non-static field is not referenced from a static context, and then returns the analyzed field selection sub-tree
 \end{enumerate}
 
 \pause
 \bigskip
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     // Reclassify the ambiguous part.
     ...
@@ -1117,7 +1195,7 @@ public JExpression analyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
         field = targetType.fieldFor(fieldName);
         if (field == null) {
             JAST.compilationUnit.reportSemanticError(line(),
@@ -1154,14 +1232,19 @@ public JExpression analyze(Context context) {
 After reclassifying any \lstinline{AmbiguousName}, analyzing a \lstinline{JMessageExpression} proceeds as follows
 
 \begin{enumerate}
+\pause
 \item It analyzes the arguments to the message and constructs an array of their types
+\pause
 \item It determines the surrounding, defining class (for determining access)
+\pause
 \item It analyzes the target to which the message is being sent
+\pause
 \item It takes the message name and the array of argument types and looks for a matching method defined in the target's type (in \jmm, argument types must match exactly), and if no such method is found, it reports an error
+\pause
 \item Otherwise, the target class and method are checked for accessibility, a non-static method is now allowed to be referenced from a static context, and the method's return type becomes the type of the message expression
 \end{enumerate}
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     // Reclassify the ambiguous part
     …
@@ -1180,7 +1263,7 @@ public JExpression analyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 
     // Where are we now? (For access)
     Type thisType = ((JTypeDecl) context.classContext
@@ -1211,7 +1294,7 @@ public JExpression analyze(Context context) {
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 
     // Find appropriate Method for this message expression
     method = target.type().methodFor(messageName, argTypes);
@@ -1257,7 +1340,7 @@ For most kinds of AST nodes, analysis involves analyzing the sub-trees and check
 \bigskip
 
 Analysis of \lstinline{JIfStatement}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JStatement analyze(Context context) {
     test = (JExpression) test.analyze(context);
     test.type().mustMatchExpected(line(), Type.BOOLEAN);
@@ -1273,7 +1356,7 @@ public JStatement analyze(Context context) {
 \bigskip
 
 Analysis of \lstinline{JSubtractOp}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
      lhs = (JExpression) lhs.analyze(context);
      rhs = (JExpression) rhs.analyze(context);
@@ -1289,7 +1372,7 @@ public JExpression analyze(Context context) {
 \pause
 
 Analysis of \lstinline{JPlusOp}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     lhs = (JExpression) lhs.analyze(context);
     rhs = (JExpression) rhs.analyze(context);
@@ -1311,7 +1394,7 @@ public JExpression analyze(Context context) {
 \bigskip
 
 Analysis of \lstinline{JStringConcatenateOp}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     type = Type.STRING;
     return this;
@@ -1322,7 +1405,7 @@ public JExpression analyze(Context context) {
 \bigskip
 
 Analysis of \lstinline{JLiteralInt}
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     type = Type.INT;
     return this;
@@ -1344,7 +1427,7 @@ There are no implied conversions in \jmm; when one assigns an expression to a va
 \bigskip
 
 This does not exclude polymorphism; for example if type \lstinline{Bar} extends type \lstinline{Foo}, if \lstinline{bar} is a variable of type \lstinline{Bar} and \lstinline{foo} is a variable of type \lstinline{Foo}, we can say
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 foo = (Foo) bar;
 \end{lstlisting}
 to keep the \jmm compiler happy
@@ -1358,12 +1441,14 @@ Of course, the object that \lstinline{bar} refers to could be of type \lstinline
 \bigskip
 
 Analysis, when encountering a \lstinline{JCastOp}\index{\lstinline{JCastOp}} for an expression such as 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
     (Type2) expression of Type1
 \end{lstlisting}
 must determine two things
 \begin{enumerate}
+\pause
 \item That an expression of type \lstinline{Type1} can be cast to \lstinline{Type2}, ie, that the cast is valid
+\pause
 \item The type of the result, which is simply \lstinline{Type2}
 \end{enumerate}
 \end{frame}
@@ -1373,12 +1458,17 @@ must determine two things
 
 To determine (1) we must consider the possibilities for \lstinline{Type1} and \lstinline{Type2}
 \begin{enumerate}
+\pause
 \item Any type may be cast to itself (aka identity cast)
+\pause
 \item An arbitrary reference type may be cast to another reference type if and only if either one of the following holds
 \begin{enumerate}
+\pause
 \item The first type is a sub-type of (extends) the second type; this is called widening and requires no action at run time
+\pause
 \item The second type is a sub-type of the first type; this is called narrowing and requires a run-time check to make sure the expression being cast is actually an instance of the type it is being cast to
 \end{enumerate}
+\pause
 \item The following table summarizes other casts, and says whether or not (and how) a type labeling a row may be cast to a type labeling a column
 \begin{center}
     \begin{tabular}{ | l | l | l | l | l | l | l | }
@@ -1402,7 +1492,7 @@ To determine (1) we must consider the possibilities for \lstinline{Type1} and \l
 
 Analysis in \lstinline{JCastOp}
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public JExpression analyze(Context context) {
     expr = (JExpression) expr.analyze(context);
     type = cast = cast.resolve(context);
@@ -1427,7 +1517,7 @@ public JExpression analyze(Context context) {
 \bigskip
 
 A converter for narrowing one reference type to another (more specific) reference sub-type
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 class NarrowReference implements Converter {
     private Type target;
 
