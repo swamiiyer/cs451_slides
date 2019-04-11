@@ -759,21 +759,38 @@ The \lstinline{codegen()} method in \lstinline{JFieldSelection} works as follows
 \pause
 
 For example, the following code
-\begin{lstlisting}[language=Java]
+
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
 ... = s.instanceField;
 \end{lstlisting}
+
+\smallskip
+
 would be translated as
-\begin{lstlisting}[language={}]
+
+\smallskip
+
+\begin{lstlisting}[language={},style=focusin]
 aload s'
 getfield instanceField
 \end{lstlisting}
 
+\smallskip
+
 whereas the following code
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 ... = Square.staticField;
 \end{lstlisting}
+
+\smallskip
+
 would be translated as
-\begin{lstlisting}[language={}]
+
+\smallskip
+
+\begin{lstlisting}[language={},style=focusin]
 getstatic staticField
 \end{lstlisting}
 
@@ -781,11 +798,20 @@ getstatic staticField
 \bigskip
 
 Code generation for array access expressions is straightforward; for example, if the variable \lstinline{a} references an array object, and \lstinline{i} is an integer, then the following code
-\begin{lstlisting}[language=Java]
+
+\smallskip
+
+\begin{lstlisting}[language=Java,style=focusin]
 ... = a[i];
 \end{lstlisting}
+
+\smallskip
+
 is translated to 
-\begin{lstlisting}[language={}]
+
+\smallskip
+
+\begin{lstlisting}[language={},style=focusin]
 aload a'
 iload i'
 iaload
@@ -842,6 +868,9 @@ produces
 iload y'
 istore x'
 \end{lstlisting}
+
+\pause
+\bigskip
 
 On the other hand, compiling
 \begin{lstlisting}[language=Java]
@@ -919,9 +948,13 @@ The instructions in brackets [...] must be generated if and only if the operatio
 \pause
 
 The table above suggests four sub-operations common to most of the assignment-like operations in \jmm \begin{enumerate}
+\pause
 \item \lstinline{codegenLoadLhsLvalue()} - this generates code to load any up-front data for the left-hand side of an assignment needed for an eventual store, ie, its $l$-value
+\pause
 \item \lstinline{codegenLoadLhsRvalue()} - this generates code to load the $r$-value of the left-hand side, needed for implementing, for example the \lstinline{+=} operator
+\pause
 \item \lstinline{codegenDuplicateRvalue()} - this generates code to duplicate an $r$-value on the stack and put it in a place where it will be on top of the stack once the store is executed
+\pause
 \item \lstinline{codegenStore()} - this generates the code necessary to perform the actual store
 \end{enumerate}
 
@@ -936,7 +969,7 @@ The code needed for each of these differs for each potential left-hand side of a
 The code necessary for each of the four operations, and for each left-hand-side form, is illustrated in the table below
 
 \begin{center}
-\visible<4->{\includegraphics[scale=0.27]{{figures/assignments2}.jpg}}
+\visible<8->{\includegraphics[scale=0.27]{{figures/assignments2}.jpg}}
 \end{center}
 \end{frame}
 
@@ -954,7 +987,7 @@ Of course, one must also be able to generate code for the right-hand side expres
 \bigskip
 
 For example, \lstinline{JPlusAssignOp}'s \lstinline{codegen()} is shown below
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public void codegen(CLEmitter output) {
     ((JLhs) lhs).codegenLoadLhsLvalue(output);
     if (lhs.type().equals(Type.STRING)) {
@@ -1002,8 +1035,11 @@ x = x + <expression>
 
 To implement string concatenation, the compiler generates code to do the following
 \begin{enumerate}
+\pause
 \item Create an empty string buffer, ie, a \lstinline{StringBuffer} object, and initialize it
+\pause
 \item Append any operands to that buffer; that \lstinline{StringBuffer}'s \lstinline{append()} method is overloaded to deal with any type makes handling operands of mixed types easy
+\pause
 \item Invoke the \lstinline{toString()} method on the string buffer to produce a \lstinline{String}
 \end{enumerate}
 
@@ -1016,11 +1052,11 @@ To implement string concatenation, the compiler generates code to do the followi
 \bigskip
 
 For example, given the \jmm expression
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 x + true + "cat" + 0
 \end{lstlisting}
 the compiler generates the following JVM code
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 new java/lang/StringBuilder
 dup
 invokespecial StringBuilder."<init>":()V
@@ -1051,7 +1087,7 @@ Each \lstinline{Converter} implements a method \lstinline{codegen()}, which gene
 \bigskip
 
 For example, consider the converter for casting a reference type to one of its sub-types (narrowing cast) which requires that a \lstinline{checkcast} instruction be generated
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 class NarrowReference implements Converter {
     private Type target;
 
@@ -1076,7 +1112,7 @@ On the other hand, when any type is cast to itself (the identity cast), or when 
 
 Casting an \lstinline{int} to an \lstinline{Integer} is called boxing and requires an invocation of the \lstinline{Integer.valueOf()} method
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
 \end{lstlisting}
 
@@ -1085,7 +1121,7 @@ invokestatic java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
 
 Casting an \lstinline{Integer} to an \lstinline{int} is called unboxing and requires an invocation of the \lstinline{Integer.intValue()} method
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 invokevirtual java/lang/Integer.intValue:()I
 \end{lstlisting}
 
