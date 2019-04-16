@@ -32,11 +32,6 @@
 \titlepage
 \end{frame}
 
-\begin{frame}
-\frametitle{Outline}
-\tableofcontents
-\end{frame}
-
 \section{Introduction}
 \begin{frame}[fragile]
 \pause
@@ -109,7 +104,7 @@ We translate enough JVM code to SPIM code to handle the \jmm program shown in th
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 import spim.SPIM;
 
 // Prints factorial of a number computed using recursive and iterative
@@ -174,7 +169,7 @@ To determine what JVM instructions must be handled, it is worth looking at the o
 \pause
 \bigskip
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 public class Factorial extends java.lang.Object
   minor version: 0
   major version: 49
@@ -194,7 +189,7 @@ public Factorial();
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 
 public static int computeRec(int);
   Code:
@@ -236,7 +231,7 @@ public static int computeIter(int);
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 
 public static void main(java.lang.String[]);
   Code:
@@ -356,7 +351,7 @@ A basic block is a sequence of instructions with just one entry point at the sta
 \pause
 
 Consider the \lstinline{computeIter()} method from our \lstinline{Factorial} example 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
     public static int computeIter(int n) {
         int result = 1;
         while ( n > 0 ) {
@@ -370,7 +365,7 @@ Consider the \lstinline{computeIter()} method from our \lstinline{Factorial} exa
 \bigskip
 
 The JVM code for the method is shown below (line breaks to delineate basic blocks)
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 public static int computeIter(int);
   Code:
    Stack=2, Locals=2, Args_size=1
@@ -484,11 +479,11 @@ The instruction sequence within each basic block is of a higher level than is JV
 \bigskip
 
 For example, the \jmm statement 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 w = x + y + z;
 \end{lstlisting}
 \noindent might bre represented in HIR by
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 I8: I0 + I1
 I9: I8 + I2
 \end{lstlisting}
@@ -499,7 +494,7 @@ where \lstinline{I0}, \lstinline{I1} and \lstinline{I2} refer to the instruction
 \pause
 
 The instruction for loading a constant is simply the constant itself; for example, the single instruction from block \lstinline{B1} 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 I2: 1
 \end{lstlisting}
 
@@ -522,7 +517,7 @@ Our HIR employs static single assignment (SSA) form, where for every variable, t
 \bigskip
 
 For example, given the simple sequence
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 x = 3;
 x = x + y;
 \end{lstlisting}
@@ -657,7 +652,7 @@ The \lstinline{NControlFlowGraph} constructor is invoked on the method, which pr
 \bigskip
 
 The method call
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 cfg.detectLoops(cfg.basicBlocks.get(0), null);
 \end{lstlisting}
 detects loop headers and loop tails
@@ -666,7 +661,7 @@ detects loop headers and loop tails
 \bigskip
 
 The method call
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 cfg.removeUnreachableBlocks();
 \end{lstlisting}
 removes unreachable blocks
@@ -676,7 +671,7 @@ removes unreachable blocks
 \pause
 
 The method call
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 cfg.computeDominators(cfg.basicBlocks.get(0), null);
 \end{lstlisting}
 computes an immediate dominator for each basic block, that closest predecessor through which all paths must pass to reach the target block; it's a useful place to which insert invariant code that is lifted out of a loop in optimization
@@ -685,7 +680,7 @@ computes an immediate dominator for each basic block, that closest predecessor t
 \bigskip
 
 The method call
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 cfg.tuplesToHir();
 \end{lstlisting}
 converts the tuples representation to HIR, stored as a sequence of HIR instructions in the array list \lstinline{hir} for each block
@@ -694,7 +689,7 @@ converts the tuples representation to HIR, stored as a sequence of HIR instructi
 \bigskip
 
 The method call
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 cfg.eliminateRedundantPhiFunctions();
 \end{lstlisting}
 eliminates unnecessary Phi functions and replaces them with their simpler values
@@ -725,7 +720,7 @@ Global optimizations require an analysis of the whole control graph and involve 
 
 In some cases, the code of a callee's body can replace the call sequence in the caller's code, saving the overhead of a routine call --- we call this inlining; for example, consider the following code
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 static int getA() {
     return Getter.a;
 }
@@ -738,7 +733,7 @@ static void foo() {
 
 can be replaced with
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 static void foo() {
     int i;
     i = Getter.a;
@@ -756,7 +751,7 @@ Expressions having operands that are both constants, or variables whose values a
 
 For example, consider the Java method
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 static void foo() {
     int i = 1;
     int j = 2;
@@ -766,7 +761,7 @@ static void foo() {
 
 and the corresponding HIR code
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
   B0 succ: B1
   Locals:
     0: 0
@@ -797,7 +792,7 @@ The instruction \lstinline{I3 + I4} at \lstinline{I5} can be replaced by the con
 
 Another optimization one may make is common subexpression elimination, where we identify expressions that are re-evaluated even if their operands are unchanged; for example, in the following method
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 void foo(int i) {
     int j = i * i * i;
     int k = i * i * i;
@@ -806,13 +801,13 @@ void foo(int i) {
 
 we can replace
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 int k = i * i * i;
 \end{lstlisting}
 
 in \lstinline{foo()} with the more efficient
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 int k = j;
 \end{lstlisting}
 
@@ -820,7 +815,7 @@ int k = j;
 \bigskip
 
 Common subexpressions do arise in places one might not expect them; for example, consider the following C language fragment
-\begin{lstlisting}[language=C]
+\begin{lstlisting}[language=C,style=focusin]
 for (i = 0; i < 1000; i++) {
     for (j = 0; j < 1000; j++) {
         c[i][j] = a[i][j] + b[i][j];
@@ -844,7 +839,7 @@ Loop invariant expressions can be lifted out of the loop and computed in the pre
 \bigskip
 
 For example, the following \jmm code for summing two matrices
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 int i = 0;
 while (i <= 999) {
     int j = 0;
@@ -858,7 +853,7 @@ while (i <= 999) {
 
 can be rewritten as 
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 int i = 0;
 while (i <= 999) {
     int[] ai = a[i];
@@ -880,7 +875,7 @@ while (i <= 999) {
 
 When indexing an array, we must check that the index is within bounds; for example, in our code for matrix addition, in the assignment
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 c[i][j] = a[i][j] + b[i][j];
 \end{lstlisting}
 \noindent the \lstinline{i} and \lstinline{j} must be tested to make sure each is greater than or equal to zero, and less than 1000; and this must be done for each of \lstinline{c}, \lstinline{a} and \lstinline{b}
@@ -903,7 +898,7 @@ we want to make sure that \lstinline{a} is non-null before computing the offset 
 \bigskip
 
 But we may know that \lstinline{a} is non-null; for example, in the following code
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 ...a.f...
 ...a.g...
 ...a.h...
@@ -933,7 +928,7 @@ Since the HIR is not necessarily suitable for register allocation, we translate 
 
 For example, the LIR for \lstinline{Factorial.computeIter()} is shown below
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 computeIter (I)I
 
   B0
@@ -1074,7 +1069,7 @@ For each class, we also maintain a class template in the data segment, which amo
 \bigskip
 
 For example, consider the following \jmm code
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 public class Foo {
     int field1 = 1;
     int field2 = 2;
@@ -1180,7 +1175,7 @@ SPIM provides a set of built-in system calls for performing simple I/O tasks
 
 Our runtime environment includes a class \lstinline{SPIM}, which is a wrapper that gives us access to these calls as a set of static methods
 
-\begin{lstlisting}[language=Java]
+\begin{lstlisting}[language=Java,style=focusin]
 package spim;
 
 public class SPIM {
@@ -1251,7 +1246,7 @@ Once all of the program code has been generated, we then copy out the SPIM code 
 \bigskip
 
 For example, the SPIM code for \lstinline{Factorial.computeIter()} is as follows
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 .text
 
 Factorial.computeIter:
@@ -1279,7 +1274,7 @@ Factorial.computeIter.1:
 \begin{frame}[fragile]
 \pause
 
-\begin{lstlisting}[language={}]
+\begin{lstlisting}[language={},style=focusin]
 Factorial.computeIter.2:
     li $t3,0                                                                                                                                                                                                                                  
     ble $t1,$t3,Factorial.computeIter.4
